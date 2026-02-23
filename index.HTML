@@ -1,0 +1,365 @@
+<!DOCTYPE html> 
+<html lang="en"> 
+<head>     
+    <meta charset="UTF-8">     
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">     
+    <title>Kalvium | Protocol 2.0V Precision Sync</title>     
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><rect width=%22100%22 height=%22100%22 fill=%22black%22/><path d=%22M20 20 L80 20 L80 80 L20 80 Z%22 fill=%22none%22 stroke=%22red%22 stroke-width=%228%22/><path d=%22M20 50 L80 20 M20 50 L80 80%22 fill=%22none%22 stroke=%22red%22 stroke-width=%228%22/></svg>">     
+    
+    <!-- External Libraries -->
+    <script src="https://cdn.tailwindcss.com"></script>     
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">     
+    
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="style.css">
+
+    <!-- Custom JS (Loaded in head to prevent Theme Flash) -->
+    <script src="script.js" defer></script>
+</head> 
+<body id="home-top">     
+
+    <!-- Loader -->     
+    <div id="loader">         
+        <div class="k-logo-box mx-auto mb-6 scale-150 animate-pulse"><div class="k-logo-inner"></div></div>         
+        <h1 class="mono text-4xl text-red-600 font-black tracking-[0.5em] uppercase">Kalvium</h1>         
+        <p class="mono text-xs text-gray-500 mt-4 tracking-widest uppercase">Initializing_Neural_Sync...</p>     
+    </div>      
+
+    <!-- Onboarding -->     
+    <div id="instruction-overlay" class="fixed inset-0 z-[1500] bg-black/95 hidden items-center justify-center p-6">         
+        <div class="border-2 border-red-600 bg-zinc-950 p-10 max-w-md text-center relative shadow-[0_0_50px_rgba(255,0,0,0.15)]">             
+            <div class="bracket tl"></div><div class="bracket tr"></div><div class="bracket bl"></div><div class="bracket br"></div>             
+            <h2 class="text-2xl font-black uppercase text-red-600 mb-6 tracking-widest">Tactical Briefing</h2>             
+            <div class="space-y-6 text-left text-sm mono text-gray-400 mb-8">                 
+                <p><i class="fa-solid fa-crosshairs mr-2 text-red-600"></i> SCAN DATABASE to filter active units.</p>                 
+                <p><i class="fa-solid fa-wand-magic-sparkles mr-2 text-red-600"></i> HOVER cards to activate the glare.</p>                 
+                <p><i class="fa-solid fa-id-card mr-2 text-red-600"></i> CLICK any node for subject analysis.</p>             
+            </div>             
+            <button onclick="closeInstructions()" class="w-full py-4 bg-red-600 text-white font-black uppercase tracking-widest hover:bg-white hover:text-black transition-all border border-transparent hover:border-red-600">Acknowledge</button>         
+        </div>     
+    </div>      
+
+    <!-- NEW PAGE: SETTINGS -->     
+    <div id="settings-page">         
+        <button onclick="closeSettings()" class="fixed top-8 right-8 z-50 bg-black/50 backdrop-blur border border-white/10 text-white hover:text-red-600 hover:border-red-600 p-4 rounded-full transition-all flex items-center gap-3 shadow-[0_0_15px_rgba(0,0,0,0.8)]">             
+            <i class="fa-solid fa-arrow-left"></i> <span class="mono text-[10px] tracking-widest hidden md:inline">RETURN_TO_MAIN</span>         
+        </button>          
+
+        <div class="max-w-5xl mx-auto px-8 py-24 relative z-10">             
+            <div class="mb-16 border-b border-white/10 pb-8">                 
+                <p class="mono text-red-600 text-xs tracking-[0.5em] mb-4 uppercase">System Control</p>                 
+                <h1 class="text-4xl md:text-6xl font-black uppercase tracking-tighter text-white">Global <span class="text-transparent bg-clip-text bg-gradient-to-r from-red-600 to-red-900">Settings</span></h1>                 
+            </div>                          
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-10 text-left text-sm mono text-gray-300">                                  
+                <!-- THEME ENGINE -->                 
+                <div class="dossier-card">                     
+                    <h3 class="text-white font-bold text-lg mb-4 uppercase tracking-widest border-b border-white/10 pb-2 flex items-center gap-3"><i class="fa-solid fa-palette text-red-600"></i> Theme_Engine</h3>                     
+                    <span class="tracking-widest uppercase text-[9px] text-gray-500 mb-2 block font-bold mt-4">Color Mode</span>
+                    <div class="flex bg-black/50 border border-white/10 rounded overflow-hidden mb-6">                         
+                        <button id="btn-theme-dark" onclick="setTheme('dark')" class="theme-btn flex-1 px-4 py-3 text-xs mono uppercase transition-all border-r border-white/10 hover:bg-white/5">Dark</button>                         
+                        <button id="btn-theme-light" onclick="setTheme('light')" class="theme-btn flex-1 px-4 py-3 text-xs mono uppercase transition-all border-r border-white/10 hover:bg-white/5">Light</button>                         
+                        <button id="btn-theme-device" onclick="setTheme('device')" class="theme-btn flex-1 px-4 py-3 text-xs mono uppercase transition-all hover:bg-white/5">Sys</button>                     
+                    </div>                      
+                    <span class="tracking-widest uppercase text-[9px] text-gray-500 mb-3 block font-bold">Accent Protocol (10 Options)</span>                     
+                    <div class="flex flex-wrap gap-4 mb-2">                         
+                        <button id="swatch-red" onclick="setAccent('red')" class="swatch w-8 h-8 rounded-full border-2 border-transparent transition-all" style="background: #FF3131; color: #FF3131;" title="Red"></button>                         
+                        <button id="swatch-cyan" onclick="setAccent('cyan')" class="swatch w-8 h-8 rounded-full border-2 border-transparent transition-all" style="background: #00f0ff; color: #00f0ff;" title="Cyan"></button>                         
+                        <button id="swatch-green" onclick="setAccent('green')" class="swatch w-8 h-8 rounded-full border-2 border-transparent transition-all" style="background: #00ff00; color: #00ff00;" title="Green"></button>                         
+                        <button id="swatch-purple" onclick="setAccent('purple')" class="swatch w-8 h-8 rounded-full border-2 border-transparent transition-all" style="background: #b026ff; color: #b026ff;" title="Purple"></button>                         
+                        <button id="swatch-amber" onclick="setAccent('amber')" class="swatch w-8 h-8 rounded-full border-2 border-transparent transition-all" style="background: #ff9900; color: #ff9900;" title="Amber"></button>                     
+                        <button id="swatch-pink" onclick="setAccent('pink')" class="swatch w-8 h-8 rounded-full border-2 border-transparent transition-all" style="background: #ff00aa; color: #ff00aa;" title="Pink"></button>                     
+                        <button id="swatch-blue" onclick="setAccent('blue')" class="swatch w-8 h-8 rounded-full border-2 border-transparent transition-all" style="background: #0066ff; color: #0066ff;" title="Blue"></button>                     
+                        <button id="swatch-lime" onclick="setAccent('lime')" class="swatch w-8 h-8 rounded-full border-2 border-transparent transition-all" style="background: #ccff00; color: #ccff00;" title="Lime"></button>                     
+                        <button id="swatch-white" onclick="setAccent('white')" class="swatch w-8 h-8 rounded-full border-2 border-transparent transition-all" style="background: #ffffff; color: #ffffff;" title="White"></button>                     
+                        <button id="swatch-matrix" onclick="setAccent('matrix')" class="swatch w-8 h-8 rounded-full border-2 border-transparent transition-all" style="background: #00ff41; color: #00ff41;" title="Matrix Green"></button>                     
+                    </div>                 
+                </div>
+
+                <!-- FONT CUSTOMIZATION -->                 
+                <div class="dossier-card">                     
+                    <h3 class="text-white font-bold text-lg mb-4 uppercase tracking-widest border-b border-white/10 pb-2 flex items-center gap-3"><i class="fa-solid fa-font text-red-600"></i> Typography</h3>                     
+                    <span class="tracking-widest uppercase text-[9px] text-gray-500 mb-2 block font-bold mt-4">Typeface</span>
+                    <div class="grid grid-cols-3 sm:grid-cols-4 bg-black/50 border border-white/10 rounded overflow-hidden mb-6">                         
+                        <button id="btn-font-sans" onclick="setFont('sans')" class="font-btn px-2 py-3 text-[10px] mono uppercase transition-all border-r border-b border-white/10 hover:bg-white/5">Corp</button>                         
+                        <button id="btn-font-scifi" onclick="setFont('scifi')" class="font-btn px-2 py-3 text-[10px] mono uppercase transition-all border-r border-b border-white/10 hover:bg-white/5">Sci-Fi</button>                         
+                        <button id="btn-font-orbit" onclick="setFont('orbit')" class="font-btn px-2 py-3 text-[10px] mono uppercase transition-all border-r border-b sm:border-r-0 border-white/10 hover:bg-white/5">Orbit</button>                         
+                        <button id="btn-font-mono" onclick="setFont('mono')" class="font-btn px-2 py-3 text-[10px] mono uppercase transition-all border-r border-white/10 hover:bg-white/5">Term</button>                     
+                        <button id="btn-font-space" onclick="setFont('space')" class="font-btn px-2 py-3 text-[10px] mono uppercase transition-all border-r border-white/10 hover:bg-white/5">Space</button>                     
+                        <button id="btn-font-mecha" onclick="setFont('mecha')" class="font-btn px-2 py-3 text-[10px] mono uppercase transition-all border-r border-white/10 hover:bg-white/5">Mecha</button>                     
+                        <button id="btn-font-pixel" onclick="setFont('pixel')" class="font-btn px-2 py-3 text-[10px] mono uppercase transition-all hover:bg-white/5">Pixel</button>                     
+                    </div>
+                    <span class="tracking-widest uppercase text-[9px] text-gray-500 mb-2 block font-bold">Scaling</span>
+                    <div class="flex bg-black/50 border border-white/10 rounded overflow-hidden mb-2">                         
+                        <button id="btn-size-sm" onclick="setFontSize('sm')" class="size-btn flex-1 px-4 py-3 text-xs mono uppercase transition-all border-r border-white/10 hover:bg-white/5">Small</button>                         
+                        <button id="btn-size-md" onclick="setFontSize('md')" class="size-btn flex-1 px-4 py-3 text-xs mono uppercase transition-all border-r border-white/10 hover:bg-white/5">Normal</button>                         
+                        <button id="btn-size-lg" onclick="setFontSize('lg')" class="size-btn flex-1 px-4 py-3 text-xs mono uppercase transition-all hover:bg-white/5">Large</button>                     
+                    </div>
+                </div>
+
+                <!-- MANUAL & TOUR -->                 
+                <div class="dossier-card border-blue-900/50 bg-blue-900/5 hover:bg-blue-900/10 flex flex-col justify-center">                     
+                    <h3 class="text-blue-500 font-bold text-lg mb-4 uppercase tracking-widest border-b border-blue-900/30 pb-2 flex items-center gap-3"><i class="fa-solid fa-book-journal-whills"></i> Protocol_Manual</h3>                     
+                    <p class="text-xs text-gray-400 mb-4 leading-relaxed mono">Access the system manual to learn navigation, data extraction, and structural operations.</p>
+                    <button onclick="startTour()" class="w-full py-4 border border-blue-600/50 text-blue-500 hover:bg-blue-600 hover:text-white font-bold uppercase tracking-widest transition-all text-xs flex justify-center items-center gap-3 mt-auto">                         
+                        <i class="fa-solid fa-route"></i> Initiate_Tour                     
+                    </button>                     
+                </div>             
+
+                <!-- DANGER ZONE -->                 
+                <div class="dossier-card border-red-900/50 bg-red-900/5 hover:bg-red-900/10 flex flex-col justify-center">                     
+                    <h3 class="text-red-500 font-bold text-lg mb-4 uppercase tracking-widest border-b border-red-900/30 pb-2 flex items-center gap-3"><i class="fa-solid fa-triangle-exclamation"></i> Danger_Zone</h3>                     
+                    <button onclick="resetSystem()" class="w-full py-4 border border-red-600/50 text-red-500 hover:bg-red-600 hover:text-white font-bold uppercase tracking-widest transition-all text-xs flex justify-center items-center gap-3 mt-2">                         
+                        <i class="fa-solid fa-rotate-right"></i> Factory_Reset                     
+                    </button>                     
+                    <p class="text-[9px] text-gray-500 mt-4 text-center uppercase tracking-widest leading-relaxed">WARNING: Purges local cache, theme preferences & dossier data.</p>                 
+                </div>             
+            </div>         
+        </div>     
+        <div class="fixed inset-0 pointer-events-none z-0" style="background: radial-gradient(circle at left top, var(--k-red-transparent) 0%, transparent 50%);"></div>
+    </div>      
+
+    <!-- NEW PAGE: ABOUT KALVIUM -->
+    <div id="about-page">
+        <button onclick="closeAbout()" class="fixed top-8 right-8 z-50 bg-black/50 backdrop-blur border border-white/10 text-white hover:text-red-600 hover:border-red-600 p-4 rounded-full transition-all flex items-center gap-3 shadow-[0_0_15px_rgba(0,0,0,0.8)]">
+            <i class="fa-solid fa-arrow-left"></i> <span class="mono text-[10px] tracking-widest hidden md:inline">RETURN_TO_MAIN</span>
+        </button>
+
+        <div class="max-w-7xl mx-auto px-8 py-24 relative z-10">
+            <div class="mb-16 border-b border-white/10 pb-8">
+                <p class="mono text-red-600 text-xs tracking-[0.5em] mb-4 uppercase">System Architecture</p>
+                <h1 class="text-4xl md:text-6xl font-black uppercase tracking-tighter text-white">About <span class="text-transparent bg-clip-text bg-gradient-to-r from-red-600 to-red-900">Kalvium</span></h1>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-12 items-center mb-24">
+                <div>
+                    <h2 class="text-3xl font-bold uppercase mb-6"><span class="text-red-600">>></span> The Core Directive</h2>
+                    <p class="text-gray-400 text-lg leading-relaxed mb-6">
+                        Kalvium is not just an educational institution; it is a <span class="text-white font-bold">protocol for engineering excellence</span>. We are rewriting the source code of higher education by integrating real-world work experience directly into the academic kernel.
+                    </p>
+                    <p class="text-gray-400 text-lg leading-relaxed">
+                        Our mission is to compile the next generation of full-stack developers, system architects, and tech leaders who are industry-ready from Day 0.
+                    </p>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="dossier-card text-center py-10">
+                        <i class="fa-solid fa-briefcase text-4xl text-red-600 mb-4"></i>
+                        <h3 class="font-bold uppercase tracking-widest text-sm">Work</h3>
+                    </div>
+                    <div class="dossier-card text-center py-10">
+                        <i class="fa-solid fa-graduation-cap text-4xl text-red-600 mb-4"></i>
+                        <h3 class="font-bold uppercase tracking-widest text-sm">Study</h3>
+                    </div>
+                    <div class="dossier-card text-center py-10">
+                        <i class="fa-solid fa-coins text-4xl text-red-600 mb-4"></i>
+                        <h3 class="font-bold uppercase tracking-widest text-sm">Earn</h3>
+                    </div>
+                    <div class="dossier-card text-center py-10">
+                        <i class="fa-solid fa-rocket text-4xl text-red-600 mb-4"></i>
+                        <h3 class="font-bold uppercase tracking-widest text-sm">Scale</h3>
+                    </div>
+                </div>
+            </div>
+
+            <div class="border-t border-white/10 pt-16">
+                <h2 class="text-2xl font-bold uppercase mb-10 text-center tracking-[0.2em]">Program Modules</h2>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                    <div class="dossier-card relative overflow-hidden group">
+                        <div class="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity"><i class="fa-solid fa-code text-6xl"></i></div>
+                        <h3 class="text-xl font-bold text-white mb-2">Foundation Layer</h3>
+                        <p class="text-gray-500 text-sm mb-4">Mastering Data Structures, Algorithms, and Core Computer Science concepts.</p>
+                        <span class="text-red-600 mono text-xs font-bold">STATUS: MANDATORY</span>
+                    </div>
+                    <div class="dossier-card relative overflow-hidden group">
+                        <div class="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity"><i class="fa-solid fa-server text-6xl"></i></div>
+                        <h3 class="text-xl font-bold text-white mb-2">Full-Stack Synthesis</h3>
+                        <p class="text-gray-500 text-sm mb-4">Building scalable applications using MERN, Python, and Cloud Technologies.</p>
+                        <span class="text-red-600 mono text-xs font-bold">STATUS: DEPLOYED</span>
+                    </div>
+                    <div class="dossier-card relative overflow-hidden group">
+                        <div class="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity"><i class="fa-solid fa-building text-6xl"></i></div>
+                        <div class="absolute -inset-1 bg-red-600/20 blur-xl opacity-0 group-hover:opacity-20 transition-opacity"></div>
+                        <h3 class="text-xl font-bold text-white mb-2">Industry Integration</h3>
+                        <p class="text-gray-500 text-sm mb-4">3 Years of intense internship experience with top-tier tech partners.</p>
+                        <span class="text-red-600 mono text-xs font-bold">STATUS: HIGH PRIORITY</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="fixed inset-0 pointer-events-none z-0" style="background: radial-gradient(circle at right bottom, var(--k-red-transparent) 0%, transparent 50%);"></div>
+    </div>
+
+    <!-- Header -->     
+    <nav class="fixed top-0 w-full z-[150] px-8 py-5 flex justify-between items-center bg-black/60 backdrop-blur-xl border-b border-white/5">         
+        <div class="logo-wrapper flex items-center gap-4 cursor-pointer relative" onclick="openAbout()">             
+            <div class="k-logo-box scale-75"><div class="k-logo-inner"></div></div>             
+            <span class="font-bold tracking-tighter text-xl uppercase italic hidden md:block">Kalvium<span class="text-red-600">squad138</span></span>             
+            <span class="settings-hint text-red-600 text-xs mono tracking-widest uppercase ml-2 hidden lg:block">[ ABOUT_SYS ]</span>         
+        </div>                  
+        
+        <div class="hidden lg:flex gap-10 text-sm font-bold uppercase tracking-[0.3em] text-gray-400">             
+            <a href="#home-top" class="hover:text-red-500 transition" style="text-shadow: 0 0 5px rgba(255,49,49,0);">Home</a>             
+            <a href="#mentors" class="hover:text-red-500 transition" style="text-shadow: 0 0 5px rgba(255,49,49,0);">Mentor</a>             
+            <a href="#students-section" class="hover:text-red-500 transition" style="text-shadow: 0 0 5px rgba(255,49,49,0);">Students</a>             
+            <a href="#contact-footer" class="hover:text-red-500 transition" style="text-shadow: 0 0 5px rgba(255,49,49,0);">Contact</a>         
+        </div>         
+        <div class="relative flex items-center gap-6">             
+            <i class="fa-solid fa-terminal absolute left-3 text-red-600 text-[10px]"></i>             
+            <input type="text" id="searchBox" placeholder="SCAN_DATABASE..." class="bg-white/5 border border-white/10 rounded-none py-2 pl-10 pr-4 text-[10px] font-mono uppercase tracking-widest outline-none focus:border-red-600 transition-all w-48 md:w-64 text-white">         
+            <button onclick="openSettings()" class="text-gray-400 hover:text-red-500 transition-colors text-lg" title="Settings">
+                <i class="fa-solid fa-gear"></i>
+            </button>
+        </div>     
+    </nav>      
+
+    <!-- Hero -->     
+    <header class="min-h-screen flex flex-col justify-center items-center text-center px-8 relative z-10">         
+        <h1 class="text-6xl md:text-9xl font-black tracking-tighter mb-4 uppercase">Kalvium <span class="text-red-600"><span class="text-red-600">squad <span id="hove">138</span> </span></span></h1>         
+        <p class="mono text-gray-500 text-[10px] md:text-xs tracking-[1em] uppercase">SDE Collective // Class of 2026</p>     
+    </header>      
+
+    <!-- Mentors -->     
+    <section id="mentors" class="py-20 px-8 max-w-7xl mx-auto relative z-10 scroll-mt-32">         
+        <div class="flex items-center gap-6 mb-16"><span class="text-red-600 mono text-sm font-bold tracking-widest">[01_LEADERSHIP]</span><div class="h-[1px] flex-grow bg-red-900/30"></div></div>         
+        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-10" id="mentorGrid"></div>     
+    </section>      
+
+    <!-- Students -->     
+    <section id="students-section" class="py-32 bg-black/40 border-y border-white/5 relative z-10 scroll-mt-32">         
+        <div class="px-8 mb-16 flex flex-col md:flex-row md:items-center gap-6">             
+            <div class="flex items-center gap-6 flex-grow"><span class="text-red-600 mono text-sm font-bold tracking-widest">[02_COLLECTIVE]</span><div class="h-[1px] flex-grow bg-red-900/30"></div></div>             
+            <div class="flex gap-2">                 
+                <button onclick="switchView('scroll')" id="btn-scroll" class="view-btn active px-6 py-2 border border-white/10 mono text-[10px] uppercase transition-colors">Scroll_Mode</button>                 
+                <button onclick="switchView('gallery')" id="btn-gallery" class="view-btn px-6 py-2 border border-white/10 mono text-[10px] uppercase text-gray-500 hover:text-white transition-colors">Gallery_Mode</button>             
+            </div>         
+        </div>         
+        <div id="view-scroll" class="overflow-hidden"><div class="scroll-wrapper gap-12 px-8" id="studentScroller"></div></div>         
+        <div id="view-gallery" class="hidden-view px-8 max-w-7xl mx-auto"><div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-12" id="studentGrid"></div></div>     
+    </section>      
+
+    <!-- POPUP MODAL (Main Profile) -->     
+    <div id="modal-overlay" onclick="if(event.target.id === 'modal-overlay') closeModal()">         
+        <div class="modal-box p-8 md:p-12">             
+            <!-- Corner Brackets Added Here -->
+            <div class="bracket tl"></div>
+            <div class="bracket tr"></div>
+            <div class="bracket bl"></div>
+            <div class="bracket br"></div>
+
+            <button onclick="closeModal()" class="btn-cyber-icon absolute top-6 right-6 z-50 rounded-full h-10 w-10 flex items-center justify-center">                 
+                <i class="fa-solid fa-xmark text-xl"></i>             
+            </button>             
+            <div id="modalContent"></div>         
+        </div>     
+    </div>      
+
+    <!-- NEW PAGE: ACHIEVEMENTS DOSSIER -->     
+    <div id="dossier-overlay">         
+        <button onclick="closeAchievements()" class="fixed top-8 right-8 z-50 bg-black/50 backdrop-blur border border-white/10 text-white hover:text-red-600 hover:border-red-600 p-4 rounded-full transition-all flex items-center gap-3 shadow-[0_0_15px_rgba(0,0,0,0.8)]">             
+            <i class="fa-solid fa-arrow-right-from-bracket"></i> <span class="mono text-[10px] tracking-widest hidden md:inline">RETURN_TO_BASE</span>         
+        </button>          
+
+        <div class="max-w-7xl mx-auto px-8 py-24 relative z-10">             
+            <div class="mb-16 border-b border-white/10 pb-8">                 
+                <p class="mono text-red-600 text-xs tracking-[0.5em] mb-4 uppercase">Secure_File // Editable</p>                 
+                <h1 class="text-4xl md:text-6xl font-black uppercase tracking-tighter text-white">Subject <span class="text-transparent bg-clip-text bg-gradient-to-r from-red-600 to-red-900">Dossier</span></h1>                 
+                <h2 id="dossier-name" class="mono text-gray-500 text-sm mt-2 tracking-widest uppercase"></h2>             
+            </div>                          
+            
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-10" id="dossierContent"></div>         
+        </div>         
+        <div class="fixed inset-0 pointer-events-none z-0" style="background: radial-gradient(circle at right top, var(--k-red-transparent) 0%, transparent 50%);"></div>     
+    </div>      
+
+    <!-- INPUT MODAL -->     
+    <div id="input-modal">         
+        <div class="bg-black border border-red-600 p-8 w-full max-w-md relative shadow-[0_0_30px_rgba(255,0,0,0.15)]">             
+            <div class="bracket tl"></div><div class="bracket tr"></div><div class="bracket bl"></div><div class="bracket br"></div>             
+            <h3 id="input-modal-title" class="text-red-600 mono uppercase tracking-widest font-bold mb-6">Enter Data</h3>             
+            <div id="input-modal-body" class="flex flex-col gap-4"></div>             
+            <div class="flex gap-4 mt-8">                 
+                <button onclick="closeInputModal()" class="flex-1 py-3 border border-white/20 text-gray-400 hover:text-white uppercase mono text-xs">Cancel</button>                 
+                <button id="input-modal-save" class="flex-1 py-3 bg-red-600 text-white font-bold uppercase mono text-xs hover:bg-white hover:text-black transition-colors">Save_Data</button>             
+            </div>         
+        </div>     
+    </div>      
+
+    <!-- TERMINAL MODAL -->     
+    <div id="terminal-modal">         
+        <div class="terminal-box">             
+            <div id="terminal-text" class="flex flex-col gap-2 text-sm"></div>             
+            <div class="mt-4 border-t border-[#333] pt-2 flex justify-between items-center text-gray-500 text-xs">                 
+                <span>Status: <span id="term-status" class="text-yellow-500 animate-pulse">PROCESSING...</span></span>                 
+                <span class="mono">NODE_JS // HACKERRANK_API</span>             
+            </div>         
+        </div>     
+    </div>      
+
+    <!-- CHATBOT SYSTEM -->     
+    <button id="chatbot-toggle" onclick="toggleChatbot()" class="btn-cyber-main fixed bottom-6 right-6 z-[2500] w-14 h-14 rounded-full shadow-[0_0_20px_var(--k-red-glow)] flex items-center justify-center text-xl transition-transform hover:scale-110 border-2 border-red-600">         
+        <i class="fa-solid fa-robot"></i>     
+    </button>      
+
+    <div id="chatbot-panel" class="chat-box fixed bottom-24 right-6 z-[2500] w-[350px] max-w-[90vw] h-[500px] max-h-[75vh] flex-col" style="display: none; opacity: 0; transform: translateY(20px) scale(0.95); transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.1);">         
+        <div class="bracket tl"></div><div class="bracket tr"></div><div class="bracket bl"></div><div class="bracket br"></div>                  
+        
+        <!-- Chat Header -->         
+        <div class="p-4 border-b border-red-900/50 flex justify-between items-center bg-red-600/10">             
+            <span class="mono text-red-600 font-bold uppercase tracking-widest text-xs flex items-center gap-2"><i class="fa-solid fa-microchip animate-pulse"></i> Neural_Assist_v2</span>             
+            <button onclick="toggleChatbot()" class="text-gray-500 hover:text-red-600 transition-colors"><i class="fa-solid fa-xmark text-lg"></i></button>         
+        </div>                  
+        
+        <!-- Chat Messages -->         
+        <div id="chatbot-messages" class="flex-1 overflow-y-auto p-4 space-y-4 mono text-xs pr-2"></div>                  
+        
+        <!-- Chat Input -->         
+        <div class="p-4 border-t border-white/5 bg-black/50 flex gap-2">             
+            <input type="text" id="chatbot-input" placeholder="Enter query..." class="flex-1 bg-black/40 border border-white/10 p-2 text-white mono text-xs outline-none focus:border-red-600 transition-colors rounded-sm" onkeypress="if(event.key === 'Enter') sendChatMessage()">             
+            <button onclick="sendChatMessage()" class="bg-red-600/20 text-red-600 border border-red-600/50 hover:bg-red-600 hover:text-white transition-colors px-4 py-2 text-xs mono uppercase tracking-widest rounded-sm"><i class="fa-solid fa-paper-plane"></i></button>         
+        </div>     
+    </div>      
+
+    <!-- TOUR OVERLAY SYSTEM -->
+    <div id="tour-overlay" class="fixed inset-0 bg-black/80 z-[9000] hidden opacity-0 transition-opacity duration-300 backdrop-blur-sm pointer-events-auto"></div>
+    <div id="tour-tooltip" class="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[9001] bg-black border border-red-600 p-6 w-[90%] max-w-[350px] hidden flex-col gap-4 shadow-[0_0_30px_rgba(255,0,0,0.2)] transition-all duration-500 scale-95 opacity-0">
+        <div class="bracket tl border-red-600"></div><div class="bracket tr border-red-600"></div><div class="bracket bl border-red-600"></div><div class="bracket br border-red-600"></div>
+        <h3 id="tour-title" class="text-red-500 font-black uppercase tracking-[0.2em] text-lg border-b border-white/10 pb-2"></h3>
+        <p id="tour-text" class="text-gray-300 text-sm leading-relaxed mono"></p>
+        <div class="flex justify-between items-center mt-4">
+            <button onclick="endTour()" class="text-gray-500 hover:text-white text-xs mono uppercase tracking-widest transition-colors">Abort</button>
+            <div class="flex gap-3 items-center">
+                <span id="tour-counter" class="text-gray-600 text-xs mono">1/5</span>
+                <button id="tour-next-btn" onclick="nextTourStep()" class="bg-red-600/20 text-red-500 border border-red-600/50 hover:bg-red-600 hover:text-white px-4 py-2 text-xs mono uppercase tracking-widest transition-all">Next</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->     
+    <footer id="contact-footer" class="mt-48 border-t border-white/5 bg-[#010101] pt-32 pb-16 relative z-10 scroll-mt-32">         
+        <div class="container mx-auto px-8">             
+            <div class="grid md:grid-cols-3 gap-20 items-start mb-24 text-center md:text-left">                 
+                <div>                     
+                    <div class="k-logo-box mb-6 mx-auto md:mx-0"><div class="k-logo-inner"></div></div>                     
+                    <p class="mono text-[10px] text-red-600 uppercase font-black mb-4 tracking-widest">Kalvium Engineering protocol</p>                     
+                    <p class="text-gray-500 text-sm leading-relaxed">Synthesizing real-world industry leaders through high-performance Work-Integrated learning.</p>                 
+                </div>                 
+                <div class="text-center flex flex-col justify-center min-h-[120px]">                     
+                    <p class="text-gray-600 mono text-[10px] uppercase mb-4 tracking-widest italic font-bold">System_Thought</p>                     
+                    <h3 id="proverbDisplay" class="text-2xl font-light italic text-gray-400 min-h-[64px]"></h3>                 
+                </div>                 
+                <div class="flex flex-col items-center md:items-end gap-10">                     
+                    <p class="text-gray-600 mono text-[10px] uppercase tracking-widest font-bold">Connect_Network</p>                     
+                    <div class="flex flex-wrap justify-center gap-8">                         
+                        <a href="#" class="f-icon f-linkedin"><i class="fa-brands fa-linkedin-in"></i><span class="footer-tooltip">[ LINKEDIN ]</span></a>                         
+                        <a href="#" class="f-icon f-github"><i class="fa-brands fa-github"></i><span class="footer-tooltip">[ GITHUB ]</span></a>                         
+                        <a href="#" class="f-icon f-insta"><i class="fa-brands fa-instagram"></i><span class="footer-tooltip">[ INSTAGRAM ]</span></a>                         
+                        <a href="#" class="f-icon f-whatsapp"><i class="fa-brands fa-whatsapp"></i><span class="footer-tooltip">[ WHATSAPP ]</span></a>                         
+                        <a href="#" class="f-icon f-mail"><i class="fa-solid fa-envelope"></i><span class="footer-tooltip">[ SECURE_MAIL ]</span></a>                     
+                    </div>                 
+                </div>             
+            </div>             
+            <div class="text-center pt-8 border-t border-white/5 mono text-[9px] text-gray-700 uppercase tracking-[0.5em]">KALVIUM_SYNC_V22 // SUCCESS</div>         
+        </div>     
+    </footer>      
+</body> 
+</html>
