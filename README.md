@@ -1,4 +1,3 @@
-# kalvium-2.0-portfolio
 
 Kalvium 2.0 Portfolio is a redesigned and feature-rich version of our student portfolio website.  
 This project showcases student work with a modern interface, customizable themes, and interactive elements.
