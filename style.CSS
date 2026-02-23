@@ -212,7 +212,7 @@ body.light-mode .btn-cyber-main:hover { color: #fff; }
 .f-linkedin:hover { color: #0077b5; filter: drop-shadow(0 0 15px #0077b5); }         
 .f-github:hover { color: #fff; filter: drop-shadow(0 0 15px #fff); }         
 body.light-mode .f-github:hover { color: #111; filter: drop-shadow(0 0 15px #111); }         
-.f-insta:hover { color: #e4405f; filter: drop-shadow(0 0 15px #e4405f); }         
+.f-discord:hover { color: #5865F2; filter: drop-shadow(0 0 15px #5865F2); }         
 .f-whatsapp:hover { color: #25d366; filter: drop-shadow(0 0 15px #25d366); }         
 .f-mail:hover { color: var(--k-red); filter: drop-shadow(0 0 15px var(--k-red)); }                  
 
