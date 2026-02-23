@@ -338,7 +338,7 @@ function openModal(name, isMentor) {
                     <a href="${p.github}" target="_blank" class="btn-cyber-icon flex-1 min-w-[130px] py-3 rounded-lg font-black text-xs uppercase text-center tracking-[0.1em] flex justify-center items-center gap-2">                                 
                         <i class="fa-brands fa-github text-lg"></i> GitHub                             
                     </a>` : ''}                             
-                    <a href="mailto:${p.email}" class="btn-cyber-icon w-[46px] h-[46px] flex items-center justify-center rounded-lg text-lg flex-shrink-0">                                 
+                    <a href="https://mail.google.com/mail/?view=cm&fs=1&to=${p.email}" class="btn-cyber-icon w-[46px] h-[46px] flex items-center justify-center rounded-lg text-lg flex-shrink-0">                                 
                         <i class="fa-solid fa-envelope"></i>                             
                     </a>                         
                 </div>                     
