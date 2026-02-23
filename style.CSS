@@ -3,7 +3,7 @@
 
 :root {             
     --k-red: #FF3131;             
-    --k-red-glow: rgba(255, 49, 49, 0.5);             
+    --k-red-glow: rgba(255, 49, 49, 0.6);             
     --k-red-transparent: rgba(255, 49, 49, 0.15);             
     --bg-dark: #020202;             
     --glass: rgba(10, 10, 10, 0.95);         
