@@ -83,9 +83,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- DATA & STATE ---         
     const mentorsData = [
-        { name: "Aravind R", role: "PSUP MENTOR", bio: "Academic Mentor specializing in debugging, problem-solving, and guiding future developers at Kalvium.", img: "/src/Aravind - Mentor.png", linkedin: "https://www.linkedin.com/in/aravind-r-812634245/", email: "aravind.r@kalvium.com" },
-        { name: "H. Karunakaran", role: "LSRW MENTOR", bio: "Academic Mentor focused on student development, problem-solving excellence, and career readiness through technology-driven learning.", img: "/src/Karunakaran - Mentor.png", linkedin: "https://www.linkedin.com/in/h-karunakaran-3b1285376", email: "karunakaran.h@kalvium.com" },
-            { name: "Hanuram T", role: "FEWD MENTOR", bio: "Academic mentor cum business analyst, balancing logic, data, and good vibes.", img: "/src/Hanuram - Mentor.png", linkedin: "http://www.linkedin.com/in/hanuram-t", email: "hanuram.t@kalvium.com" }
+        { name: "Aravind R", role: "MENTOR", bio: "Academic Mentor specializing in debugging, problem-solving, and guiding future developers at Kalvium.", img: "/src/Aravind - Mentor.png", linkedin: "https://www.linkedin.com/in/aravind-r-812634245/", email: "aravind.r@kalvium.com" },
+        { name: "H. Karunakaran", role: "CAMPUS MANAGER", bio: "Academic Mentor focused on student development, problem-solving excellence, and career readiness through technology-driven learning.", img: "/src/Karunakaran - Mentor.png", linkedin: "https://www.linkedin.com/in/h-karunakaran-3b1285376", email: "karunakaran.h@kalvium.com" },
+            { name: "Hanuram T", role: "MENTOR", bio: "Academic mentor cum business analyst, balancing logic, data, and good vibes.", img: "/src/Hanuram - Mentor.png", linkedin: "http://www.linkedin.com/in/hanuram-t", email: "hanuram.t@kalvium.com" }
         ];          
 
     const studentsData = [
