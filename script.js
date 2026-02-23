@@ -83,9 +83,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- DATA & STATE ---         
     const mentorsData = [
-        { name: "Aravind R", role: "PSUP MENTOR", bio: "Currently a professional 'Wait, why is it doing that?' investigator at Kalvium. As an Academic Mentor, I spend my days helping students realize that 90% of coding is just staring at a screen until the screen blinks first. I’m part-time debugger, part-time cheerleader, and full-time convinced that the semicolon is the most powerful character in the English language. I don’t just teach people how to code; I teach them how to not throw their laptops out the window.", img: "/src/Aravind - Mentor.png", linkedin: "https://www.linkedin.com/in/aravind-r-812634245/", email: "aravind.r@kalvium.com" },
-        { name: "H. Karunakaran", role: "LSRW MENTOR", bio: "Karunakaran is a dedicated academic professional passionate about student development, technology-driven learning, and building strong campus communities. He focuses on mentoring students in problem solving, discipline, and career readiness. With a commitment to continuous improvement, he works closely with squads to create an environment that encourages creativity, accountability, and practical learning.", img: "/src/Karunakaran - Mentor.png", linkedin: "https://www.linkedin.com/in/h-karunakaran-3b1285376", email: "karunakaran.h@kalvium.com" },
-            { name: "Hanuram T", role: "FEWD MENTOR", bio: "Academic mentor cum business analyst, balancing logic, data, and good vibes.", img: "/src/Hanuram - Mentor.png", linkedin: "http://www.linkedin.com/in/hanuram-t", email: "hanuram.t@kalvium.com" }
+        { name: "Aravind R", role: "MENTOR", bio: "Academic Mentor specializing in debugging, problem-solving, and guiding future developers at Kalvium.", img: "/src/Aravind - Mentor.png", linkedin: "https://www.linkedin.com/in/aravind-r-812634245/", email: "aravind.r@kalvium.com" },
+        { name: "H. Karunakaran", role: "CAMPUS MANAGER", bio: "Academic Mentor focused on student development, problem-solving excellence, and career readiness through technology-driven learning.", img: "/src/Karunakaran - Mentor.png", linkedin: "https://www.linkedin.com/in/h-karunakaran-3b1285376", email: "karunakaran.h@kalvium.com" },
+            { name: "Hanuram T", role: "MENTOR", bio: "Academic mentor cum business analyst, balancing logic, data, and good vibes.", img: "/src/Hanuram - Mentor.png", linkedin: "http://www.linkedin.com/in/hanuram-t", email: "hanuram.t@kalvium.com" }
         ];          
 
     const studentsData = [
