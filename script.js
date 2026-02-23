@@ -207,7 +207,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     <div class="card-watermark">${watermark}</div>                         
                     <img src="${p.img}" class="w-32 h-32 mb-6 border border-red-600/30 p-1 transition-all duration-500 grayscale group-hover:grayscale-0 group-hover:border-red-600 rounded-full z-10" loading="lazy">                         
                     <div class="text-center z-10 px-4">                             
-                        <p class="text-red-600 mono text-[9px] uppercase font-bold tracking-widest mb-1 transition-colors duration-500 group-hover:text-white">${p.role}</p>                             
+                        <p class="text-red-600 mono text-[9px] uppercase font-bold tracking-widest mb-1 transition-colors duration-500 group-hover:text-white">${isMentor ? p.role : 'KALVIAN'}</p>                             
                         <h3 class="text-xl font-black uppercase tracking-tighter">${p.name}</h3>                         
                     </div>                     
                 </div>                 
@@ -314,7 +314,7 @@ function openModal(name, isMentor) {
             <div class="text-left max-w-xl w-full">                         
                 <div class="flex items-center gap-3 mb-3">                             
                     <span class="w-2 h-2 rounded-full bg-red-600 animate-pulse"></span>                             
-                    <span class="text-red-600 mono text-xs uppercase tracking-[0.3em] font-bold">${p.role} // ONLINE</span>                         
+                    <span class="text-red-600 mono text-xs uppercase tracking-[0.3em] font-bold">${isMentor ? 'MENTOR' : 'KALVIAN'} // ONLINE</span>                         
                 </div>                         
                 <h2 class="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-black uppercase tracking-tighter mb-2 text-white drop-shadow-[0_0_12px_rgba(255,255,255,0.1)] leading-[0.9] break-words max-w-full">${p.name}</h2>                         
                 <p class="text-gray-400 mono text-sm md:text-base font-bold mb-6 uppercase tracking-widest border-l-2 border-red-600 pl-4">${p.role}</p>                                                  
