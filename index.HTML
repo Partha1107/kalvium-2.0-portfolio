@@ -360,6 +360,29 @@
             </div>             
             <div class="text-center pt-8 border-t border-white/5 mono text-[9px] text-gray-700 uppercase tracking-[0.5em]">KALVIUM_SYNC_V22 // SUCCESS</div>         
         </div>     
-    </footer>      
+    </footer>     
+    <script>
+  // Disable right click
+    document.addEventListener("contextmenu", function (e) {
+        e.preventDefault();
+    });
+
+   // Disable text selection
+    document.addEventListener("selectstart", function (e) {
+        e.preventDefault();
+    });
+
+   // Disable drag
+    document.addEventListener("dragstart", function (e) {
+        e.preventDefault();
+    });
+
+   // Disable long press on mobile
+    document.addEventListener("touchstart", function (e) {
+        if (e.touches.length > 1) {
+        e.preventDefault();
+        }
+    }, { passive: false });
+</script>
 </body> 
 </html>
