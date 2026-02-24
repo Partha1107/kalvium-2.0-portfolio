@@ -10,24 +10,24 @@ window.addEventListener('beforeunload', () => {
     window.scrollTo(0, 0);
 });
 
-// --- EARLY THEME, ACCENT & FONT INITIALIZATION (Prevents Flash) ---         
+// --- EARLY THEME, ACCENT & FONT INITIALIZATION (Prevents Flash) ---
 const colors = {             
     red: { main: '#FF3131', glow: 'rgba(255, 49, 49, 0.5)', trans: 'rgba(255, 49, 49, 0.15)' },             
-    cyan: { main: '#00f0ff', glow: 'rgba(0, 240, 255, 0.5)', trans: 'rgba(0, 240, 255, 0.15)' },             
-    green: { main: '#00ff00', glow: 'rgba(0, 255, 0, 0.5)', trans: 'rgba(0, 255, 0, 0.15)' },             
-    purple: { main: '#b026ff', glow: 'rgba(176, 38, 255, 0.5)', trans: 'rgba(176, 38, 255, 0.15)' },             
-    amber: { main: '#ff9900', glow: 'rgba(255, 153, 0, 0.5)', trans: 'rgba(255, 153, 0, 0.15)' },
+    cyan: { main: '#2ef2e2', glow: 'rgba(15, 47, 47, 0.5)', trans: 'rgba(15, 47, 47, 0.15)' },             
+    green: { main: '#A4F000', glow: 'rgba(0, 63, 58, 0.5)', trans: 'rgba(0, 63, 58, 0.15)' },             
+    purple: { main: '#7c83ff', glow: 'rgba(31, 33, 64, 0.5)', trans: 'rgba(31, 33, 64, 0.15)' },             
+    amber: { main: '#FF9E6D', glow: 'rgba(255, 153, 0, 0.5)', trans: 'rgba(255, 153, 0, 0.15)' },
     pink: { main: '#ff00aa', glow: 'rgba(255, 0, 170, 0.5)', trans: 'rgba(255, 0, 170, 0.15)' },
     blue: { main: '#0066ff', glow: 'rgba(0, 102, 255, 0.5)', trans: 'rgba(0, 102, 255, 0.15)' },
     lime: { main: '#ccff00', glow: 'rgba(204, 255, 0, 0.5)', trans: 'rgba(204, 255, 0, 0.15)' },
     white: { main: '#ffffff', glow: 'rgba(255, 255, 255, 0.5)', trans: 'rgba(255, 255, 255, 0.15)' },
-    matrix: { main: '#03A062', glow: 'rgba(0, 255, 65, 0.5)', trans: 'rgba(0, 255, 65, 0.15)' }         
+    matrix: { main: '#03A062', glow: 'rgba(0, 255, 65, 0.5)', trans: 'rgba(0, 255, 65, 0.15)' }
 };          
 
 let currentTheme = localStorage.getItem('cyber_theme') || 'dark';         
-let currentAccent = localStorage.getItem('cyber_accent') || 'red';         
+let currentAccent = localStorage.getItem('cyber_accent') || 'red';
 let currentFont = localStorage.getItem('cyber_font') || 'sans'; 
-let currentFontSize = localStorage.getItem('cyber_fontsize') || 'md'; 
+let currentFontSize = localStorage.getItem('cyber_fontsize') || 'md';
 
 function applyTheme(mode) {             
     let isDark = true;             
@@ -38,11 +38,11 @@ function applyTheme(mode) {
     else { document.documentElement.classList.add('light-mode'); document.body.classList.add('light-mode'); }         
 }          
 
-function applyAccent(colorKey) {             
-    const c = colors[colorKey];             
-    document.documentElement.style.setProperty('--k-red', c.main);             
-    document.documentElement.style.setProperty('--k-red-glow', c.glow);             
-    document.documentElement.style.setProperty('--k-red-transparent', c.trans);         
+function applyAccent(colorKey) {
+    const c = colors[colorKey];
+    document.documentElement.style.setProperty('--k-red', c.main);
+    document.documentElement.style.setProperty('--k-red-glow', c.glow);
+    document.documentElement.style.setProperty('--k-red-transparent', c.trans);
 }                  
 
 function applyFont(fontKey) {
@@ -153,11 +153,11 @@ document.addEventListener('DOMContentLoaded', () => {
         return window.dossierStates[name];         
     }          
 
-    const proverbsList = [             
+    const proverbsList = [
         "“Talk is cheap. Show me the code.”",             
-        "“First, solve the problem. Then, write the code.”",             
-        "“Simplicity is the soul of efficiency.”",             
-        "“Make it work, make it right, make it fast.”"         
+        "“First, solve the problem. Then, write the code.”",
+        "“Simplicity is the soul of efficiency.”",
+        "“Make it work, make it right, make it fast.”"
     ];         
     let currentProverbIdx = 0;          
 
@@ -175,7 +175,7 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('studentGrid').innerHTML = studentsData.map(s => renderCard(s, false, 'grid')).join('');                          
         
         document.getElementById('proverbDisplay').innerText = proverbsList[currentProverbIdx];             
-        setInterval(cycleProverbs, 30000);              
+        setInterval(cycleProverbs, 20000);              
 
         // Sync UI Toggles with localStorage state             
         document.getElementById(`btn-theme-${currentTheme}`).classList.add('active');             
@@ -200,15 +200,15 @@ document.addEventListener('DOMContentLoaded', () => {
         const width = type === 'scroll' ? 'w-80 flex-shrink-0' : 'w-full';             
         const words = p.name.trim().split(/\s+/);             
         const watermark = words.reduce((l, c) => c.replace(/[^a-zA-Z]/g,'').length > l.replace(/[^a-zA-Z]/g,'').length ? c : l, words[0]);             
-        return `                 
-            <div class="card-perspective ${width}">                     
+        return `
+            <div class="card-perspective ${width}">
                 <div class="tactical-card group" onmousemove="handleCardMove(event, this)" onclick="openModal(&quot;${p.name}&quot;, ${isMentor})" data-name="${p.name.toLowerCase()}">                         
                     <div class="card-glare"></div>                         
                     <div class="card-watermark">${watermark}</div>                         
                     <img src="${p.img}" class="w-32 h-32 mb-6 border border-red-600/30 p-1 transition-all duration-500 grayscale group-hover:grayscale-0 group-hover:border-red-600 rounded-full z-10" loading="lazy">                         
                     <div class="text-center z-10 px-4">                             
-                        <p class="text-red-600 mono text-[9px] uppercase font-bold tracking-widest mb-1 transition-colors duration-500 group-hover:text-white">${isMentor ? p.role : 'KALVIAN'}</p>                             
-                        <h3 class="text-xl font-black uppercase tracking-tighter">${p.name}</h3>                         
+                        <p class="text-red-600 mono text-[9px] uppercase font-bold tracking-widest mb-1 transition-colors duration-500 group-hover:text-white">${isMentor ? p.role : 'KALVIAN'}</p>
+                        <h3 class="text-xl font-black uppercase tracking-tighter">${p.name}</h3>
                     </div>                     
                 </div>                 
             </div>`;         
