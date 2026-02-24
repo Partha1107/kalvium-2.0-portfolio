@@ -214,7 +214,7 @@ body.light-mode .btn-cyber-main:hover { color: #fff; }
 body.light-mode .f-github:hover { color: #111; filter: drop-shadow(0 0 15px #111); }         
 .f-discord:hover { color: #5865F2; filter: drop-shadow(0 0 15px #5865F2); }         
 .f-whatsapp:hover { color: #25d366; filter: drop-shadow(0 0 15px #25d366); }         
-.f-mail:hover { color: var(--k-red); filter: drop-shadow(0 0 15px var(--k-red)); }                  
+.f-mail:hover { color: var(--k-red); filter: drop-shadow(0 0 15px var(--k-red)); }
 
 .footer-tooltip { position: absolute; bottom: 120%; left: 50%; transform: translateX(-50%) translateY(10px) scale(0.9); background: #000; border: 1px solid var(--k-red); color: var(--k-red); font-family: 'JetBrains Mono', monospace; font-size: 9px; font-weight: 900; letter-spacing: 0.2em; padding: 6px 12px; white-space: nowrap; opacity: 0; visibility: hidden; pointer-events: none; transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55); z-index: 20; box-shadow: 0 4px 15px var(--k-red-transparent); }         
 .footer-tooltip::after { content: ''; position: absolute; top: 100%; left: 50%; transform: translateX(-50%); border-width: 4px; border-style: solid; border-color: var(--k-red) transparent transparent transparent; }         
