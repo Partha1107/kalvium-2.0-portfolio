@@ -34,7 +34,12 @@ body { background-color: var(--bg-dark); color: #ffffff; font-family: var(--font
 .shadow-\[0_0_30px_rgba\(255\,0\,0\,0\.15\)\] { box-shadow: 0 0 30px var(--k-red-transparent) !important; }         
 .from-red-600 { --tw-gradient-from: var(--k-red) !important; }         
 .to-red-900 { --tw-gradient-to: var(--k-red-transparent) !important; }         
-.via-red-600\/50 { --tw-gradient-stops: transparent, var(--k-red-glow), transparent !important; }          
+.via-red-600\/50 { --tw-gradient-stops: transparent, var(--k-red-glow), transparent !important; }
+.hover\:text-red-500:hover { color: var(--k-red) !important; }
+.hover\:text-red-600:hover { color: var(--k-red) !important; }
+.hover\:border-red-600:hover { border-color: var(--k-red) !important; }
+.terminal-icon { color: var(--k-red); transition: color 0.3s; }
+.search-input:focus { border-color: var(--k-red) !important; box-shadow: 0 0 10px var(--k-red-transparent); }          
 img { -webkit-user-drag: none; }         
 
 /* --- BACKGROUND PULSE ANIMATION --- */
@@ -142,8 +147,10 @@ body.light-mode .swatch.active { border-color: #000; }
 
 #dossier-overlay.active, #settings-page.active, #about-page.active { transform: translateX(0); }         
 
-.dossier-card { background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); padding: 24px; border-radius: 12px; transition: 0.3s; position: relative; }         
-.dossier-card:hover { border-color: var(--k-red-glow); background: var(--k-red-transparent); transform: translateY(-3px); box-shadow: 0 5px 20px var(--k-red-transparent); }                  
+.dossier-card { background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); padding: 24px; border-radius: 0px; transition: 0.3s; position: relative; overflow: hidden; }         
+.dossier-card .bracket { border-color: rgba(255,255,255,0.1); }
+.dossier-card:hover { border-color: var(--k-red-glow); background: var(--k-red-transparent); transform: translateY(-3px); box-shadow: 0 5px 20px var(--k-red-transparent); }
+.dossier-card:hover .bracket { border-color: var(--k-red); }                  
 
 .skill-track { width: 100%; height: 6px; border-radius: 3px; overflow: hidden; margin-top: 8px; }         
 .skill-fill { height: 100%; background: var(--k-red); box-shadow: 0 0 10px var(--k-red); transform-origin: left; transform: scaleX(0); transition: transform 1.5s cubic-bezier(0.175, 0.885, 0.32, 1.275); }                  
@@ -206,7 +213,7 @@ body.light-mode .btn-cyber-main:hover { color: #fff; }
 .tl { top: 0; left: 0; border-width: 4px 0 0 4px; }         
 .tr { top: 0; right: 0; border-width: 4px 4px 0 0; }         
 .bl { bottom: 0; left: 0; border-width: 0 0 4px 4px; }         
-.br { bottom: 0; right: 0; border-width: 0 4px 4px 0; }                  
+.br { bottom: 0; right: 0; border-width: 0 4px 4px 0; }          
 
 .f-icon { position: relative; transition: 0.4s ease; color: #555; font-size: 2.2rem; display: flex; justify-content: center; }         
 .f-linkedin:hover { color: #0077b5; filter: drop-shadow(0 0 15px #0077b5); }         
@@ -215,6 +222,8 @@ body.light-mode .f-github:hover { color: #111; filter: drop-shadow(0 0 15px #111
 .f-discord:hover { color: #5865F2; filter: drop-shadow(0 0 15px #5865F2); }         
 .f-whatsapp:hover { color: #25d366; filter: drop-shadow(0 0 15px #25d366); }         
 .f-mail:hover { color: var(--k-red); filter: drop-shadow(0 0 15px var(--k-red)); }
+.f-gear { color: #888; transition: all 0.3s ease; cursor: pointer; }
+.f-gear:hover { color: var(--k-red); filter: drop-shadow(0 0 15px var(--k-red)); }
 
 .footer-tooltip { position: absolute; bottom: 120%; left: 50%; transform: translateX(-50%) translateY(10px) scale(0.9); background: #000; border: 1px solid var(--k-red); color: var(--k-red); font-family: 'JetBrains Mono', monospace; font-size: 9px; font-weight: 900; letter-spacing: 0.2em; padding: 6px 12px; white-space: nowrap; opacity: 0; visibility: hidden; pointer-events: none; transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55); z-index: 20; box-shadow: 0 4px 15px var(--k-red-transparent); }         
 .footer-tooltip::after { content: ''; position: absolute; top: 100%; left: 50%; transform: translateX(-50%); border-width: 4px; border-style: solid; border-color: var(--k-red) transparent transparent transparent; }         
