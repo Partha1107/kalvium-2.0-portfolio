@@ -17,7 +17,7 @@
     <!-- Custom JS (Loaded in head to prevent Theme Flash) -->
     <script src="script.js" defer></script>
 </head> 
-<body id="home-top">     
+<body id="home-top">
 
     <!-- Loader -->     
     <div id="loader">         
@@ -55,6 +55,7 @@
             <div class="grid grid-cols-1 md:grid-cols-2 gap-10 text-left text-sm mono text-gray-300">                                  
                 <!-- THEME ENGINE -->                 
                 <div class="dossier-card">                     
+                    <div class="bracket tl"></div><div class="bracket tr"></div><div class="bracket bl"></div><div class="bracket br"></div>
                     <h3 class="text-white font-bold text-lg mb-4 uppercase tracking-widest border-b border-white/10 pb-2 flex items-center gap-3"><i class="fa-solid fa-palette text-red-600"></i> Theme_Engine</h3>                     
                     <span class="tracking-widest uppercase text-[9px] text-gray-500 mb-2 block font-bold mt-4">Color Mode</span>
                     <div class="flex bg-black/50 border border-white/10 rounded overflow-hidden mb-6">                         
@@ -81,6 +82,7 @@
                 <!-- FONT CUSTOMIZATION -->                 
 
                 <div class="dossier-card">                     
+                    <div class="bracket tl"></div><div class="bracket tr"></div><div class="bracket bl"></div><div class="bracket br"></div>
                     <h3 class="text-white font-bold text-lg mb-4 uppercase tracking-widest border-b border-white/10 pb-2 flex items-center gap-3"><i class="fa-solid fa-font text-red-600"></i> Typography</h3>                     
                     <span class="tracking-widest uppercase text-[9px] text-gray-500 mb-2 block font-bold mt-4">Typeface</span>
                     <div class="grid grid-cols-3 sm:grid-cols-4 bg-black/50 border border-white/10 rounded overflow-hidden mb-6">                         
@@ -101,7 +103,8 @@
                 </div>
 
                 <!-- MANUAL & TOUR -->                 
-                <div class="dossier-card border-blue-900/50 bg-blue-900/5 hover:bg-blue-900/10 flex flex-col justify-center">                     
+                <div class="dossier-card border-blue-900/50 bg-blue-900/5 hover:bg-blue-900/10 flex flex-col justify-center">   
+                        <div class="bracket tl"></div><div class="bracket tr"></div><div class="bracket bl"></div><div class="bracket br"></div> 
                     <h3 class="text-blue-500 font-bold text-lg mb-4 uppercase tracking-widest border-b border-blue-900/30 pb-2 flex items-center gap-3"><i class="fa-solid fa-book-journal-whills"></i> Protocol_Manual</h3>                     
                     <p class="text-xs text-gray-400 mb-4 leading-relaxed mono">Access the system manual to learn navigation, data extraction, and structural operations.</p>
                     <button onclick="startTour()" class="w-full py-4 border border-blue-600/50 text-blue-500 hover:bg-blue-600 hover:text-white font-bold uppercase tracking-widest transition-all text-xs flex justify-center items-center gap-3 mt-auto">                         
@@ -110,7 +113,8 @@
                 </div>             
 
                 <!-- DANGER ZONE -->                 
-                <div class="dossier-card border-red-900/50 bg-red-900/5 hover:bg-red-900/10 flex flex-col justify-center">                     
+                <div class="dossier-card border-red-900/50 bg-red-900/5 hover:bg-red-900/10 flex flex-col justify-center">   
+                        <div class="bracket tl"></div><div class="bracket tr"></div><div class="bracket bl"></div><div class="bracket br"></div> 
                     <h3 class="text-red-500 font-bold text-lg mb-4 uppercase tracking-widest border-b border-red-900/30 pb-2 flex items-center gap-3"><i class="fa-solid fa-triangle-exclamation"></i> Danger_Zone</h3>                     
                     <button onclick="resetSystem()" class="w-full py-4 border border-red-600/50 text-red-500 hover:bg-red-600 hover:text-white font-bold uppercase tracking-widest transition-all text-xs flex justify-center items-center gap-3 mt-2">                         
                         <i class="fa-solid fa-rotate-right"></i> Factory_Reset                     
@@ -146,18 +150,22 @@
                 </div>
                 <div class="grid grid-cols-2 gap-4">
                     <div class="dossier-card text-center py-10">
+                        <div class="bracket tl"></div><div class="bracket tr"></div><div class="bracket bl"></div><div class="bracket br"></div>
                         <i class="fa-solid fa-briefcase text-4xl text-red-600 mb-4"></i>
                         <h3 class="font-bold uppercase tracking-widest text-sm">Work</h3>
                     </div>
                     <div class="dossier-card text-center py-10">
+                        <div class="bracket tl"></div><div class="bracket tr"></div><div class="bracket bl"></div><div class="bracket br"></div>
                         <i class="fa-solid fa-graduation-cap text-4xl text-red-600 mb-4"></i>
                         <h3 class="font-bold uppercase tracking-widest text-sm">Study</h3>
                     </div>
                     <div class="dossier-card text-center py-10">
+                        <div class="bracket tl"></div><div class="bracket tr"></div><div class="bracket bl"></div><div class="bracket br"></div>
                         <i class="fa-solid fa-coins text-4xl text-red-600 mb-4"></i>
                         <h3 class="font-bold uppercase tracking-widest text-sm">Earn</h3>
                     </div>
                     <div class="dossier-card text-center py-10">
+                        <div class="bracket tl"></div><div class="bracket tr"></div><div class="bracket bl"></div><div class="bracket br"></div>
                         <i class="fa-solid fa-rocket text-4xl text-red-600 mb-4"></i>
                         <h3 class="font-bold uppercase tracking-widest text-sm">Scale</h3>
                     </div>
@@ -168,18 +176,21 @@
                 <h2 class="text-2xl font-bold uppercase mb-10 text-center tracking-[0.2em]">Program Modules</h2>
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
                     <div class="dossier-card relative overflow-hidden group">
+                        <div class="bracket tl"></div><div class="bracket tr"></div><div class="bracket bl"></div><div class="bracket br"></div>
                         <div class="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity"><i class="fa-solid fa-code text-6xl"></i></div>
                         <h3 class="text-xl font-bold text-white mb-2">Foundation Layer</h3>
                         <p class="text-gray-500 text-sm mb-4">Mastering Data Structures, Algorithms, and Core Computer Science concepts.</p>
                         <span class="text-red-600 mono text-xs font-bold">STATUS: MANDATORY</span>
                     </div>
                     <div class="dossier-card relative overflow-hidden group">
+                        <div class="bracket tl"></div><div class="bracket tr"></div><div class="bracket bl"></div><div class="bracket br"></div>
                         <div class="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity"><i class="fa-solid fa-server text-6xl"></i></div>
                         <h3 class="text-xl font-bold text-white mb-2">Full-Stack Synthesis</h3>
                         <p class="text-gray-500 text-sm mb-4">Building scalable applications using MERN, Python, and Cloud Technologies.</p>
                         <span class="text-red-600 mono text-xs font-bold">STATUS: DEPLOYED</span>
                     </div>
                     <div class="dossier-card relative overflow-hidden group">
+                        <div class="bracket tl"></div><div class="bracket tr"></div><div class="bracket bl"></div><div class="bracket br"></div>
                         <div class="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity"><i class="fa-solid fa-building text-6xl"></i></div>
                         <div class="absolute -inset-1 bg-red-600/20 blur-xl opacity-0 group-hover:opacity-20 transition-opacity"></div>
                         <h3 class="text-xl font-bold text-white mb-2">Industry Integration</h3>
@@ -202,14 +213,14 @@
         
         <div class="hidden lg:flex gap-10 text-sm font-bold uppercase tracking-[0.3em] text-gray-400">             
             <a href="#home-top" class="hover:text-red-500 transition" style="text-shadow: 0 0 5px rgba(255,49,49,0);">Home</a>             
-            <a href="#mentors" class="hover:text-red-500 transition" style="text-shadow: 0 0 5px rgba(255,49,49,0);">Mentor</a>             
+            <a href="#mentors" class="hover:text-red-500 transition" style="text-shadow: 0 0 5px rgba(255,49,49,0);">Mentors</a>             
             <a href="#students-section" class="hover:text-red-500 transition" style="text-shadow: 0 0 5px rgba(255,49,49,0);">Kalvians</a>             
             <a href="#contact-footer" class="hover:text-red-500 transition" style="text-shadow: 0 0 5px rgba(255,49,49,0);">Contact</a>         
         </div>         
         <div class="relative flex items-center gap-6">             
-            <i class="fa-solid fa-terminal absolute left-3 text-red-600 text-[10px]"></i>             
-            <input type="text" id="searchBox" placeholder="SCAN_DATABASE..." class="bg-white/5 border border-white/10 rounded-none py-2 pl-10 pr-4 text-[10px] font-mono uppercase tracking-widest outline-none focus:border-red-600 transition-all w-48 md:w-64 text-white">         
-            <button onclick="openSettings()" class="text-gray-400 hover:text-red-500 transition-colors text-lg" title="Settings">
+            <i class="fa-solid fa-terminal absolute left-3 terminal-icon text-[10px]"></i>             
+            <input type="text" id="searchBox" placeholder="SCAN_DATABASE..." class="bg-white/5 border border-white/10 rounded-none py-2 pl-10 pr-4 text-[10px] font-mono uppercase tracking-widest outline-none transition-all w-48 md:w-64 text-white search-input">         
+            <button onclick="openSettings()" class="f-gear" title="Settings">
                 <i class="fa-solid fa-gear"></i>
             </button>
         </div>     
