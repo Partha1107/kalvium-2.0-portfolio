@@ -38,6 +38,9 @@ body { background-color: var(--bg-dark); color: #ffffff; font-family: var(--font
 .hover\:text-red-500:hover { color: var(--k-red) !important; }
 .hover\:text-red-600:hover { color: var(--k-red) !important; }
 .hover\:border-red-600:hover { border-color: var(--k-red) !important; }
+#settings-page > button { border-radius: 8px !important; }
+#about-page > button { border-radius: 8px !important; }
+#dossier-overlay > button { border-radius: 8px !important; }
 .terminal-icon { color: var(--k-red); transition: color 0.3s; }
 .search-input:focus { border-color: var(--k-red) !important; box-shadow: 0 0 10px var(--k-red-transparent); }          
 img { -webkit-user-drag: none; }         
