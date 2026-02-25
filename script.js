@@ -19,7 +19,6 @@ const colors = {
     amber: { main: '#FF9E6D', glow: 'rgba(255, 153, 0, 0.5)', trans: 'rgba(255, 153, 0, 0.15)' },
     pink: { main: '#ff00aa', glow: 'rgba(255, 0, 170, 0.5)', trans: 'rgba(255, 0, 170, 0.15)' },
     blue: { main: '#0066ff', glow: 'rgba(0, 102, 255, 0.5)', trans: 'rgba(0, 102, 255, 0.15)' },
-    lime: { main: '#ccff00', glow: 'rgba(204, 255, 0, 0.5)', trans: 'rgba(204, 255, 0, 0.15)' },
     white: { main: '#ffffff', glow: 'rgba(255, 255, 255, 0.5)', trans: 'rgba(255, 255, 255, 0.15)' },
     matrix: { main: '#03A062', glow: 'rgba(0, 255, 65, 0.5)', trans: 'rgba(0, 255, 65, 0.15)' },
     gold: { main: '#FFD700', glow: 'rgba(255, 215, 0, 0.5)', trans: 'rgba(255, 215, 0, 0.15)' }
