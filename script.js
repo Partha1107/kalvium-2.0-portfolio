@@ -226,23 +226,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
     document.getElementById('searchBox').addEventListener('input', (e) => {
     const value = e.target.value.toLowerCase();
+    const cards = document.querySelectorAll('.card-perspective');
 
-    const grid = document.getElementById('studentGrid');
-    const cards = Array.from(grid.querySelectorAll('.card-perspective'));
+    cards.forEach(card => {
+        const name = card.querySelector('.tactical-card').dataset.name;
 
-    cards.sort((a, b) => {
-        const nameA = a.querySelector('.tactical-card').dataset.name;
-        const nameB = b.querySelector('.tactical-card').dataset.name;
-
-        const matchA = nameA.includes(value);
-        const matchB = nameB.includes(value);
-
-        if (matchA && !matchB) return -1;
-        if (!matchA && matchB) return 1;
-        return 0;
+        if (value === "") {
+            card.style.display = "block"; // show all if empty
+        } else if (name.includes(value)) {
+            card.style.display = "block"; // show match
+        } else {
+            card.style.display = "none"; // hide others
+        }
     });
-
-    cards.forEach(card => grid.appendChild(card));
 });          
     
     init();
