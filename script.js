@@ -224,13 +224,26 @@ document.addEventListener('DOMContentLoaded', () => {
     window.mentorsData = mentorsData;
     window.studentsData = studentsData;
 
-    document.getElementById('searchBox').addEventListener('input', (e) => {             
-        const v = e.target.value.toLowerCase();             
-        document.querySelectorAll('.tactical-card').forEach(c => {                 
-            const n = c.dataset.name;                 
-            c.classList.toggle('dimmed', v && !n.includes(v));             
-        });         
-    });          
+    document.getElementById('searchBox').addEventListener('input', (e) => {
+    const value = e.target.value.toLowerCase();
+
+    const grid = document.getElementById('studentGrid');
+    const cards = Array.from(grid.querySelectorAll('.card-perspective'));
+
+    cards.sort((a, b) => {
+        const nameA = a.querySelector('.tactical-card').dataset.name;
+        const nameB = b.querySelector('.tactical-card').dataset.name;
+
+        const matchA = nameA.includes(value);
+        const matchB = nameB.includes(value);
+
+        if (matchA && !matchB) return -1;
+        if (!matchA && matchB) return 1;
+        return 0;
+    });
+
+    cards.forEach(card => grid.appendChild(card));
+});          
     
     init();
 });
