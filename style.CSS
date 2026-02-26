@@ -269,3 +269,13 @@ body.light-mode .chat-bot-bubble { color: #111; }
     transition: all 0.3s ease;
     pointer-events: none; /* Prevent accidental clicks during tour */
 }
+
+.card-perspective:hover {
+    transform: scale(1.05);
+    z-index: 20;
+    transition: all 0.3s ease;
+}
+
+.card-perspective:hover .tactical-card {
+    box-shadow: 0 0 25px var(--k-red);
+}
