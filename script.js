@@ -44,7 +44,35 @@ function applyAccent(colorKey) {
     document.documentElement.style.setProperty('--k-red-glow', c.glow);
     document.documentElement.style.setProperty('--k-red-transparent', c.trans);
 }                  
+function smoothScrollTo(targetId, duration = 800) {
+  const target = document.getElementById(targetId);
+  if (!target) return;
 
+  const startPosition = window.scrollY;
+  const targetPosition = target.offsetTop;
+  const distance = targetPosition - startPosition;
+  let startTime = null;
+
+  function animation(currentTime) {
+    if (!startTime) startTime = currentTime;
+    const elapsed = currentTime - startTime;
+    const progress = Math.min(elapsed / duration, 1);
+
+    // Ease-in-out curve
+    const ease =
+      progress < 0.5
+        ? 2 * progress * progress
+        : -1 + (4 - 2 * progress) * progress;
+
+    window.scrollTo(0, startPosition + distance * ease);
+
+    if (elapsed < duration) {
+      requestAnimationFrame(animation);
+    }
+  }
+
+  requestAnimationFrame(animation);
+}
 function applyFont(fontKey) {
     const fontMap = {
         scifi: "'Rajdhani', sans-serif",
