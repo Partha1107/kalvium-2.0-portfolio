@@ -164,7 +164,10 @@ document.addEventListener('DOMContentLoaded', () => {
     window.currentActiveSubject = "";          
 
     window.getDossierState = function(name) {             
-        if (!window.dossierStates[name]) {                 
+        if (!window.dossierStates[name]) {
+            const allPeople = [...(window.mentorsData || []), ...(window.studentsData || [])];
+            const person = allPeople.find(p => p.name === name);
+            const ghUsername = person ? extractGitHubUsername(person.github) : '';
             window.dossierStates[name] = {                     
                 projects: [                         
                     { title: "Project_Nexus", desc: "Distributed AI architecture bridging edge and cloud components." },                         
@@ -175,7 +178,12 @@ document.addEventListener('DOMContentLoaded', () => {
                     { name: "JavaScript / TS", pct: Math.floor(Math.random() * 30) + 40 },                         
                     { name: "Python", pct: Math.floor(Math.random() * 30) + 40 },                         
                     { name: "C++ / Algorithms", pct: Math.floor(Math.random() * 30) + 40 }                     
-                ]                 
+                ],
+                platforms: {
+                    github: ghUsername,
+                    leetcode: person?.leetcode || '',
+                    codeforces: person?.codeforces || ''
+                }                 
             };             
         }             
         return window.dossierStates[name];         
@@ -417,7 +425,9 @@ function openAchievements(name) {
     window.currentActiveSubject = name;             
     document.getElementById('dossier-name').innerText = `ID_${name.replace(/\s+/g, '_')}`;             
     renderDossier();             
-    document.getElementById('dossier-overlay').classList.add('active');         
+    document.getElementById('dossier-overlay').classList.add('active');
+    // Load real coding stats from APIs
+    loadCodingStats(name);         
 }          
 
 function closeAchievements() {             
@@ -427,8 +437,10 @@ function closeAchievements() {
 }          
 
 function renderDossier() {             
-    const state = window.getDossierState(window.currentActiveSubject);             
-    const content = `                 
+    const state = window.getDossierState(window.currentActiveSubject);
+    const statsHTML = renderCodingStatsSection();
+    const content = `
+        ${statsHTML}                 
         <div class="flex flex-col gap-4">                     
             <div class="flex justify-between items-center border-b border-red-900/50 pb-2 mb-2">                         
                 <h3 class="mono text-red-500 font-bold uppercase tracking-widest flex items-center gap-2"><i class="fa-solid fa-folder-tree"></i> Deployed_Systems</h3>                         
