@@ -349,10 +349,21 @@
             <a href="#contact-footer" onclick="event.preventDefault(); smoothScrollTo('contact-footer', 500);" class="hover:text-red-500 transition"
                 style="text-shadow: 0 0 5px rgba(255,49,49,0);">Contact</a>
         </div>
-        <div class="relative flex items-center gap-6">
-            <i class="fa-solid fa-terminal absolute left-3 terminal-icon text-[10px]"></i>
-            <input type="text" id="searchBox" placeholder="SCAN_DATABASE..."
-                class="bg-white/5 border border-white/10 rounded-none py-2 pl-10 pr-4 text-[10px] font-mono uppercase tracking-widest outline-none transition-all w-48 md:w-64 text-white search-input">
+        <div class="relative flex items-center gap-4">
+            <!-- Collapsible Search -->
+            <div class="search-wrap" id="searchWrap">
+                <button class="search-toggle" id="searchToggle" onclick="toggleSearch()" title="Scan Database">
+                    <i class="fa-solid fa-terminal"></i>
+                </button>
+                <div class="search-field">
+                    <i class="fa-solid fa-terminal absolute left-3 terminal-icon text-[10px]"></i>
+                    <input type="text" id="searchBox" placeholder="SCAN_DATABASE..."
+                        class="bg-transparent border-none py-2 pl-8 pr-4 text-[10px] font-mono uppercase tracking-widest outline-none text-white w-full">
+                    <button class="search-close" onclick="toggleSearch()" title="Close">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                </div>
+            </div>
             <button onclick="openSettings()" class="f-gear" title="Settings">
                 <i class="fa-solid fa-gear"></i>
             </button>

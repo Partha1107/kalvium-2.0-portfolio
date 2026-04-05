@@ -1,2 +1,4 @@
+# Allow dossier page to be served directly
+/dossier.html   /dossier.html   200
 # Redirect any 404s back to home
 /*    /index.HTML   200

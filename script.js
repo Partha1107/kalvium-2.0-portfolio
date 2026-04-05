@@ -262,6 +262,39 @@ document.addEventListener('DOMContentLoaded', () => {
     window.mentorsData = mentorsData;
     window.studentsData = studentsData;
 
+    // --- COLLAPSIBLE SEARCH LOGIC ---
+    window.toggleSearch = function() {
+        const wrap = document.getElementById('searchWrap');
+        const input = document.getElementById('searchBox');
+        const isExpanded = wrap.classList.contains('expanded');
+        if (isExpanded) {
+            // Collapse
+            wrap.classList.remove('expanded');
+            input.value = '';
+            input.dispatchEvent(new Event('input')); // Reset filter
+        } else {
+            // Expand
+            wrap.classList.add('expanded');
+            setTimeout(() => input.focus(), 350);
+        }
+    };
+
+    // Close search on Escape key
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+            const wrap = document.getElementById('searchWrap');
+            if (wrap && wrap.classList.contains('expanded')) toggleSearch();
+        }
+    });
+
+    // Close search when clicking outside
+    document.addEventListener('click', (e) => {
+        const wrap = document.getElementById('searchWrap');
+        if (wrap && wrap.classList.contains('expanded') && !wrap.contains(e.target)) {
+            toggleSearch();
+        }
+    });
+
     document.getElementById('searchBox').addEventListener('input', (e) => {
         const value = e.target.value.toLowerCase();
         // Only filter static grid cards – never touch the infinite-scroll strip
@@ -423,13 +456,10 @@ function openModal(name, isMentor) {
 
 // --- DOSSIER PAGE LOGIC ---         
 function openAchievements(name) {             
-    document.getElementById('modal-overlay').classList.remove('active');             
-    window.currentActiveSubject = name;             
-    document.getElementById('dossier-name').innerText = `ID_${name.replace(/\s+/g, '_')}`;             
-    renderDossier();             
-    document.getElementById('dossier-overlay').classList.add('active');
-    // Load real coding stats from APIs
-    loadCodingStats(name);         
+    document.getElementById('modal-overlay').classList.remove('active');
+    document.body.style.overflow = 'auto';
+    // Open dossier in a new tab
+    window.open(`dossier.html?name=${encodeURIComponent(name)}`, '_blank');
 }          
 
 function closeAchievements() {             
