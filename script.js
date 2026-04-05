@@ -1166,7 +1166,191 @@ function simulateHackerRankTest(skillIndex, skillName) {
   }, delay + 500);
 }
 
-// --- CHATBOT LOGIC ---
+// --- UPGRADED CHATBOT LOGIC ---
+const chatKnowledge = {
+  greetings: {
+    triggers: ["hello", "hi", "hey", "sup", "yo", "greetings", "good morning", "good evening", "good afternoon", "what's up", "howdy"],
+    responses: [
+      "Greetings, operator. Neural_Assist_v3 is online and fully synchronized. How may I assist?",
+      "Welcome back, agent. All systems nominal. What do you need?",
+      "Connection established. I'm ready to process your queries.",
+      "Hey there! Neural pathways active. Fire away with your question."
+    ],
+    suggestions: ["Who are the mentors?", "Show me features", "How many students?"]
+  },
+  about: {
+    triggers: ["about", "what is this", "what is kalvium", "tell me about", "explain", "purpose", "what does this"],
+    responses: [
+      "📡 <b>Kalvium 2.0 Portfolio</b> — Squad 138's tactical showcase. Built by Ashwin Raj, Dhinesh Babu & Sanjay Chelliah. Features include:<br>• Interactive student/mentor profiles<br>• Real-time coding stats (LeetCode, GitHub, Codeforces)<br>• Customizable themes & fonts<br>• Editable dossier system<br>• This Neural Assist chatbot"
+    ],
+    suggestions: ["Who built this?", "Show features", "Open settings"]
+  },
+  features: {
+    triggers: ["features", "what can you do", "capabilities", "function", "tools", "options"],
+    responses: [
+      "⚡ <b>Available Systems:</b><br><br>🎨 <b>Theme Engine</b> — 3 modes, 10 accents, 7 fonts<br>📊 <b>Coding Intelligence</b> — Live stats from LeetCode/GitHub/Codeforces<br>📁 <b>Subject Dossiers</b> — Editable projects, certs & skills<br>🔍 <b>Database Scanner</b> — Real-time student search<br>🤖 <b>Neural Assist</b> — That's me!<br>🗺️ <b>Guided Tour</b> — Interactive walkthrough<br><br>Try asking me to navigate somewhere!"
+    ],
+    suggestions: ["Start tour", "Open settings", "Go to students"]
+  },
+  students: {
+    triggers: ["students", "kalvians", "how many students", "squad", "members", "classmates", "batch"],
+    responses: [
+      `📋 <b>Squad 138 Registry:</b> 36 active operatives enrolled in B.Tech CSE at St. Joseph's University, Chennai — powered by <b>Kalvium</b>.<br><br>Notable operatives include the 3 creators: <b>Dhinesh Babu G</b>, <b>Sanjay Chelliah C</b>, and <b>Ashwin Raj J J</b>.<br><br>Want me to look up a specific student?`
+    ],
+    suggestions: ["Who are creators?", "Go to students", "Open a profile"]
+  },
+  mentors: {
+    triggers: ["mentor", "mentors", "teachers", "faculty", "guide", "instructor", "aravind", "karunakaran", "hanuram"],
+    responses: [
+      "👨‍🏫 <b>Leadership Nodes (Mentors):</b><br><br>• <b>Aravind R</b> — Academic Mentor, specializes in debugging & problem-solving<br>• <b>H. Karunakaran</b> — Campus Manager, focused on student development<br>• <b>Hanuram T</b> — Mentor & Business Analyst, balancing logic, data & good vibes"
+    ],
+    suggestions: ["Go to mentors", "Tell me about Kalvium", "Show students"]
+  },
+  creators: {
+    triggers: ["who built", "who made", "creator", "developer", "who created", "built by"],
+    responses: [
+      "🛠️ <b>System Architects:</b><br><br>• <b>Ashwin Raj J J</b> — Creator_3, Lead Developer<br>• <b>Dhinesh Babu G</b> — Creator_1<br>• <b>Sanjay Chelliah C</b> — Creator_2<br><br>Built with HTML, CSS, JavaScript & deployed on Netlify."
+    ],
+    suggestions: ["Open Ashwin's profile", "Show features", "About Kalvium"]
+  },
+  coding: {
+    triggers: ["coding", "leetcode", "github", "codeforces", "score", "coding stats", "rank", "dossier stats", "programming"],
+    responses: [
+      "📊 <b>Coding Intelligence System:</b><br><br>The portfolio tracks real-time coding skills across 3 platforms:<br><br>• <b>LeetCode</b> (40% weight) — Problem difficulty breakdown<br>• <b>GitHub</b> (30% weight) — Repos, stars, languages<br>• <b>Codeforces</b> (30% weight) — Rating & rank<br><br>Composite scores range from 0–100 with ranks: RECRUIT → OPERATIVE → SPECIALIST → ELITE → LEGENDARY<br><br>Open any student's <b>Dossier</b> to see their score!"
+    ],
+    suggestions: ["What ranks exist?", "Go to students", "About features"]
+  },
+  ranks: {
+    triggers: ["rank", "ranks", "legendary", "elite", "specialist", "operative", "recruit"],
+    responses: [
+      "🏆 <b>Rank Classification:</b><br><br>⬛ 0–19 — <span style='color:#888'>INITIALIZING</span><br>🟥 20–39 — <span style='color:#ff6b35'>RECRUIT</span><br>🟧 40–59 — <span style='color:#ffa500'>OPERATIVE</span><br>🟨 60–74 — <span style='color:#a0ff00'>SPECIALIST</span><br>🟩 75–89 — <span style='color:#00ff88'>ELITE</span><br>🟪 90–100 — <span style='color:#ff00aa'>LEGENDARY</span>"
+    ],
+    suggestions: ["How is score calculated?", "Open a dossier", "Show features"]
+  },
+  theme: {
+    triggers: ["theme", "dark mode", "light mode", "color", "accent", "font", "customize", "settings"],
+    responses: [
+      "🎨 <b>Customization Matrix:</b><br><br>• <b>3 Themes</b> — Dark, Light, Device-adaptive<br>• <b>10 Accents</b> — Red, Cyan, Green, Purple, Amber, Pink, Blue, White, Matrix, Gold<br>• <b>7 Fonts</b> — Corp, Sci-Fi, Orbit, Terminal, Space, Mecha, Pixel<br>• <b>3 Sizes</b> — Small, Normal, Large<br><br>Want me to open Settings for you?"
+    ],
+    suggestions: ["Open settings", "Set dark mode", "Set accent cyan"]
+  },
+  help: {
+    triggers: ["help", "commands", "what can i ask", "how to use"],
+    responses: [
+      "📖 <b>Neural_Assist Commands:</b><br><br>💬 <b>Ask anything</b> — Students, mentors, features, coding stats<br>🧭 <b>Navigate</b> — \"Go to students\", \"Go to mentors\", \"Go to contact\"<br>👤 <b>Open profiles</b> — \"Open Ashwin's profile\"<br>⚙️ <b>Settings</b> — \"Open settings\", \"Set dark mode\", \"Set accent cyan\"<br>🗺️ <b>Tour</b> — \"Start tour\"<br>🔄 <b>Actions</b> — \"Switch to gallery\", \"Switch to scroll\"<br><br>Or just chat — I don't bite! 🤖"
+    ],
+    suggestions: ["About this site", "Show students", "Start tour"]
+  },
+  fun: {
+    triggers: ["joke", "funny", "lol", "haha", "bored", "entertain", "fun"],
+    responses: [
+      "Why do programmers prefer dark mode? Because light attracts bugs. 🐛",
+      "A SQL query walks into a bar, sees two tables, and asks... 'Can I JOIN you?' 🍺",
+      "There are only 10 types of people in the world: those who understand binary, and those who don't. 💻",
+      "!false — It's funny because it's true. 😄",
+      "A programmer's wife says: 'Go to the store, buy a gallon of milk. If they have eggs, get a dozen.' He returns with 12 gallons of milk. 🥛"
+    ],
+    suggestions: ["Tell another joke", "About this site", "Show features"]
+  },
+  thanks: {
+    triggers: ["thank", "thanks", "thx", "appreciate", "great", "awesome", "cool", "nice"],
+    responses: [
+      "Happy to assist, operator! Neural pathways remain active. 🫡",
+      "Acknowledged! Let me know if you need anything else. ⚡",
+      "Mission accomplished. Standing by for further orders. 🎯"
+    ],
+    suggestions: ["Show features", "About Kalvium", "Help"]
+  },
+  goodbye: {
+    triggers: ["bye", "goodbye", "see you", "exit", "quit", "close"],
+    responses: [
+      "Disconnecting neural link... Until next time, operator. 👋",
+      "Session terminated. Stay sharp out there, agent. 🔒",
+      "Logging off. Remember: the code never sleeps. 🌙"
+    ],
+    suggestions: []
+  }
+};
+
+// Action commands the bot can execute
+const chatActions = [
+  { triggers: ["go to student", "show student", "go to kalvian", "navigate student"], action: () => { smoothScrollTo('students-section'); return "🧭 Navigating to the Kalvians registry..."; }},
+  { triggers: ["go to mentor", "show mentor", "navigate mentor"], action: () => { smoothScrollTo('mentorGrid'); return "🧭 Navigating to Leadership Nodes..."; }},
+  { triggers: ["go to contact", "show contact", "navigate contact"], action: () => { smoothScrollTo('contact-footer'); return "🧭 Navigating to Contact sector..."; }},
+  { triggers: ["go to top", "go home", "scroll top"], action: () => { smoothScrollTo('home-top'); return "🧭 Returning to base..."; }},
+  { triggers: ["open setting", "show setting"], action: () => { openSettings(); return "⚙️ Opening System Configuration..."; }},
+  { triggers: ["start tour", "guided tour", "show tour", "take a tour"], action: () => { setTimeout(() => startTour(), 500); return "🗺️ Initiating guided tour sequence..."; }},
+  { triggers: ["gallery mode", "switch gallery", "show gallery"], action: () => { switchView('gallery'); smoothScrollTo('students-section'); return "🖼️ Switching to Gallery mode..."; }},
+  { triggers: ["scroll mode", "switch scroll", "feed mode"], action: () => { switchView('scroll'); smoothScrollTo('students-section'); return "📜 Switching to Scroll mode..."; }},
+  { triggers: ["dark mode", "set dark"], action: () => { setTheme('dark'); return "🌙 Dark mode activated."; }},
+  { triggers: ["light mode", "set light"], action: () => { setTheme('light'); return "☀️ Light mode activated."; }},
+  { triggers: ["accent red"], action: () => { setAccent('red'); return "🔴 Accent set to Red."; }},
+  { triggers: ["accent cyan"], action: () => { setAccent('cyan'); return "🔵 Accent set to Cyan."; }},
+  { triggers: ["accent green"], action: () => { setAccent('green'); return "🟢 Accent set to Green."; }},
+  { triggers: ["accent purple"], action: () => { setAccent('purple'); return "🟣 Accent set to Purple."; }},
+  { triggers: ["accent gold"], action: () => { setAccent('gold'); return "🟡 Accent set to Gold."; }},
+  { triggers: ["accent matrix"], action: () => { setAccent('matrix'); return "💚 Accent set to Matrix."; }},
+  { triggers: ["accent pink"], action: () => { setAccent('pink'); return "💗 Accent set to Pink."; }},
+];
+
+function findStudentByName(query) {
+  const lower = query.toLowerCase();
+  const allPeople = [...(window.mentorsData || []), ...(window.studentsData || [])];
+  return allPeople.find(p => {
+    const nameLower = p.name.toLowerCase();
+    return nameLower.includes(lower) || lower.includes(nameLower.split(' ')[0]);
+  });
+}
+
+function generateReply(msg) {
+  const lower = msg.toLowerCase().trim();
+
+  // 1. Check action commands first
+  for (const cmd of chatActions) {
+    if (cmd.triggers.some(t => lower.includes(t))) {
+      return { text: cmd.action(), suggestions: ["Show features", "Help"] };
+    }
+  }
+
+  // 2. Check for "open profile" commands
+  if (lower.includes("open") && (lower.includes("profile") || lower.includes("dossier"))) {
+    const nameQuery = lower.replace(/open|profile|dossier|'s|the|of/gi, '').trim();
+    const person = findStudentByName(nameQuery);
+    if (person) {
+      const isMentor = (window.mentorsData || []).some(m => m.name === person.name);
+      setTimeout(() => openModal(person.name, isMentor), 600);
+      return { text: `👤 Opening profile for <b>${person.name}</b>...`, suggestions: ["Show students", "Go to mentors"] };
+    }
+  }
+
+  // 3. Check for student/mentor name lookups
+  const nameMatch = findStudentByName(lower.replace(/who is|tell me about|find|search|look up/gi, '').trim());
+  if (nameMatch && lower.length > 3 && (lower.includes("who") || lower.includes("tell") || lower.includes("find") || lower.includes("about"))) {
+    const isMentor = (window.mentorsData || []).some(m => m.name === nameMatch.name);
+    const role = isMentor ? nameMatch.role : 'Kalvian';
+    return {
+      text: `👤 <b>${nameMatch.name}</b><br>Role: ${role}<br><br>"${nameMatch.bio.substring(0, 150)}${nameMatch.bio.length > 150 ? '...' : ''}"<br><br>${nameMatch.github ? `<a href="${nameMatch.github}" target="_blank" class="text-red-500 hover:underline">GitHub ↗</a> · ` : ''}<a href="${nameMatch.linkedin}" target="_blank" class="text-red-500 hover:underline">LinkedIn ↗</a>`,
+      suggestions: [`Open ${nameMatch.name.split(' ')[0]}'s profile`, "Show all students", "Back to help"]
+    };
+  }
+
+  // 4. Check knowledge base
+  for (const [, knowledge] of Object.entries(chatKnowledge)) {
+    if (knowledge.triggers.some(t => lower.includes(t))) {
+      const reply = knowledge.responses[Math.floor(Math.random() * knowledge.responses.length)];
+      return { text: reply, suggestions: knowledge.suggestions || [] };
+    }
+  }
+
+  // 5. Fallback
+  const fallbacks = [
+    "🤔 I couldn't parse that query. Try asking about <b>students</b>, <b>mentors</b>, <b>features</b>, or type <b>help</b> for all commands.",
+    "⚠️ Signal unclear. I can help with navigation, student info, coding stats, and more. Type <b>help</b> to see what I can do.",
+    "📡 Query not recognized in the database. Try: \"Who are the mentors?\" or \"Show features\" or \"Go to students\"."
+  ];
+  return { text: fallbacks[Math.floor(Math.random() * fallbacks.length)], suggestions: ["Help", "Show features", "About"] };
+}
+
 function toggleChatbot() {
   const panel = document.getElementById("chatbot-panel");
   if (panel.style.display === "flex") {
@@ -1183,10 +1367,10 @@ function toggleChatbot() {
 
     const msgs = document.getElementById("chatbot-messages");
     if (msgs.children.length === 0) {
-      appendChatbotMessage(
-        "SYSTEM",
-        "Neural_Assist_v2 online. How can I assist with your deployment?",
-      );
+      appendChatbotMessage("SYSTEM", "Neural_Assist_v3 online. All systems synchronized. How can I assist, operator?");
+      setTimeout(() => {
+        renderSuggestions(["Help", "About this site", "Show features"]);
+      }, 600);
     }
   }
 }
@@ -1196,6 +1380,10 @@ function sendChatMessage() {
   const msg = input.value.trim();
   if (!msg) return;
 
+  // Remove old suggestion chips
+  const oldChips = document.getElementById("chatbot-messages").querySelector('.chat-suggestions');
+  if (oldChips) oldChips.remove();
+
   appendChatbotMessage("USER", msg);
   input.value = "";
 
@@ -1203,39 +1391,47 @@ function sendChatMessage() {
   setTimeout(() => {
     appendChatbotMessage(
       "SYSTEM",
-      '<span class="animate-pulse">PROCESSING_QUERY...</span>',
+      '<span class="animate-pulse flex items-center gap-2"><span class="w-1.5 h-1.5 bg-red-500 rounded-full animate-bounce"></span><span class="w-1.5 h-1.5 bg-red-500 rounded-full animate-bounce" style="animation-delay:0.1s"></span><span class="w-1.5 h-1.5 bg-red-500 rounded-full animate-bounce" style="animation-delay:0.2s"></span> Analyzing...</span>',
       typingId,
     );
-  }, 400);
+  }, 300);
 
+  const replyDelay = 800 + Math.random() * 700;
   setTimeout(() => {
     const typingEl = document.getElementById(typingId);
     if (typingEl) typingEl.remove();
 
-    const lower = msg.toLowerCase();
-    let reply = "Query acknowledged. Cross-referencing database arrays.";
-    const responses = [
-      "Access denied. Clearance level insufficient.",
-      "Data synthesized successfully.",
-      "Logic checks out. Validating packet streams.",
-      "Please refine parameters. Syntax anomaly detected.",
-    ];
+    const result = generateReply(msg);
+    appendChatbotMessage("SYSTEM", result.text);
 
-    if (lower.includes("hello") || lower.includes("hi"))
-      reply = "Greetings, operator. Systems are nominal.";
-    else if (lower.includes("kalvium"))
-      reply =
-        "Kalvium: The peak of immersive, work-integrated engineering synthesis.";
-    else if (lower.includes("clearance"))
-      reply =
-        "Your current protocol clearance is OPERATOR_L1. Escalate to Lead Architect for elevation.";
-    else if (lower.includes("help"))
-      reply =
-        "Available commands: 'SCAN_NODES', 'CHECK_CLEARANCE', 'INIT_KALVIUM'.";
-    else reply = responses[Math.floor(Math.random() * responses.length)];
+    if (result.suggestions && result.suggestions.length > 0) {
+      setTimeout(() => renderSuggestions(result.suggestions), 400);
+    }
+  }, replyDelay);
+}
 
-    appendChatbotMessage("SYSTEM", reply);
-  }, 1500);
+function renderSuggestions(suggestions) {
+  if (!suggestions || suggestions.length === 0) return;
+  const messages = document.getElementById("chatbot-messages");
+
+  // Remove existing
+  const old = messages.querySelector('.chat-suggestions');
+  if (old) old.remove();
+
+  const container = document.createElement('div');
+  container.className = 'chat-suggestions flex flex-wrap gap-2 mt-2 mb-1';
+  suggestions.forEach(s => {
+    const btn = document.createElement('button');
+    btn.className = 'text-[9px] mono uppercase tracking-wider px-3 py-1.5 border border-red-600/30 text-red-500 bg-red-600/5 hover:bg-red-600 hover:text-white rounded-full transition-all duration-200 cursor-pointer';
+    btn.textContent = s;
+    btn.onclick = () => {
+      document.getElementById("chatbot-input").value = s;
+      sendChatMessage();
+    };
+    container.appendChild(btn);
+  });
+  messages.appendChild(container);
+  messages.scrollTop = messages.scrollHeight;
 }
 
 function appendChatbotMessage(sender, text, id = "") {
@@ -1248,15 +1444,18 @@ function appendChatbotMessage(sender, text, id = "") {
     : "chat-bot-bubble rounded-r-xl rounded-bl-xl";
   const senderColor = isUser ? "text-gray-500" : "text-red-500";
 
+  const now = new Date();
+  const time = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
   const div = document.createElement("div");
   div.className = `flex flex-col ${alignClass} w-full`;
   if (id) div.id = id;
 
-  div.innerHTML = `                 
-        <span class="text-[9px] ${senderColor} mb-1 tracking-widest font-bold">${sender}</span>                 
-        <div class="${bubbleClass} p-3 max-w-[85%] leading-relaxed shadow-md">                     
-            ${text}                 
-        </div>             
+  div.innerHTML = `
+        <span class="text-[9px] ${senderColor} mb-1 tracking-widest font-bold flex items-center gap-2">${sender} <span class="text-gray-600 font-normal">${time}</span></span>
+        <div class="${bubbleClass} p-3 max-w-[85%] leading-relaxed shadow-md">
+            ${text}
+        </div>
     `;
 
   messages.appendChild(div);
