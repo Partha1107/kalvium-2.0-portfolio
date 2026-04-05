@@ -168,6 +168,8 @@ document.addEventListener('DOMContentLoaded', () => {
             const allPeople = [...(window.mentorsData || []), ...(window.studentsData || [])];
             const person = allPeople.find(p => p.name === name);
             const ghUsername = person ? extractGitHubUsername(person.github) : '';
+            // Check for saved platform config (persists across refreshes)
+            const savedPlatforms = getSavedPlatformConfig(name);
             window.dossierStates[name] = {                     
                 projects: [                         
                     { title: "Project_Nexus", desc: "Distributed AI architecture bridging edge and cloud components." },                         
@@ -179,7 +181,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     { name: "Python", pct: Math.floor(Math.random() * 30) + 40 },                         
                     { name: "C++ / Algorithms", pct: Math.floor(Math.random() * 30) + 40 }                     
                 ],
-                platforms: {
+                platforms: savedPlatforms || {
                     github: ghUsername,
                     leetcode: person?.leetcode || '',
                     codeforces: person?.codeforces || ''

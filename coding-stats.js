@@ -27,6 +27,31 @@ function extractGitHubUsername(url) {
     return match ? match[1] : '';
 }
 
+// --- PLATFORM CONFIG PERSISTENCE ---
+function savePlatformConfig(name, platforms) {
+    try {
+        const configs = JSON.parse(localStorage.getItem('platform_configs') || '{}');
+        configs[name] = platforms;
+        localStorage.setItem('platform_configs', JSON.stringify(configs));
+    } catch {}
+}
+function getSavedPlatformConfig(name) {
+    try {
+        const configs = JSON.parse(localStorage.getItem('platform_configs') || '{}');
+        return configs[name] || null;
+    } catch { return null; }
+}
+
+// --- SCORE RANK LABEL ---
+function getScoreRank(score) {
+    if (score >= 90) return { label: 'LEGENDARY', color: '#ff00aa' };
+    if (score >= 75) return { label: 'ELITE', color: '#00ff88' };
+    if (score >= 60) return { label: 'SPECIALIST', color: '#A4F000' };
+    if (score >= 40) return { label: 'OPERATIVE', color: '#FFA116' };
+    if (score >= 20) return { label: 'RECRUIT', color: '#FF6B35' };
+    return { label: 'INITIALIZING', color: '#666' };
+}
+
 // --- LEETCODE API (via alfa-leetcode-api proxy) ---
 async function fetchLeetCodeStats(username) {
     if (!username) return null;
@@ -153,7 +178,8 @@ function renderCodingStatsSection() {
                             <span class="score-max">/ 100</span>
                         </div>
                     </div>
-                    <p class="mono text-[9px] text-gray-500 mt-4 uppercase tracking-[0.3em]">Composite Score</p>
+                    <p class="mono text-[9px] text-gray-500 mt-3 uppercase tracking-[0.3em]">Composite Score</p>
+                    <p class="mono text-[10px] font-bold mt-1 uppercase tracking-[0.4em]" id="score-rank-label" style="color:#666">INITIALIZING</p>
                 </div>
                 <!-- LeetCode -->
                 <div class="dossier-card platform-card relative overflow-hidden">
@@ -194,37 +220,50 @@ function renderCodingStatsSection() {
 
 // --- RENDER INDIVIDUAL PLATFORM STATS ---
 function renderLCStats(data) {
-    if (!data) return `<div class="stats-empty"><i class="fa-solid fa-unlink"></i> Not linked</div>`;
-    const pct = data.totalEasy > 0 ? Math.round((data.total / (data.totalEasy + data.totalMedium + data.totalHard)) * 100) : 0;
+    if (!data) return `<div class="stats-empty"><i class="fa-solid fa-unlink"></i> Not linked<p class="text-[9px] mt-2 text-gray-600">Click Link_Platforms to connect</p></div>`;
+    const easyPct = data.totalEasy > 0 ? (data.easy / data.totalEasy * 100).toFixed(0) : 0;
+    const medPct = data.totalMedium > 0 ? (data.medium / data.totalMedium * 100).toFixed(0) : 0;
+    const hardPct = data.totalHard > 0 ? (data.hard / data.totalHard * 100).toFixed(0) : 0;
     return `
         <div class="space-y-3">
             <div class="stat-row"><span class="text-green-400">Easy</span><span class="font-bold text-white">${data.easy}<span class="text-gray-600">/${data.totalEasy}</span></span></div>
+            <div class="lc-diff-bar"><div class="lc-diff-fill lc-easy" style="width:${easyPct}%"></div></div>
             <div class="stat-row"><span class="text-yellow-400">Medium</span><span class="font-bold text-white">${data.medium}<span class="text-gray-600">/${data.totalMedium}</span></span></div>
+            <div class="lc-diff-bar"><div class="lc-diff-fill lc-medium" style="width:${medPct}%"></div></div>
             <div class="stat-row"><span class="text-red-400">Hard</span><span class="font-bold text-white">${data.hard}<span class="text-gray-600">/${data.totalHard}</span></span></div>
-            <div class="stat-row border-t border-white/10 pt-2 mt-2"><span class="text-gray-400">Total</span><span class="font-bold text-white text-lg">${data.total}</span></div>
-            ${data.ranking ? `<div class="stat-row"><span class="text-gray-400">Rank</span><span class="mono text-xs text-gray-300">#${data.ranking.toLocaleString()}</span></div>` : ''}
+            <div class="lc-diff-bar"><div class="lc-diff-fill lc-hard" style="width:${hardPct}%"></div></div>
+            <div class="stat-row border-t border-white/10 pt-2 mt-2"><span class="text-gray-400">Total Solved</span><span class="font-bold text-white text-lg">${data.total}</span></div>
+            ${data.ranking ? `<div class="stat-row"><span class="text-gray-400">Global Rank</span><span class="mono text-xs text-gray-300">#${data.ranking.toLocaleString()}</span></div>` : ''}
         </div>`;
 }
 
 function renderGHStats(data) {
-    if (!data) return `<div class="stats-empty"><i class="fa-solid fa-unlink"></i> Not linked</div>`;
+    if (!data) return `<div class="stats-empty"><i class="fa-solid fa-unlink"></i> Not linked<p class="text-[9px] mt-2 text-gray-600">Click Link_Platforms to connect</p></div>`;
+    const topReposHTML = data.topRepos && data.topRepos.length > 0 ? `
+        <div class="border-t border-white/5 pt-2 mt-1 space-y-1.5">
+            <span class="text-[9px] text-gray-500 uppercase tracking-widest">Recent Repos</span>
+            ${data.topRepos.map(r => `<div class="flex justify-between items-center text-[10px] mono"><span class="text-gray-300 truncate mr-2">${r.name}</span><span class="text-gray-600 flex-shrink-0">${r.lang || '—'}</span></div>`).join('')}
+        </div>` : '';
     return `
         <div class="space-y-3">
             <div class="stat-row"><span class="text-gray-400">Repos</span><span class="font-bold text-white">${data.publicRepos}</span></div>
             <div class="stat-row"><span class="text-gray-400">Stars</span><span class="font-bold text-yellow-400">★ ${data.totalStars}</span></div>
             <div class="stat-row"><span class="text-gray-400">Followers</span><span class="font-bold text-white">${data.followers}</span></div>
             <div class="stat-row"><span class="text-gray-400">Languages</span><span class="font-bold text-white">${data.languages.length}</span></div>
-            ${data.languages.length > 0 ? `<div class="flex flex-wrap gap-1 mt-2">${data.languages.slice(0, 6).map(l => `<span class="text-[9px] mono px-2 py-0.5 bg-white/5 border border-white/10 rounded text-gray-400">${l}</span>`).join('')}</div>` : ''}
+            ${data.languages.length > 0 ? `<div class="flex flex-wrap gap-1 mt-1">${data.languages.slice(0, 6).map(l => `<span class="text-[9px] mono px-2 py-0.5 bg-white/5 border border-white/10 rounded text-gray-400">${l}</span>`).join('')}</div>` : ''}
+            ${topReposHTML}
         </div>`;
 }
 
 function renderCFStats(data) {
-    if (!data) return `<div class="stats-empty"><i class="fa-solid fa-unlink"></i> Not linked</div>`;
+    if (!data) return `<div class="stats-empty"><i class="fa-solid fa-unlink"></i> Not linked<p class="text-[9px] mt-2 text-gray-600">Click Link_Platforms to connect</p></div>`;
     const rankColors = { 'newbie': '#808080', 'pupil': '#008000', 'specialist': '#03a89e', 'expert': '#0000ff', 'candidate master': '#aa00aa', 'master': '#ff8c00', 'international master': '#ff8c00', 'grandmaster': '#ff0000' };
     const color = rankColors[data.rank.toLowerCase()] || '#808080';
+    const ratingPct = Math.min(100, (data.rating / 2400) * 100);
     return `
         <div class="space-y-3">
             <div class="stat-row"><span class="text-gray-400">Rating</span><span class="font-bold text-xl" style="color:${color}">${data.rating}</span></div>
+            <div class="lc-diff-bar"><div class="lc-diff-fill" style="width:${ratingPct}%;background:${color};box-shadow:0 0 8px ${color}"></div></div>
             <div class="stat-row"><span class="text-gray-400">Max Rating</span><span class="font-bold text-white">${data.maxRating}</span></div>
             <div class="stat-row"><span class="text-gray-400">Rank</span><span class="font-bold uppercase text-xs tracking-widest" style="color:${color}">${data.rank}</span></div>
             <div class="stat-row"><span class="text-gray-400">Max Rank</span><span class="mono text-xs text-gray-300 uppercase">${data.maxRank}</span></div>
@@ -235,6 +274,7 @@ function renderCFStats(data) {
 function updateScoreRing(score) {
     const ring = document.getElementById('score-ring-fill');
     const valEl = document.getElementById('composite-score-val');
+    const rankEl = document.getElementById('score-rank-label');
     if (!ring || !valEl) return;
     const circumference = 2 * Math.PI * 60; // r=60
     const offset = circumference - (score / 100) * circumference;
@@ -245,6 +285,13 @@ function updateScoreRing(score) {
     valEl.textContent = score;
     valEl.style.color = color;
     valEl.style.textShadow = `0 0 20px ${color}`;
+    // Update rank label
+    if (rankEl) {
+        const rank = getScoreRank(score);
+        rankEl.textContent = rank.label;
+        rankEl.style.color = rank.color;
+        rankEl.style.textShadow = `0 0 10px ${rank.color}`;
+    }
 }
 
 // --- LOAD CODING STATS (main async function) ---
@@ -342,6 +389,7 @@ function promptConfigPlatforms() {
             github: document.getElementById('in-gh-user').value.trim(),
             codeforces: document.getElementById('in-cf-user').value.trim()
         };
+        savePlatformConfig(name, state.platforms);
         closeInputModal();
         refreshCodingStats();
     };
