@@ -166,7 +166,6 @@ document.addEventListener("DOMContentLoaded", () => {
     {
       name: "Aravind R",
       role: "MENTOR",
-      bio: "Academic Mentor specializing in debugging, problem-solving, and guiding future developers at Kalvium.",
       img: "./Src/Aravind - Mentor.png",
       linkedin: "https://www.linkedin.com/in/aravind-r-812634245/",
       email: "aravind.r@kalvium.com",
@@ -174,7 +173,6 @@ document.addEventListener("DOMContentLoaded", () => {
     {
       name: "H. Karunakaran",
       role: "CAMPUS MANAGER",
-      bio: "Academic Mentor focused on student development, problem-solving excellence, and career readiness through technology-driven learning.",
       img: "./Src/Karunakaran - Mentor.png",
       linkedin: "https://www.linkedin.com/in/h-karunakaran-3b1285376",
       email: "karunakaran.h@kalvium.com",
@@ -182,7 +180,6 @@ document.addEventListener("DOMContentLoaded", () => {
     {
       name: "Hanuram T",
       role: "MENTOR",
-      bio: "Academic mentor cum business analyst, balancing logic, data, and good vibes.",
       img: "./Src/Hanuram - Mentor.png",
       linkedin: "http://www.linkedin.com/in/hanuram-t",
       email: "hanuram.t@kalvium.com",
@@ -193,7 +190,6 @@ document.addEventListener("DOMContentLoaded", () => {
     {
       name: "Dhinesh Babu G",
       role: "Kalvian/Creator_1",
-      bio: "I am Dhinesh Babu, a focused and ambitious student who is working hard to build strong technical skills in programming and problem-solving.I care about organizing your life, improving your knowledge step by step, and preparing yourself for a successful future career.",
       img: "./Src/Dhinesh Babu.png",
       github: "https://github.com/dhineshbabus138-commit",
       linkedin: "https://www.linkedin.com/in/dhinesh-babu-software-engg",
@@ -202,7 +198,6 @@ document.addEventListener("DOMContentLoaded", () => {
     {
       name: "Sanjay Chelliah C",
       role: "Kalvian/Creator_2",
-      bio: "I tend to show up quietly, like I was already there before anyone noticed. I say normal things, but there’s usually something slightly off about the timing. I enjoy silence, late hours, and watching the world do its strange little routines. Sometimes I feel like I’m just passing through, taking mental notes for no clear reason. If you ask what I’m thinking, I might say “nothing”… but if you listen closely, you might hear me mumble a certain number more than once.",
       img: "./Src/Sanjay Chelliah.png",
       github: "https://github.com/SanCheS138",
       linkedin: "https://www.linkedin.com/in/sanjay-c-606981384",
@@ -211,7 +206,6 @@ document.addEventListener("DOMContentLoaded", () => {
     {
       name: "Ashwin raj J J",
       role: "Kalvian/Creator_3",
-      bio: "My name is Ashwin, and I am currently studying at St. Joseph University. I am very interested in improving my communication skills and becoming more confident in speaking. I enjoy learning programming and exploring new technologies. I always try to develop my skills step by step and work towards becoming a better version of myself.",
       img: "./Src/Ashwin Raj.png",
       github: "https://github.com/Partha1107",
       linkedin: "https://www.linkedin.com/in/ashwin-raj-j-j-a8034a383",
@@ -220,7 +214,6 @@ document.addEventListener("DOMContentLoaded", () => {
     {
       name: "Purushoth K",
       role: "Kalvian",
-      bio: "B.Tech CSE Fresher | Future Software Developer | Passionate about Coding, AI & Web Technologies.",
       img: "./Src/PURUSHOTHAMAN K.png",
       github: "https://github.com/purushothaman-k",
       linkedin: "https://www.linkedin.com/in/purushothaman-k-82129a325",
@@ -229,7 +222,6 @@ document.addEventListener("DOMContentLoaded", () => {
     {
       name: "Vignesh M ",
       role: "Kalvian",
-      bio: "I am a first-year Computer Science student at Kalvium, passionate about learning and growing in the field of technology. I enjoy coding, problem-solving, and exploring new technologies. My goal is to build a successful career as a software developer and contribute to innovative projects.",
       img: "./Src/Vignesh M.png",
       github: "https://github.com/vigneshms138-creator",
       linkedin: "https://www.linkedin.com/in/vignesh-m-2b1690383",
@@ -238,7 +230,6 @@ document.addEventListener("DOMContentLoaded", () => {
     {
       name: "Manoj Kumar P",
       role: "Kalvian",
-      bio: "I am a dedicated learner focused on building strong fundamentals and practical skills in software development.",
       img: "./Src/Manoj Kumar Ponnusamy.png",
       github: "https://github.com/manojponnusamy2032-star",
       linkedin: "https://www.linkedin.com/in/manoj-kumar-p-621049386",
@@ -247,7 +238,6 @@ document.addEventListener("DOMContentLoaded", () => {
     {
       name: "Pradheesh S",
       role: "Kalvian",
-      bio: "I am a First-Year B.Tech student at Kalvium with a strong interest in technology and cybersecurity. As a beginner in cybersecurity, I am actively learning the fundamentals of network security, ethical hacking, and system protection.I am passionate about understanding how systems work and how to secure them against vulnerabilities and threats. Currently, I am building my programming skills and exploring concepts like encryption, secure coding practices, and digital safety.My goal is to grow into a skilled cybersecurity professional who can help organizations protect their data and infrastructure. I am always eager to learn, experiment, and improve my technical skills.",
       img: "./Src/Pradheesh S.png",
       github: "https://github.com/pradheesh08-s",
       linkedin: "https://www.linkedin.com/in/pradheesh-s-a7a7a0381",
@@ -256,7 +246,6 @@ document.addEventListener("DOMContentLoaded", () => {
     {
       name: "Shree Vidhya T ",
       role: "Kalvian",
-      bio: "Hi, I’m Shree Vidhya. I’m currently a first-year college student who is passionate about learning and improving my skills. I’m a dedicated and responsible person who enjoys teamwork and taking on new challenges. I’m always eager to grow both personally and professionally.",
       img: "./Src/Srividhya (1).png",
       github: "https://github.com/shreevidhyats138-cmyk",
       linkedin: "https://www.linkedin.com/in/shree-v-5a60a0382",
@@ -265,7 +254,6 @@ document.addEventListener("DOMContentLoaded", () => {
     {
       name: "Arun Ragav G K G",
       role: "Kalvian",
-      bio: "Hi, I’m Arun Ragav G.K.G, an aspiring developer passionate about JavaScript, Python, and web development. I enjoy solving problems, building interactive projects, and continuously improving my coding skills. ",
       img: "./Src/Arun ragav G.K.G.png",
       github: "https://github.com/arun-ragav",
       linkedin: "https://www.linkedin.com/in/arun-ragav-589061384",
@@ -274,7 +262,6 @@ document.addEventListener("DOMContentLoaded", () => {
     {
       name: "Prasanna kumar A",
       role: "Kalvian",
-      bio: "Hi, I’m Prasanna Kumar, a passionate programmer with a strong interest in Python and Artificial Intelligence. I enjoy solving problems, building projects, and exploring how AI can be used to create smart and useful applications. I am continuously learning and improving my skills in Python and AI, and I love turning ideas into real-world solutions through code. My goal is to grow as an AI developer and contribute to innovative and impactful technology.",
       img: "./Src/Prasanna Kumar A.png",
       github: "https://github.com/prasannaas138-alt",
       linkedin: "https://www.linkedin.com/in/prasanna-kumar-a0a055384",
@@ -283,7 +270,6 @@ document.addEventListener("DOMContentLoaded", () => {
     {
       name: "Deboraah Issac I",
       role: "Kalvian",
-      bio: "Hi, I’m Deboraahissac, a first-year college student who’s curious, motivated, and always ready to learn. I enjoy working with others, taking on challenges, and continuously improving myself.",
       img: "./Src/DeboraahIssac I.png",
       github: "https://github.com/deboraahissacats138-cmyx",
       linkedin: "https://www.linkedin.com/in/deboraah-issac-ab0813388",
@@ -292,7 +278,6 @@ document.addEventListener("DOMContentLoaded", () => {
     {
       name: "Sasi Mahesh Y",
       role: "Kalvian",
-      bio: "Hi, I’m Sasi Mahesh a curious and driven first-year college student who believes growth begins where comfort ends. I’m passionate about learning new concepts, especially in technology, and constantly look for ways to sharpen my skills and think differently. I enjoy collaborating with people, brainstorming ideas, and solving problems that push me to think deeper.",
       img: "./Src/Sasi Mahesh.png",
       github: "https://github.com/sasimaheshs138-loop",
       linkedin: "https://www.linkedin.com/in/sasi-mahesh-2aa3b4384",
@@ -301,7 +286,6 @@ document.addEventListener("DOMContentLoaded", () => {
     {
       name: "chandru A",
       role: "Kalvian",
-      bio: "Motivated and dedicated student with a strong commitment to academic excellence and continuous learning. Eager to apply knowledge, develop practical skills, and contribute positively to team environments.",
       img: "./Src/Chandru A.png",
       github: "https://github.com/chandrua138",
       linkedin: "https://www.linkedin.com/in/chandru-a-331451384",
@@ -310,7 +294,6 @@ document.addEventListener("DOMContentLoaded", () => {
     {
       name: "Sandeep V",
       role: "Kalvian",
-      bio: "My goal is to build a successful career and continue growing both personally and professionally.",
       img: "./Src/Sandeep V.jpeg",
       github: "https://github.com/sandeepvs138-dev",
       linkedin: "https://www.linkedin.com/in/sandeep-v-947063384",
@@ -319,7 +302,6 @@ document.addEventListener("DOMContentLoaded", () => {
     {
       name: "ARVIND SELVA JAS J S",
       role: "Kalvian",
-      bio: "I am a passionate and dedicated student pursuing B.Tech in Computer Science Engineering. I have a strong interest in programming, problem-solving, and exploring new technologies. My goal is to become a skilled software developer and contribute to innovative projects.'",
       img: "./Src/Arvind selva Jas J. S.jpg",
       github: "https://github.com/arvindselvajas0222-coder",
       linkedin: "https://www.linkedin.com/in/arvind-selva-jas-j-s-68a79b381",
@@ -328,7 +310,6 @@ document.addEventListener("DOMContentLoaded", () => {
     {
       name: "Nithyanandharaj M",
       role: "Kalvian",
-      bio: "I am a first-year Computer Science student at Kalvium (St. Joseph’s University, Chennai), passionate about solving problems and building solutions through technology. I enjoy coding and have been learning Python, Java and JavaScript to strengthen my programming skills.I see myself as a creative thinker and logical problem solver who loves taking on challenges that require innovative solutions. ",
       img: "./Src/Nithyanadharaj.png",
       github: "https://github.com/nithyanandharajms138-debug",
       linkedin: "https://www.linkedin.com/in/nithyanandharaj-m-728189383",
@@ -337,7 +318,6 @@ document.addEventListener("DOMContentLoaded", () => {
     {
       name: "Tavanidhiragavi B B ",
       role: "Kalvian",
-      bio: "I am focused on learning, building, and growing as a software developer",
       img: "./Src/Tavanidhiragavi B.B.jpg",
       github: "https://github.com/tavanidhiragavibbs138-rgb",
       linkedin: "https://www.linkedin.com/in/tavanidhiragavi-b-b-0068b03a2",
@@ -346,7 +326,6 @@ document.addEventListener("DOMContentLoaded", () => {
     {
       name: "SHERLY N",
       role: "Kalvian",
-      bio: "First-Year B. Tech CSE Student, Aspiring Software Developer, Eager to Learn, Solve & Build. Computer Science Undergraduate, Exploring Coding, AI & Web Development",
       img: "./Src/Sherly N.jpg",
       github: "https://github.com/sherlyns138-crypto",
       linkedin: "https://www.linkedin.com/in/sherly-n-407881382",
@@ -355,7 +334,6 @@ document.addEventListener("DOMContentLoaded", () => {
     {
       name: "chandru S ",
       role: "Kalvian",
-      bio: "Hi, I’m Chandru S. I’m someone who believes that every day is a new opportunity to learn and improve. As a first-year college student, I’m exploring new ideas, building my skills, and pushing myself beyond my comfort zone. I enjoy working with others, sharing ideas, and turning challenges into learning experiences. My goal is simple — to grow stronger and better every day",
       img: "./Src/Chandru S.jpg",
       github: "https://github.com/chandru24126",
       linkedin: "https://www.linkedin.com/in/chandru-sk-999077384",
@@ -364,7 +342,6 @@ document.addEventListener("DOMContentLoaded", () => {
     {
       name: "Ashwath Palanisamy",
       role: "Kalvian",
-      bio: "I’m a self‑taught Flutter developer with a passion for learning new technologies and building user‑friendly apps. Skilled in Python, Supabase, and Vercel deployment, I focus on creating secure, scalable solutions while continuously expanding my knowledge. My curiosity drives me to explore modern tools and frameworks to stay ahead in the tech landscape",
       img: "./Src/Ashwath Palanisamy.jpg",
       github: "https://github.com/Ashwath-Palanisamy",
       linkedin: "https://www.linkedin.com/in/ashwathpalanisamy",
@@ -373,7 +350,6 @@ document.addEventListener("DOMContentLoaded", () => {
     {
       name: "kishore R",
       role: "Kalvian",
-      bio: "I am a friendly and hardworking person.I always try to learn new things and improve myself.",
       img: "./Src/Kishore. R.png",
       github: "https://github.com/kishorers138-cyber",
       linkedin: "https://www.linkedin.com/in/kishore-r-6bb4a6383",
@@ -382,7 +358,6 @@ document.addEventListener("DOMContentLoaded", () => {
     {
       name: "Deepika V",
       role: "Kalvian",
-      bio: "B.Tech CSE Student | Aspiring Software Developer | Passionate About AI & Web Development | Learning, Building, Growing",
       img: "./Src/Deepika (1).jpg",
       github: "https://github.com/deepikavs138-design",
       linkedin: "https://www.linkedin.com/in/deepika-v-957099382",
@@ -391,7 +366,6 @@ document.addEventListener("DOMContentLoaded", () => {
     {
       name: "HARICHARAN P",
       role: "Kalvian",
-      bio: "I’m Haricharan, a focused and determined individual who believes in constant growth.I adapt quickly to new challenges and strive to improve every day. With a positive mindset and strong work ethic, I aim to achieve success.",
       img: "./Src/Hari charan (1).png",
       github: "https://github.com/harips138-droid",
       linkedin: "https://www.linkedin.com/in/hari-charan-p-5006393b1",
@@ -400,7 +374,6 @@ document.addEventListener("DOMContentLoaded", () => {
     {
       name: "karthikeyan",
       role: "Kalvian",
-      bio: "Hello, I’m Karthikeyan. I am a first-year college student with a strong passion for learning and developing new skills. I consider myself a committed and responsible individual who works well in teams and enjoys taking on new challenges. I am continuously striving to grow both personally and professionally, and I look forward to gaining more experience and contributing effectively wherever I can.”",
       img: "./Src/Karthikeyan A.E.png",
       github: "https://github.com/karthikeyan24-kk",
       linkedin: "https://www.linkedin.com/in/karthikeyan-a-e-8b3847381",
@@ -409,7 +382,6 @@ document.addEventListener("DOMContentLoaded", () => {
     {
       name: "MOHAMMED THARIK S",
       role: "Kalvian",
-      bio: "Motivated and detail-oriented professional committed to excellence. Always eager to learn, adapt, and contribute effectively to meaningful projects.",
       img: "./Src/Mohammed Tharik S.jpg",
       github: "https://github.com/MohammedTharikS",
       linkedin: "https://www.linkedin.com/in/mohammed-tharik-s-26b108384",
@@ -418,7 +390,6 @@ document.addEventListener("DOMContentLoaded", () => {
     {
       name: "Saigoutham G",
       role: "Kalvian",
-      bio: "My name is Gundla Sai Gutham. I am a hardworking and dedicated person. I always try to learn new things and improve myself.My goal is to achieve success and make my family proud.",
       img: "./Src/Gundla Sai Gowtham.png",
       github: "https://github.com/gundlagowthams138-cell",
       linkedin: "https://www.linkedin.com/in/gundla-sai-gowtham-985460390",
@@ -427,7 +398,6 @@ document.addEventListener("DOMContentLoaded", () => {
     {
       name: "Ram CHARAN M",
       role: "Kalvian",
-      bio: "I'm an editor.i turn the raw footage into emotional stories",
       img: "./Src/Ram Charan.png",
       github: "https://github.com/medaboinacharan-pixel",
       linkedin: "https://www.linkedin.com/in/ram-charan-b551133ab",
@@ -436,7 +406,6 @@ document.addEventListener("DOMContentLoaded", () => {
     {
       name: "Dinesh p",
       role: "Kalvian",
-      bio: "Student at St. Joseph University, Palanchur, dedicated to academic growth and professional development.Focused on building a strong foundation in my field within the university's vibrant learning environment. Aspiring professional committed to excellence and contributing to the campus community.",
       img: "./Src/Dinesh P.webp",
       github: "https://github.com/dineshps138-ds",
       linkedin: "https://www.linkedin.com/in/dinesh-prakasam-a8279a381",
@@ -445,7 +414,6 @@ document.addEventListener("DOMContentLoaded", () => {
     {
       name: "Surjith sri k",
       role: "Kalvian",
-      bio: "Hi, I’m Surjith Sri. I’m a student who loves technology and problem-solving. I’m currently preparing for a career as a software engineer and spending time learning Python and development skills.",
       img: "./Src/Surjith Sri K.jpeg",
       github: "https://github.com/surjithks138",
       linkedin: "https://kalvium.community",
@@ -454,7 +422,6 @@ document.addEventListener("DOMContentLoaded", () => {
     {
       name: "Navya D ",
       role: "Kalvian",
-      bio: "I am Navya, a B.Tech CSE (Applied AI) student at St. Joseph University, powered by Kalvium, with my schooling completed at Sri Chaitanya Techno School. Passionate about combining creativity with technology, I bring a curious mindset that drives me to learn, explore, and solve real-world problems through innovative AI-driven solutions.",
       img: "./Src/Navya D.jpg",
       github: "https://github.com/navyads138-star",
       linkedin: "https://www.linkedin.com/in/navya-d-a1b187383",
@@ -463,7 +430,6 @@ document.addEventListener("DOMContentLoaded", () => {
     {
       name: "DAVID G",
       role: "Kalvian",
-      bio: "Hi, I’m David. I’m someone who believes that every day is a new opportunity to learn and improve. As a first-year college student, I’m exploring new ideas, building my skills, and pushing myself beyond my comfort zone. I enjoy working with others, sharing ideas, and turning challenges into learning experiences. My goal is simple — to grow stronger and better every day",
       img: "./Src/DAVID G.png",
       github: "https://github.com/davidgs138-cyber",
       linkedin: "https://www.linkedin.com/in/david-g-6bb3323b1",
@@ -472,7 +438,6 @@ document.addEventListener("DOMContentLoaded", () => {
     {
       name: "Harshini J",
       role: "Kalvian",
-      bio: "B.Tech CSE Student @ St. Joseph’s University | Kalvium Program | Aspiring Full-Stack Developer | Passionate about Problem Solving",
       img: "./Src/Harshini J.png",
       github: "https://github.com/harshinijs138-svg",
       linkedin: "https://www.linkedin.com/in/harshini-j-244611383",
@@ -481,7 +446,6 @@ document.addEventListener("DOMContentLoaded", () => {
     {
       name: "Udhaya E",
       role: "Kalvian",
-      bio: "I am a first-year student who is passionate about learning new technologies and improving my skills.I have a strong interest in programming and web development.I enjoy solving problems and working on creative projects.I am always eager to learn, grow, and take on new challenges.My goal is to build a successful career in the technology field.",
       img: "./Src/Udhaya E.png",
       github: "https://github.com/udhayaes138-spec",
       linkedin: "https://www.linkedin.com/in/udhaya-e-a1b443383",
@@ -490,7 +454,6 @@ document.addEventListener("DOMContentLoaded", () => {
     {
       name: "Jeevanand J",
       role: "Kalvian",
-      bio: "“I’m a CSE student. I’m into building things more than just studying them — electronics projects, hardware-software stuff, racing sim builds. I like figuring out how things work and making them better.”",
       img: "./Src/Jeevanand j.png",
       github: "https://github.com/jeevanand-jaisankar",
       linkedin: "https://www.linkedin.com/in/jeevanand-j-575676281",
@@ -499,7 +462,6 @@ document.addEventListener("DOMContentLoaded", () => {
     {
       name: "Edupalli sai praneeth",
       role: "Kalvian",
-      bio: "Hi, I’m Sai Praneeth. I am a passionate and curious student who loves learning new technologies. I enjoy coding and building projects using HTML, CSS, JavaScript, and Python. I am always eager to improve my skills and take on new challenges. My goal is to become a successful software developer and create innovative applications.",
       img: "./Src/Edupalli Sai Praneeth Lokesh.png",
       github: "https://github.com/edupallilokeshs138-bot",
       linkedin: "https://www.linkedin.com/in/edupalli-sai-praneeth-3ab348383",
@@ -508,7 +470,6 @@ document.addEventListener("DOMContentLoaded", () => {
     {
       name: "Chandana",
       role: "Kalvian",
-      bio: "I am a responsible and self-motivated individual who is always willing to learn and improve. I believe in continuous growth, both personally and professionally. I am disciplined, adaptable, and capable of handling responsibilities with sincerity.I value honesty, teamwork, and clear communication. I try to approach every task with dedication and a positive attitude. Even when I face challenges, I remain calm and focused on finding solutions rather than giving up.I am currently working on developing my technical and communication skills to become more confident and efficient in my field. My goal is to build a strong career by staying consistent, hardworking, and open to new opportunities. Passionate coder building modern web applications.",
       img: "./Src/Chadhana (1).png",
       github: "https://github.com/chandanaes139-lang",
       linkedin: "https://www.linkedin.com/in/chandana-elavarasan-a10964384",
@@ -521,7 +482,6 @@ document.addEventListener("DOMContentLoaded", () => {
     studentsData.push({
       name: `Subject Node ${id}`,
       role: "SDE Intern",
-      bio: "Core engineer within the Kalvium class sync protocol.",
       img: `https://i.pravatar.cc/400?u=st${id}`,
       github: "https://github.com",
       linkedin: "#",
@@ -543,17 +503,8 @@ document.addEventListener("DOMContentLoaded", () => {
       // Check for saved platform config (persists across refreshes)
       const savedPlatforms = getSavedPlatformConfig(name);
       window.dossierStates[name] = {
-        projects: [
-          {
-            title: "Project_Nexus",
-            desc: "Distributed AI architecture bridging edge and cloud components.",
-          },
-          {
-            title: "CyberShield v2.0",
-            desc: "Automated packet analysis & anomaly detection firewall.",
-          },
-        ],
-        certs: ["Kalvium Sync Level_04", "AWS Certified Arch_Assoc"],
+        projects: [],
+        certs: [],
         skills: [
           { name: "JavaScript / TS", pct: Math.floor(Math.random() * 30) + 40 },
           { name: "Python", pct: Math.floor(Math.random() * 30) + 40 },
@@ -565,7 +516,8 @@ document.addEventListener("DOMContentLoaded", () => {
         platforms: savedPlatforms || {
           github: ghUsername,
           leetcode: person?.leetcode || "",
-          codeforces: person?.codeforces || "",
+          hackerrank: person?.hackerrank || "",
+          codechef: person?.codechef || "",
         },
       };
     }
@@ -581,7 +533,24 @@ document.addEventListener("DOMContentLoaded", () => {
   let currentProverbIdx = 0;
 
   // --- INIT ---
-  function init() {
+  async function init() {
+    // 1. Fetch updated avatars from Mainframe
+    if (supabaseClient) {
+      const { data: remoteData } = await supabaseClient.from('dossiers').select('full_name, avatar_url');
+      if (remoteData) {
+        remoteData.forEach(remote => {
+          if (remote.avatar_url) {
+            // Check students
+            const s = studentsData.find(st => st.name === remote.full_name);
+            if (s) s.img = remote.avatar_url;
+            // Check mentors
+            const m = mentorsData.find(mn => mn.name === remote.full_name);
+            if (m) m.img = remote.avatar_url;
+          }
+        });
+      }
+    }
+
     setTimeout(() => {
       window.scrollTo(0, 0); // Force to top one last time before revealing
       document.getElementById("loader").style.display = "none";
@@ -841,7 +810,7 @@ function openModal(name, isMentor) {
                 
                 <div class="bg-black/40 border border-white/10 rounded-xl p-5 mb-8 backdrop-blur-sm shadow-inner relative overflow-hidden flex flex-col items-start">                             
                     <div class="absolute top-0 left-0 w-1 h-full bg-gradient-to-b from-transparent via-red-600/50 to-transparent"></div>                             
-                    <p id="modalBioText" class="text-gray-300 text-base md:text-lg font-light bio-text" style="max-height: 3.2em;">${p.bio}</p>                             
+                    <p id="modalBioText" class="text-gray-300 text-base md:text-lg font-light bio-text" style="max-height: 3.2em;">>> SYNCING_WITH_MAINFRAME...</p>                             
                     <button id="modalBioToggle" onclick="toggleBio()" class="hidden text-red-500 hover:text-white mono text-[10px] uppercase font-bold tracking-widest mt-4 transition-all hover:translate-x-2 flex items-center gap-2 group">                                 
                         <i class="fa-solid fa-chevron-right text-[10px] group-hover:text-red-500"></i> Initialize_Decryption [Read_More]                             
                     </button>                         
@@ -877,6 +846,32 @@ function openModal(name, isMentor) {
   document.getElementById("modal-overlay").classList.add("active");
   document.body.style.overflow = "hidden";
 
+  // Background Sync for Bio if not mentor
+  if (!isMentor && supabaseClient) {
+      // Set temporary state while syncing
+      const bioEl = document.getElementById("modalBioText");
+      if (bioEl) bioEl.classList.add('opacity-50');
+
+      supabaseClient.from('dossiers').select('bio').eq('full_name', name).maybeSingle()
+      .then(({data}) => {
+          if (bioEl) {
+              bioEl.classList.remove('opacity-50');
+              if (data && data.bio && data.bio.trim() !== "") {
+                  bioEl.innerText = data.bio;
+                  bioEl.classList.remove('text-red-900/40', 'italic');
+              } else {
+                  bioEl.innerText = ">> NO_ANY_BIO_ADDED // PLEASE_UPDATE_VIA_DASHBOARD";
+                  bioEl.classList.add('text-red-900/40', 'italic');
+              }
+              // Re-check read more button after content load
+              const toggleBtn = document.getElementById("modalBioToggle");
+              if (toggleBtn) {
+                  toggleBtn.style.display = bioEl.scrollHeight > bioEl.clientHeight ? "flex" : "none";
+              }
+          }
+      });
+  }
+
   setTimeout(() => {
     const bioEl = document.getElementById("modalBioText");
     const toggleBtn = document.getElementById("modalBioToggle");
@@ -894,8 +889,8 @@ function openModal(name, isMentor) {
 function openAchievements(name) {
   document.getElementById("modal-overlay").classList.remove("active");
   document.body.style.overflow = "auto";
-  // Open dossier in a new tab
-  window.open(`dossier.html?name=${encodeURIComponent(name)}`, "_blank");
+  // Open dossier in the same tab
+  window.location.href = `dossier.html?name=${encodeURIComponent(name)}`;
 }
 
 function closeAchievements() {
@@ -1538,6 +1533,11 @@ const tourSteps = [
     title: "Neural Assist v2",
     text: "Initiate localized AI communication. Query the system or ask for operational assistance.",
   },
+  {
+    sel: "#auth-login-btn, #auth-user-btn",
+    title: "Identity Synchronization",
+    text: "Access your personalized dashboard by synchronizing your Google Identity with the Kalvium structural matrix.",
+  },
 ];
 
 let currentTourStep = 0;
@@ -1608,3 +1608,62 @@ function endTour() {
     document.getElementById("tour-tooltip").classList.add("hidden");
   }, 300);
 }
+
+// --- SUPABASE & OAUTH LOGIN LOGIC ---
+const SUPABASE_URL = 'https://gjkbbbklxqgxvjoqhvue.supabase.co';
+// NOTE TO USER: Replace 'YOUR_SUPABASE_ANON_KEY' with your actual Anon Key from Project Settings -> API
+const SUPABASE_ANON_KEY = 'sb_publishable_Z-ZLJ1kdtSnjYqXFwwDAQw_JKMikQQr';
+const supabaseClient = window.supabase ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
+
+async function checkSession() {
+  if (!supabaseClient) return;
+  const { data: { session } } = await supabaseClient.auth.getSession();
+  const loginBtn = document.getElementById('auth-login-btn');
+  const userBtn = document.getElementById('auth-user-btn');
+  
+  if (session && session.user) {
+    if (loginBtn) loginBtn.classList.add('hidden');
+    if (userBtn) {
+      userBtn.classList.remove('hidden');
+      userBtn.classList.add('flex');
+    }
+  } else {
+    if (loginBtn) loginBtn.classList.remove('hidden');
+    if (userBtn) {
+      userBtn.classList.add('hidden');
+      userBtn.classList.remove('flex');
+    }
+  }
+}
+
+async function handleLogin() {
+  if (!supabaseClient) {
+    alert("Supabase client is not initialized. Please ensure the CDN is loaded and Anon Key is provided.");
+    return;
+  }
+  
+  // Initiate Supabase Google OAuth Flow
+  const { data, error } = await supabaseClient.auth.signInWithOAuth({
+    provider: 'google',
+    options: {
+      redirectTo: 'https://gjkbbbklxqgxvjoqhvue.supabase.co/auth/v1/callback' // As requested, though commonly window.location.origin is used for SPA redirects
+    }
+  });
+
+  if (error) {
+    console.error("Authentication Error:", error.message);
+    alert("OAuth Error: " + error.message);
+  }
+}
+
+// Automatically check session on page load if supabase client exists
+document.addEventListener('DOMContentLoaded', () => {
+  checkSession();
+  
+  // Also listen for auth state changes (e.g. returning from OAuth redirect)
+  if (supabaseClient) {
+    supabaseClient.auth.onAuthStateChange((event, session) => {
+      checkSession();
+    });
+  }
+});
