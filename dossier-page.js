@@ -348,7 +348,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   // Find the person locally first for basic UI (img, email)
   const allPeople = [...mentorsData, ...studentsData];
-  const person = allPeople.find((p) => p.name === name);
+  const person = allPeople.find((p) => p.name.trim().toLowerCase() === name.trim().toLowerCase());
 
   if (!person) {
     document.getElementById("dossierContent").innerHTML =

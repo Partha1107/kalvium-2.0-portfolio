@@ -68,12 +68,12 @@
             <i class="fa-solid fa-id-card text-red-600"></i> Identity_Verified
           </h3>
           <div class="flex items-center gap-6 mt-6 mb-6">
-            <div class="relative group">
+            <div class="relative group flex-shrink-0">
               <img
                 id="dashboard-avatar"
                 src=""
                 alt="Avatar"
-                class="w-20 h-20 rounded-full border-2 border-red-600/50 object-cover"
+                class="w-20 h-20 aspect-square rounded-full border-2 border-red-600/50 object-cover"
               />
               <input type="file" id="avatar-input" class="hidden" accept="image/*" onchange="handleAvatarUpload(this)">
               <button onclick="document.getElementById('avatar-input').click()" class="absolute inset-0 flex items-center justify-center bg-black/60 rounded-full opacity-0 group-hover:opacity-100 transition-opacity text-[8px] mono text-white">UPGRADE_AVATAR</button>
@@ -93,13 +93,6 @@
           </div>
 
           <div class="flex flex-col gap-2 mt-4">
-            <button
-              onclick="viewPublicDossier()"
-              class="w-full py-3 border border-blue-600/50 text-blue-500 hover:bg-blue-600 hover:text-white font-bold uppercase tracking-widest transition-all text-xs flex justify-center items-center gap-3"
-            >
-              <i class="fa-solid fa-eye"></i> View_Public_Dossier
-            </button>
-
             <button
               onclick="handleLogout()"
               class="w-full py-3 border border-red-600/50 text-red-500 hover:bg-red-600 hover:text-white font-bold uppercase tracking-widest transition-all text-xs flex justify-center items-center gap-3"
