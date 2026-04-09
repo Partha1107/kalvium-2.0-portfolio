@@ -1,0 +1,556 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Subject Dashboard | Kalvium Squad 138</title>
+    <link
+      rel="icon"
+      href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><rect width=%22100%22 height=%22100%22 fill=%22black%22/><path d=%22M20 20 L80 20 L80 80 L20 80 Z%22 fill=%22none%22 stroke=%22red%22 stroke-width=%228%22/><path d=%22M20 50 L80 20 M20 50 L80 80%22 fill=%22none%22 stroke=%22red%22 stroke-width=%228%22/></svg>"
+    />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="style.css" />
+    <style>
+      .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+      .custom-scrollbar::-webkit-scrollbar-track { background: rgba(255, 255, 255, 0.05); }
+      .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(239, 68, 68, 0.2); }
+      .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: rgba(239, 68, 68, 0.5); }
+      .input-group:focus-within label { color: #dc2626; }
+      .project-row { border-left: 2px solid transparent; transition: all 0.3s; }
+      .project-row:hover { border-left-color: #dc2626; background: rgba(255,255,255,0.02); }
+    </style>
+
+    <!-- Supabase -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  </head>
+
+  <body id="dashboard-body" style="overflow-y: auto">
+    <div class="max-w-5xl mx-auto px-8 py-24 relative z-10">
+      <a
+        href="index.html"
+        class="inline-flex items-center gap-3 mb-12 bg-black/50 backdrop-blur border border-white/10 text-white hover:text-red-600 hover:border-red-600 px-6 py-3 rounded-full transition-all shadow-[0_0_15px_rgba(0,0,0,0.8)]"
+      >
+        <i class="fa-solid fa-arrow-left"></i>
+        <span class="mono text-[10px] tracking-widest">RETURN_TO_MAIN</span>
+      </a>
+
+      <div class="mb-16 border-b border-white/10 pb-8">
+        <p class="mono text-red-600 text-xs tracking-[0.5em] mb-4 uppercase">
+          OPERATIVE STATUS
+        </p>
+        <h1
+          class="text-4xl md:text-6xl font-black uppercase tracking-tighter text-white"
+        >
+          User
+          <span
+            class="text-transparent bg-clip-text bg-gradient-to-r from-red-600 to-red-900"
+            >Dashboard</span
+          >
+        </h1>
+      </div>
+
+      <div
+        class="grid grid-cols-1 md:grid-cols-2 gap-10 text-left cursor-default"
+      >
+        <!-- PROFILE INFO -->
+        <div class="dossier-card">
+          <div class="bracket tl"></div>
+          <div class="bracket tr"></div>
+          <div class="bracket bl"></div>
+          <div class="bracket br"></div>
+          <h3
+            class="text-white font-bold text-lg mb-4 uppercase tracking-widest border-b border-white/10 pb-2 flex items-center gap-3"
+          >
+            <i class="fa-solid fa-id-card text-red-600"></i> Identity_Verified
+          </h3>
+          <div class="flex items-center gap-6 mt-6 mb-6">
+            <div class="relative group">
+              <img
+                id="dashboard-avatar"
+                src=""
+                alt="Avatar"
+                class="w-20 h-20 rounded-full border-2 border-red-600/50 object-cover"
+              />
+              <input type="file" id="avatar-input" class="hidden" accept="image/*" onchange="handleAvatarUpload(this)">
+              <button onclick="document.getElementById('avatar-input').click()" class="absolute inset-0 flex items-center justify-center bg-black/60 rounded-full opacity-0 group-hover:opacity-100 transition-opacity text-[8px] mono text-white">UPGRADE_AVATAR</button>
+            </div>
+            <div>
+              <p
+                id="dashboard-name"
+                class="text-white mono text-xs uppercase mt-1"
+              ></p>
+              <p
+                id="dashboard-email"
+                class="text-gray-400 mono text-sm font-bold tracking-widest"
+              >
+                VERIFYING...
+              </p>
+            </div>
+          </div>
+
+          <div class="flex flex-col gap-2 mt-4">
+            <button
+              onclick="viewPublicDossier()"
+              class="w-full py-3 border border-blue-600/50 text-blue-500 hover:bg-blue-600 hover:text-white font-bold uppercase tracking-widest transition-all text-xs flex justify-center items-center gap-3"
+            >
+              <i class="fa-solid fa-eye"></i> View_Public_Dossier
+            </button>
+
+            <button
+              onclick="handleLogout()"
+              class="w-full py-3 border border-red-600/50 text-red-500 hover:bg-red-600 hover:text-white font-bold uppercase tracking-widest transition-all text-xs flex justify-center items-center gap-3"
+            >
+              <i class="fa-solid fa-power-off"></i> Disconnect_Session
+            </button>
+          </div>
+        </div>
+
+        <!-- DOSSIER CONFIGURATION -->
+        <div class="dossier-card border-red-900/50 bg-red-900/5 col-span-1 md:col-span-2">
+          <div class="bracket tl"></div>
+          <div class="bracket tr"></div>
+          <div class="bracket bl"></div>
+          <div class="bracket br"></div>
+          <h3
+            class="text-red-500 font-bold text-lg mb-6 uppercase tracking-widest border-b border-red-900/30 pb-2 flex items-center gap-3"
+          >
+            <i class="fa-solid fa-user-gear"></i> Dossier_Config_Matrix
+          </h3>
+          
+          <div class="grid grid-cols-1 lg:grid-cols-2 gap-12">
+            <!-- Left Side: Basic Info -->
+            <div class="space-y-8">
+              <div class="input-group">
+                <label class="block text-[10px] text-gray-500 mono uppercase mb-2 tracking-widest">Subject_Biography</label>
+                <textarea id="in-bio" class="w-full bg-black/60 border border-white/10 p-4 text-white mono text-xs focus:border-red-600 outline-none transition-all h-32 leading-relaxed" placeholder="Biometric description..."></textarea>
+              </div>
+
+              <div class="p-6 border border-white/5 bg-white/[0.02] space-y-4">
+                <p class="mono text-[10px] text-gray-600 uppercase tracking-[0.3em] mb-4">Coding_Signal_Identifiers</p>
+                <div class="grid grid-cols-2 gap-6">
+                  <div class="input-group">
+                    <label class="block text-[9px] text-gray-500 mono uppercase mb-1">GitHub_ID</label>
+                    <input id="in-github" class="w-full bg-black/40 border border-white/10 p-3 text-white mono text-xs focus:border-red-600 outline-none transition-all" placeholder="username" />
+                  </div>
+                  <div class="input-group">
+                    <label class="block text-[9px] text-gray-500 mono uppercase mb-1">LeetCode_ID</label>
+                    <input id="in-leetcode" class="w-full bg-black/40 border border-white/10 p-3 text-white mono text-xs focus:border-red-600 outline-none transition-all" placeholder="id" />
+                  </div>
+                  <div class="input-group">
+                    <label class="block text-[9px] text-gray-500 mono uppercase mb-1">HackerRank_ID</label>
+                    <input id="in-hackerrank" class="w-full bg-black/40 border border-white/10 p-3 text-white mono text-xs focus:border-red-600 outline-none transition-all" placeholder="id" />
+                  </div>
+                  <div class="input-group">
+                    <label class="block text-[9px] text-gray-500 mono uppercase mb-1">CodeChef_ID</label>
+                    <input id="in-codechef" class="w-full bg-black/40 border border-white/10 p-3 text-white mono text-xs focus:border-red-600 outline-none transition-all" placeholder="id" />
+                  </div>
+                </div>
+                <div class="input-group pt-2">
+                  <label class="block text-[9px] text-gray-500 mono uppercase mb-1">LinkedIn_Profile_Protocol</label>
+                  <input id="in-linkedin" class="w-full bg-black/40 border border-white/10 p-3 text-white mono text-xs focus:border-red-600 outline-none transition-all" placeholder="https://linkedin.com/in/..." />
+                </div>
+              </div>
+
+              <div class="space-y-6">
+                <div class="input-group">
+                  <label class="block text-[10px] text-gray-500 mono uppercase mb-2 tracking-widest">Neural_Capability_Array (Skills)</label>
+                  <input id="in-skills" class="w-full bg-black/60 border border-white/10 p-4 text-white mono text-xs focus:border-red-600 outline-none transition-all" placeholder="React, Node.js, Python..." />
+                </div>
+              </div>
+            </div>
+
+            <!-- Right Side: dynamic Lists -->
+            <div class="space-y-12 flex flex-col">
+              <!-- Advancements -->
+              <div class="space-y-4">
+                <div class="flex justify-between items-center mb-4 bg-white/[0.03] p-4 border border-white/5">
+                  <div>
+                    <label class="block text-[10px] text-white mono uppercase font-bold tracking-[0.2em]">Advancement_Clearances</label>
+                    <p class="text-[8px] text-gray-600 mono mt-0.5">CERTIFICATE_LOGS</p>
+                  </div>
+                  <button onclick="addCertRow()" class="text-[10px] mono text-red-500 hover:text-white border border-red-600/30 px-5 py-2 bg-red-600/5 hover:bg-red-600 transition-all rounded shadow-lg">+ NEW_NODE</button>
+                </div>
+                <div id="certs-container" class="space-y-4 max-h-[350px] overflow-y-auto pr-3 custom-scrollbar">
+                  <!-- Certs injected here -->
+                </div>
+              </div>
+
+              <!-- Projects -->
+              <div class="space-y-4 flex flex-col">
+                <div class="flex justify-between items-center mb-4 bg-white/[0.03] p-4 border border-white/5">
+                  <div>
+                    <label class="block text-[10px] text-white mono uppercase font-bold tracking-[0.2em]">Deployed_Project_Matrix</label>
+                    <p class="text-[8px] text-gray-600 mono mt-0.5">MANAGE_ACTIVE_NODES</p>
+                  </div>
+                  <button onclick="addProjectRow()" class="text-[10px] mono text-red-500 hover:text-white border border-red-600/30 px-5 py-2 bg-red-600/5 hover:bg-red-600 transition-all rounded shadow-lg">+ NEW_NODE</button>
+                </div>
+                <div id="projects-container" class="space-y-6 max-h-[450px] overflow-y-auto pr-3 custom-scrollbar">
+                  <!-- Projects injected here -->
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="flex flex-col sm:flex-row gap-4 mt-8 pt-6 border-t border-white/5">
+            <button
+              onclick="saveDossier()"
+              class="flex-1 py-4 bg-red-600 text-white font-bold uppercase tracking-widest transition-all text-xs hover:bg-white hover:text-black flex justify-center items-center gap-3 shadow-[0_0_20px_rgba(255,0,0,0.2)]"
+            >
+              <i class="fa-solid fa-cloud-arrow-up"></i> Push_to_Mainframe
+            </button>
+            <button
+              onclick="window.location.href='index.html'"
+              class="flex-1 py-4 border border-white/10 text-gray-400 hover:text-white font-bold uppercase tracking-widest transition-all text-xs flex justify-center items-center gap-3"
+            >
+              <i class="fa-solid fa-eye"></i> View_Public_Node
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div
+      class="fixed inset-0 pointer-events-none z-0"
+      style="
+        background: radial-gradient(
+          circle at top center,
+          var(--k-red-transparent) 0%,
+          transparent 60%
+        );
+      "
+    ></div>
+
+    <script>
+      // Load current theme to avoid unstyled flash
+      const currentTheme = localStorage.getItem("cyber_theme") || "dark";
+      const currentAccent = localStorage.getItem("cyber_accent") || "red";
+
+      const colors = {
+        red: { main: "#FF3131", trans: "rgba(255, 49, 49, 0.15)" },
+        cyan: { main: "#2ef2e2", trans: "rgba(15, 47, 47, 0.15)" },
+        green: { main: "#A4F000", trans: "rgba(0, 63, 58, 0.15)" },
+        purple: { main: "#7c83ff", trans: "rgba(31, 33, 64, 0.15)" },
+        amber: { main: "#FF9E6D", trans: "rgba(255, 153, 0, 0.15)" },
+        pink: { main: "#ff00aa", trans: "rgba(255, 0, 170, 0.15)" },
+        blue: { main: "#0066ff", trans: "rgba(0, 102, 255, 0.15)" },
+        white: { main: "#ffffff", trans: "rgba(255, 255, 255, 0.15)" },
+        matrix: { main: "#03A062", trans: "rgba(0, 255, 65, 0.15)" },
+        gold: { main: "#FFD700", trans: "rgba(255, 215, 0, 0.15)" },
+      };
+
+      if (colors[currentAccent]) {
+        document.documentElement.style.setProperty(
+          "--k-red",
+          colors[currentAccent].main,
+        );
+        document.documentElement.style.setProperty(
+          "--k-red-transparent",
+          colors[currentAccent].trans,
+        );
+      }
+
+      if (currentTheme !== "dark")
+        document.documentElement.classList.add("light-mode");
+
+      const SUPABASE_URL = "https://gjkbbbklxqgxvjoqhvue.supabase.co";
+      const SUPABASE_ANON_KEY =
+        "sb_publishable_Z-ZLJ1kdtSnjYqXFwwDAQw_JKMikQQr";
+      const supabaseClient = window.supabase
+        ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
+        : null;
+
+      async function checkSession() {
+        if (!supabaseClient) return;
+        const {
+          data: { session },
+        } = await supabaseClient.auth.getSession();
+
+        if (!session) {
+          window.location.href = "index.html";
+          return;
+        }
+
+        const user = session.user;
+        document.getElementById("dashboard-email").innerText = user.email || "AGENT_UNKNOWN";
+        document.getElementById("dashboard-name").innerText = user.user_metadata?.full_name || "CLASSIFIED";
+        
+        if (user.user_metadata?.avatar_url) {
+          const avatar = document.getElementById("dashboard-avatar");
+          avatar.src = user.user_metadata.avatar_url;
+          avatar.classList.remove("hidden");
+        }
+
+        // --- FETCH OR INITIALIZE DOSSIER ---
+        let { data: dossier, error } = await supabaseClient
+          .from('dossiers')
+          .select('*')
+          .eq('id', user.id)
+          .single();
+
+        if (error && error.code === 'PGRST116') { // Record not found
+           const initialData = {
+             id: user.id,
+             email: user.email,
+             full_name: user.user_metadata?.full_name || 'Anonymous Operative',
+             avatar_url: user.user_metadata?.avatar_url || '',
+             bio: "New Kalvium Operative // Class of 2026",
+             projects: [],
+             certs: [],
+             skills: []
+           };
+           const { data: newDossier } = await supabaseClient.from('dossiers').insert(initialData).select().single();
+           dossier = newDossier;
+        }
+
+        if (dossier) {
+          if (document.getElementById("in-bio")) document.getElementById("in-bio").value = dossier.bio || "";
+          if (document.getElementById("in-github")) document.getElementById("in-github").value = dossier.github_username || "";
+          if (document.getElementById("in-leetcode")) document.getElementById("in-leetcode").value = dossier.leetcode_username || "";
+          if (document.getElementById("in-hackerrank")) document.getElementById("in-hackerrank").value = dossier.hackerrank_username || "";
+          if (document.getElementById("in-codechef")) document.getElementById("in-codechef").value = dossier.codechef_username || "";
+          if (document.getElementById("in-linkedin")) document.getElementById("in-linkedin").value = dossier.linkedin_url || "";
+          
+          if (dossier.avatar_url) {
+            document.getElementById("dashboard-avatar").src = dossier.avatar_url;
+          }
+          
+          // Populate Skills
+          if (dossier.skills && Array.isArray(dossier.skills)) {
+             document.getElementById("in-skills").value = dossier.skills.join(", ");
+          }
+
+          // Populate Certs
+          const certContainer = document.getElementById("certs-container");
+          if (certContainer && dossier.certs && Array.isArray(dossier.certs)) {
+             certContainer.innerHTML = "";
+             dossier.certs.forEach(c => {
+                if (typeof c === 'string') addCertRow({title: c});
+                else addCertRow(c);
+             });
+          } else {
+             addCertRow();
+          }
+
+          // Populate Projects
+          const container = document.getElementById("projects-container");
+          if (container && dossier.projects && Array.isArray(dossier.projects)) {
+             container.innerHTML = "";
+             dossier.projects.forEach(p => addProjectRow(p));
+          } else {
+             addProjectRow(); // Add one empty row if none
+          }
+        }
+      }
+
+      function addProjectRow(data = {}) {
+        const container = document.getElementById("projects-container");
+        const id = Date.now() + Math.random();
+        const row = document.createElement("div");
+        row.className = "p-4 border border-white/5 bg-white/5 relative group project-row";
+        row.innerHTML = `
+          <button onclick="this.parentElement.remove()" class="absolute top-2 right-2 bg-white/5 border border-white/10 text-gray-500 hover:bg-red-600 hover:text-white hover:border-red-600 p-1.5 px-2 rounded-md transition-all text-[8px] mono flex items-center gap-1.5 group z-20">
+            <i class="fa-solid fa-trash-can text-[10px]"></i> REMOVE
+          </button>
+          <div class="grid grid-cols-1 gap-3">
+            <input type="text" class="p-title bg-black border border-white/10 p-2 text-white mono text-[10px] focus:border-red-600 outline-none w-full" placeholder="PROJECT_TITLE" value="${data.title || ''}">
+            <textarea class="p-desc bg-black border border-white/10 p-2 text-white mono text-[9px] focus:border-red-600 outline-none w-full h-16" placeholder="SYSTEM_DESCRIPTION">${data.desc || ''}</textarea>
+            <div class="grid grid-cols-2 gap-2">
+              <input type="text" class="p-link bg-black border border-white/10 p-2 text-white mono text-[9px] focus:border-red-600 outline-none" placeholder="LIVE_LINK_URL" value="${data.link || ''}">
+              <input type="text" class="p-video bg-black border border-white/10 p-2 text-white mono text-[9px] focus:border-red-600 outline-none" placeholder="DEMO_VIDEO_URL" value="${data.video || ''}">
+            </div>
+            <div class="grid grid-cols-2 gap-2">
+              <input type="text" class="p-github bg-black border border-white/10 p-2 text-white mono text-[9px] focus:border-red-600 outline-none" placeholder="GITHUB_REPO_URL" value="${data.github || ''}">
+              <select class="p-team bg-black border border-white/10 p-2 text-white mono text-[9px] focus:border-red-600 outline-none" onchange="this.nextElementSibling.style.display = (this.value === 'team' ? 'block' : 'none')">
+                <option value="solo" ${data.type === 'solo' ? 'selected' : ''}>SOLO_MISSION</option>
+                <option value="team" ${data.type === 'team' ? 'selected' : ''}>SQUAD_TEAM</option>
+              </select>
+              <input type="text" class="p-members bg-black border border-white/10 p-2 text-white mono text-[9px] focus:border-red-600 outline-none w-full col-span-2 mt-1" placeholder="SQUAD_MEMBER_NAMES (e.g. Alice, Bob)" value="${data.members || ''}" style="display: ${data.type === 'team' ? 'block' : 'none'}">
+            </div>
+          </div>
+        `;
+        container.appendChild(row);
+      }
+
+      function addCertRow(data = {}) {
+        const container = document.getElementById("certs-container");
+        const row = document.createElement("div");
+        row.className = "p-3 border border-white/5 bg-white/[0.01] relative group cert-row";
+        row.innerHTML = `
+          <button onclick="this.parentElement.remove()" class="absolute top-2 right-2 bg-white/5 border border-white/10 text-gray-500 hover:bg-red-600 hover:text-white hover:border-red-600 p-1 px-2 rounded-md transition-all text-[8px] mono flex items-center gap-1.5 group z-20">
+            <i class="fa-solid fa-trash-can text-[9px]"></i> DEL
+          </button>
+          <div class="space-y-2">
+            <input type="text" class="c-title bg-black border border-white/10 p-2 text-white mono text-[10px] focus:border-red-600 outline-none w-full" placeholder="CERT_TITLE" value="${data.title || ''}">
+            <div class="grid grid-cols-2 gap-2 items-center">
+              <input type="text" class="c-link bg-black border border-white/10 p-2 text-white mono text-[9px] focus:border-red-600 outline-none" placeholder="DIGITAL_LINK" value="${data.link || ''}">
+              <div class="flex items-center gap-2 bg-black/40 border border-white/10 p-1 px-2 h-[29px]">
+                <input type="file" class="hidden c-file-input" onchange="handleCertUpload(this)" accept="image/*">
+                <button onclick="this.previousElementSibling.click()" class="mono text-[8px] text-red-500 hover:text-white border border-red-600/30 px-2 py-1 bg-red-600/5 transition-all">UPLOAD_PROOF</button>
+                <input type="hidden" class="c-image" value="${data.image || ''}">
+                <span class="c-status text-[8px] mono ${data.image ? 'text-green-500' : 'text-gray-600'} truncate flex-1">${data.image ? 'READY' : 'EMPTY'}</span>
+              </div>
+            </div>
+          </div>
+        `;
+        container.appendChild(row);
+      }
+
+      async function handleCertUpload(input) {
+        const file = input.files[0];
+        if (!file) return;
+
+        const { data: { session } } = await supabaseClient.auth.getSession();
+        if (!session) return;
+
+        const statusLabel = input.parentElement.querySelector(".c-status");
+        statusLabel.innerText = "UPLOADING...";
+        statusLabel.className = "c-status text-[8px] mono text-amber-500 animate-pulse truncate flex-1";
+
+        // Path: USER_ID/certs/FILENAME
+        const fileName = `${session.user.id}/certs/${Date.now()}-${file.name.replace(/[^a-z0-9.]/gi, '_')}`;
+        
+        const { data, error } = await supabaseClient.storage
+          .from('dossier_assets')
+          .upload(fileName, file, { upsert: true });
+
+        if (error) {
+          alert("Upload failed: " + error.message);
+          statusLabel.innerText = "FAILED";
+          statusLabel.className = "c-status text-[8px] mono text-red-500 truncate flex-1";
+          return;
+        }
+
+        const { data: { publicUrl } } = supabaseClient.storage
+          .from('dossier_assets')
+          .getPublicUrl(fileName);
+
+        const hiddenInput = input.parentElement.querySelector(".c-image");
+        hiddenInput.value = publicUrl;
+        statusLabel.innerText = "SYNCED";
+        statusLabel.className = "c-status text-[8px] mono text-green-500 truncate flex-1";
+      }
+
+      async function handleAvatarUpload(input) {
+        const file = input.files[0];
+        if (!file) return;
+
+        const { data: { session } } = await supabaseClient.auth.getSession();
+        if (!session) return;
+
+        const imgEl = document.getElementById("dashboard-avatar");
+        imgEl.style.opacity = "0.5";
+
+        // Path: USER_ID/avatars/FILENAME
+        const fileName = `${session.user.id}/avatars/profile_${Date.now()}.png`;
+
+        const { data, error } = await supabaseClient.storage
+          .from('dossier_assets')
+          .upload(fileName, file, { upsert: true });
+
+        if (error) {
+          alert("Avatar sync failed: " + error.message);
+          imgEl.style.opacity = "1";
+          return;
+        }
+
+        const { data: { publicUrl } } = supabaseClient.storage
+          .from('dossier_assets')
+          .getPublicUrl(fileName);
+
+        // Update DB immediately for avatar
+        await supabaseClient.from('dossiers').update({ avatar_url: publicUrl }).eq('id', session.user.id);
+        
+        imgEl.src = publicUrl;
+        imgEl.style.opacity = "1";
+      }
+
+      async function saveDossier() {
+        const { data: { session } } = await supabaseClient.auth.getSession();
+        if (!session) return;
+
+        const bio = document.getElementById("in-bio").value;
+        const github = document.getElementById("in-github").value;
+        const leetcode = document.getElementById("in-leetcode").value;
+        const hackerrank = document.getElementById("in-hackerrank").value;
+        const codechef = document.getElementById("in-codechef").value;
+        const linkedin = document.getElementById("in-linkedin").value;
+        
+        // Parse Skills
+        const skillsText = document.getElementById("in-skills").value;
+        const skillsArray = skillsText.split(',').map(s => s.trim()).filter(s => s);
+
+        // Scrape Certs
+        const certsArray = [];
+        document.querySelectorAll(".cert-row").forEach(row => {
+          const title = row.querySelector(".c-title").value.trim();
+          if (title) {
+            certsArray.push({
+              title: title,
+              link: row.querySelector(".c-link").value.trim(),
+              image: row.querySelector(".c-image").value.trim()
+            });
+          }
+        });
+
+        // Scrape Projects
+        const projectsArray = [];
+        document.querySelectorAll(".project-row").forEach(row => {
+          const title = row.querySelector(".p-title").value.trim();
+          if (title) {
+            projectsArray.push({
+              title: title,
+              desc: row.querySelector(".p-desc").value.trim(),
+              link: row.querySelector(".p-link").value.trim(),
+              video: row.querySelector(".p-video").value.trim(),
+              github: row.querySelector(".p-github").value.trim(),
+              type: row.querySelector(".p-team").value,
+              members: row.querySelector(".p-members").value.trim()
+            });
+          }
+        });
+
+        const { error } = await supabaseClient
+          .from('dossiers')
+          .update({ 
+            bio: bio, 
+            email: session.user.email,
+            github_username: github,
+            leetcode_username: leetcode,
+            hackerrank_username: hackerrank,
+            codechef_username: codechef,
+            linkedin_url: linkedin,
+            skills: skillsArray,
+            certs: certsArray,
+            projects: projectsArray,
+            updated_at: new Date() 
+          })
+          .eq('id', session.user.id);
+
+        if (error) {
+          console.error("Save Error:", error);
+          alert("Error saving dossier: " + error.message);
+        } else {
+          alert("System profile synchronized successfully!");
+        }
+      }
+
+      async function handleLogout() {
+        if (!supabaseClient) return;
+        await supabaseClient.auth.signOut();
+        window.location.href = "index.html";
+      }
+
+      function viewPublicDossier() {
+        const name = document.getElementById("dashboard-name").innerText;
+        if (name) {
+          window.location.href = `dossier.html?name=${encodeURIComponent(name)}`;
+        }
+      }
+
+      document.addEventListener("DOMContentLoaded", checkSession);
+    </script>
+  </body>
+</html>
