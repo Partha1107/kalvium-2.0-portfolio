@@ -897,29 +897,63 @@ function openModal(name, isMentor) {
   document.body.style.overflow = "hidden";
 
   // Background Sync for Bio if not mentor
-  if (!isMentor && supabaseClient) {
-      // Set temporary state while syncing
-      const bioEl = document.getElementById("modalBioText");
-      if (bioEl) bioEl.classList.add('opacity-50');
+  if (!isMentor) {
+    const bioEl = document.getElementById("modalBioText");
 
-      supabaseClient.from('dossiers').select('bio').eq('full_name', name).maybeSingle()
-      .then(({data}) => {
-          if (bioEl) {
-              bioEl.classList.remove('opacity-50');
-              if (data && data.bio && data.bio.trim() !== "") {
-                  bioEl.innerText = data.bio;
-                  bioEl.classList.remove('text-red-900/40', 'italic');
-              } else {
-                  bioEl.innerText = ">> NO_ANY_BIO_ADDED // PLEASE_UPDATE_VIA_DASHBOARD";
-                  bioEl.classList.add('text-red-900/40', 'italic');
-              }
-              // Re-check read more button after content load
-              const toggleBtn = document.getElementById("modalBioToggle");
-              if (toggleBtn) {
-                  toggleBtn.style.display = bioEl.scrollHeight > bioEl.clientHeight ? "flex" : "none";
-              }
+    // Prefer any locally-merged dossier bio first (set by dossier-page or earlier sync)
+    const localBio = (window.dossierStates && window.dossierStates[name] && window.dossierStates[name].bio) || p.bio || "";
+    if (bioEl) {
+      if (localBio && localBio.trim() !== "") {
+        bioEl.innerText = localBio;
+        bioEl.classList.remove('text-red-900/40', 'italic');
+      } else {
+        bioEl.innerText = ">> SYNCING_WITH_MAINFRAME...";
+        bioEl.classList.add('opacity-50');
+      }
+    }
+
+    // If Supabase is available, try to fetch authoritative bio (email first, then name)
+    if (supabaseClient) {
+      if (bioEl) bioEl.classList.add('opacity-50');
+      (async () => {
+        try {
+          let resp = await supabaseClient.from('dossiers').select('bio').eq('email', p.email).maybeSingle();
+          let data = resp && resp.data ? resp.data : null;
+          if (!data) {
+            const nameResp = await supabaseClient.from('dossiers').select('bio').ilike('full_name', name).maybeSingle();
+            data = nameResp && nameResp.data ? nameResp.data : null;
           }
-      });
+
+          if (bioEl) {
+            bioEl.classList.remove('opacity-50');
+            if (data && data.bio && data.bio.trim() !== "") {
+              bioEl.innerText = data.bio;
+              bioEl.classList.remove('text-red-900/40', 'italic');
+            } else if (!localBio || localBio.trim() === "") {
+              bioEl.innerText = ">> NO_ANY_BIO_ADDED // PLEASE_UPDATE_VIA_DASHBOARD";
+              bioEl.classList.add('text-red-900/40', 'italic');
+            }
+
+            const toggleBtn = document.getElementById("modalBioToggle");
+            if (toggleBtn) {
+              toggleBtn.style.display = bioEl.scrollHeight > bioEl.clientHeight ? "flex" : "none";
+            }
+          }
+        } catch (e) {
+          console.error('Bio sync error', e);
+          if (bioEl) bioEl.classList.remove('opacity-50');
+        }
+      })();
+    } else {
+      // No supabase available — re-evaluate toggle button based on whatever content we have
+      setTimeout(() => {
+        const toggleBtn = document.getElementById("modalBioToggle");
+        const bioEl2 = document.getElementById("modalBioText");
+        if (toggleBtn && bioEl2) {
+          toggleBtn.style.display = bioEl2.scrollHeight > bioEl2.clientHeight ? "flex" : "none";
+        }
+      }, 60);
+    }
   }
 
   setTimeout(() => {
@@ -1373,8 +1407,9 @@ function generateReply(msg) {
   if (nameMatch && lower.length > 3 && (lower.includes("who") || lower.includes("tell") || lower.includes("find") || lower.includes("about"))) {
     const isMentor = (window.mentorsData || []).some(m => m.name === nameMatch.name);
     const role = isMentor ? nameMatch.role : 'Kalvian';
+    const safeBio = (nameMatch.bio || "").toString();
     return {
-      text: `👤 <b>${nameMatch.name}</b><br>Role: ${role}<br><br>"${nameMatch.bio.substring(0, 150)}${nameMatch.bio.length > 150 ? '...' : ''}"<br><br>${nameMatch.github ? `<a href="${nameMatch.github}" target="_blank" class="text-red-500 hover:underline">GitHub ↗</a> · ` : ''}<a href="${nameMatch.linkedin}" target="_blank" class="text-red-500 hover:underline">LinkedIn ↗</a>`,
+      text: `👤 <b>${nameMatch.name}</b><br>Role: ${role}<br><br>"${safeBio.substring(0, 150)}${safeBio.length > 150 ? '...' : ''}"<br><br>${nameMatch.github ? `<a href="${nameMatch.github}" target="_blank" class="text-red-500 hover:underline">GitHub ↗</a> · ` : ''}<a href="${nameMatch.linkedin}" target="_blank" class="text-red-500 hover:underline">LinkedIn ↗</a>`,
       suggestions: [`Open ${nameMatch.name.split(' ')[0]}'s profile`, "Show all students", "Back to help"]
     };
   }
