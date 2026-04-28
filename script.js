@@ -69,6 +69,19 @@ let currentAccent = localStorage.getItem("cyber_accent") || "red";
 let currentFont = localStorage.getItem("cyber_font") || "sans";
 let currentFontSize = localStorage.getItem("cyber_fontsize") || "md";
 
+const SUPABASE_BUCKET_IMAGE_BASE =
+  "https://gjkbbbklxqgxvjoqhvue.supabase.co/storage/v1/object/public/dossier_assets/Profile/profile_picture/";
+
+function resolveDossierImageSrc(src) {
+  if (!src) return src;
+  if (src.startsWith("http://") || src.startsWith("https://")) return src;
+
+  const fileName = src.replace(/^\.\/Src\//, "");
+  if (!fileName || fileName === src) return src;
+
+  return `${SUPABASE_BUCKET_IMAGE_BASE}${encodeURIComponent(fileName)}`;
+}
+
 function applyTheme(mode) {
   let isDark = true;
   if (mode === "device")
@@ -90,7 +103,7 @@ function applyAccent(colorKey) {
   document.documentElement.style.setProperty("--k-red-glow", c.glow);
   document.documentElement.style.setProperty("--k-red-transparent", c.trans);
 }
-function smoothScrollTo(targetId, duration = 800) {
+function smoothScrollTo(targetId, duration = 400) {
   const target = document.getElementById(targetId);
   if (!target) return;
 
@@ -534,22 +547,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // --- INIT ---
   async function init() {
-    // 1. Fetch updated avatars from Mainframe
-    if (supabaseClient) {
-      const { data: remoteData } = await supabaseClient.from('dossiers').select('full_name, avatar_url');
-      if (remoteData) {
-        remoteData.forEach(remote => {
-          if (remote.avatar_url) {
-            // Check students
-            const s = studentsData.find(st => st.name === remote.full_name);
-            if (s) s.img = remote.avatar_url;
-            // Check mentors
-            const m = mentorsData.find(mn => mn.name === remote.full_name);
-            if (m) m.img = remote.avatar_url;
-          }
-        });
-      }
-    }
+    // Keep dossier images local for now.
+    // Supabase avatars can be enabled later, but they must not override `Src/` images.
 
     setTimeout(() => {
       window.scrollTo(0, 0); // Force to top one last time before revealing
@@ -562,15 +561,27 @@ document.addEventListener("DOMContentLoaded", () => {
     document.getElementById("mentorGrid").innerHTML = mentorsData
       .map((m) => renderCard(m, true))
       .join("");
-    document.getElementById("studentScroller").innerHTML = [
-      ...studentsData,
-      ...studentsData,
-    ]
-      .map((s) => renderCard(s, false, "scroll"))
-      .join("");
-    document.getElementById("studentGrid").innerHTML = studentsData
-      .map((s) => renderCard(s, false, "grid"))
-      .join("");
+
+    // Defer rendering of the heavy students section until it's in view.
+    // Place lightweight placeholders so first paint is fast.
+    const scrollerEl = document.getElementById("studentScroller");
+    const gridEl = document.getElementById("studentGrid");
+    if (scrollerEl) scrollerEl.innerHTML = '<div class="stats-loader">LOADING_STUDENTS...</div>';
+    if (gridEl) gridEl.innerHTML = '<div class="stats-loader">LOADING_STUDENTS...</div>';
+
+    const studentsSection = document.getElementById('students-section');
+    if (studentsSection && 'IntersectionObserver' in window) {
+      const io = new IntersectionObserver((entries, obs) => {
+        if (entries[0].isIntersecting) {
+          renderStudents();
+          obs.disconnect();
+        }
+      }, { rootMargin: '400px' });
+      io.observe(studentsSection);
+    } else {
+      // Fallback: render immediately
+      renderStudents();
+    }
 
     document.getElementById("proverbDisplay").innerText =
       proverbsList[currentProverbIdx];
@@ -598,6 +609,55 @@ document.addEventListener("DOMContentLoaded", () => {
     }, 800);
   }
 
+  // --- LAZY RENDER STUDENTS ---
+  function renderStudents() {
+    const scrollerEl = document.getElementById("studentScroller");
+    const gridEl = document.getElementById("studentGrid");
+
+    // Scroller: show a smaller set to avoid heavy duplication
+    const scrollerItems = studentsData.slice(0, 12);
+    if (scrollerEl) {
+      scrollerEl.innerHTML = scrollerItems
+        .map((s) => renderCard(s, false, "scroll"))
+        .join("");
+      // Pause animation briefly then resume to avoid jank
+      const wrapper = scrollerEl.closest('.scroll-wrapper');
+      if (wrapper) {
+        wrapper.style.animationPlayState = 'running';
+      }
+    }
+
+    // Grid: render first chunk and add load-more control
+    const initialGrid = studentsData.slice(0, 12);
+    if (gridEl) {
+      gridEl.innerHTML = initialGrid.map((s) => renderCard(s, false, 'grid')).join('');
+      if (studentsData.length > 12) {
+        gridEl.insertAdjacentHTML('beforeend', `
+          <div class="flex justify-center mt-6 w-full">
+            <button id="load-more-students" class="btn-cyber-main px-6 py-3">LOAD_MORE</button>
+          </div>
+        `);
+        const btn = document.getElementById('load-more-students');
+        if (btn) btn.addEventListener('click', loadMoreStudents);
+      }
+    }
+    // track loaded count
+    window._studentsLoadedCount = 12;
+  }
+
+  function loadMoreStudents() {
+    const gridEl = document.getElementById('studentGrid');
+    const next = window._studentsLoadedCount || 12;
+    const chunk = studentsData.slice(next, next + 12);
+    if (!gridEl) return;
+    gridEl.insertAdjacentHTML('beforeend', chunk.map(s => renderCard(s, false, 'grid')).join(''));
+    window._studentsLoadedCount = next + chunk.length;
+    if (window._studentsLoadedCount >= studentsData.length) {
+      const btn = document.getElementById('load-more-students');
+      if (btn) btn.remove();
+    }
+  }
+
   // --- RENDER CARDS ---
   window.renderCard = function (p, isMentor, type = "grid") {
     const width = type === "scroll" ? "w-80 flex-shrink-0" : "w-full";
@@ -614,7 +674,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 <div class="tactical-card group" onmousemove="handleCardMove(event, this)" onclick="openModal(&quot;${p.name}&quot;, ${isMentor})" data-name="${p.name.toLowerCase()}">                         
                     <div class="card-glare"></div>                         
                     <div class="card-watermark">${watermark}</div>                         
-                    <img src="${p.img}" class="w-32 h-32 mb-6 border border-red-600/30 p-1 transition-all duration-500 grayscale group-hover:grayscale-0 group-hover:border-red-600 rounded-full z-10" loading="lazy">                         
+                    <img src="${resolveDossierImageSrc(p.img)}" class="w-32 h-32 mb-6 border border-red-600/30 p-1 transition-all duration-500 grayscale group-hover:grayscale-0 group-hover:border-red-600 rounded-full z-10" loading="lazy">                         
                     <div class="text-center z-10 px-4">                             
                         <p class="text-red-600 mono text-[9px] uppercase font-bold tracking-widest mb-1 transition-colors duration-500 group-hover:text-white">${isMentor ? p.role : "KALVIAN"}</p>
                         <h3 class="text-xl font-black uppercase tracking-tighter">${p.name}</h3>
@@ -691,17 +751,7 @@ document.addEventListener("DOMContentLoaded", () => {
     anchor.addEventListener("click", function (e) {
       e.preventDefault();
       const targetId = this.getAttribute("href").substring(1);
-      const targetElement = document.getElementById(targetId);
-
-      if (targetElement) {
-        // Calculate position considering any fixed nav or sticky elements natively
-        const targetPosition =
-          targetElement.getBoundingClientRect().top + window.scrollY;
-        window.scrollTo({
-          top: targetPosition,
-          behavior: "smooth",
-        });
-      }
+      smoothScrollTo(targetId, 350);
     });
   });
 
@@ -798,7 +848,7 @@ function openModal(name, isMentor) {
             <div class="w-56 h-56 md:w-72 md:h-72 flex-shrink-0 relative group">                         
                 <div class="absolute inset-0 border-2 border-red-600/20 rounded-full group-hover:border-red-600/60 transition-all duration-500 animate-[spin_8s_linear_infinite]"></div>                         
                 <div class="absolute inset-3 border border-red-600/40 rounded-full border-dashed animate-[spin_12s_linear_infinite_reverse]"></div>                         
-                <img src="${p.img}" class="w-full h-full object-cover rounded-full p-5 transition-all duration-700 shadow-[0_0_30px_rgba(255,0,0,0.15)]">                         
+                <img src="${resolveDossierImageSrc(p.img)}" loading="lazy" class="w-full h-full object-cover rounded-full p-5 transition-all duration-700 shadow-[0_0_30px_rgba(255,0,0,0.15)]">                         
             </div>                     
             <div class="text-left max-w-xl w-full">                         
                 <div class="flex items-center gap-3 mb-3">                             
