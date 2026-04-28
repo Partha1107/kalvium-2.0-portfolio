@@ -27,6 +27,34 @@ function extractGitHubUsername(url) {
     return match ? match[1] : '';
 }
 
+function normalizeHandle(value) {
+    return String(value || '').trim();
+}
+
+function extractHackerRankUsername(value) {
+    const raw = normalizeHandle(value);
+    if (!raw) return '';
+    const m = raw.match(/hackerrank\.com\/(?:profile\/)?([^\/\?#]+)/i);
+    if (m && m[1]) return m[1].trim();
+    return raw.replace(/^@/, '');
+}
+
+function extractCodeChefUsername(value) {
+    const raw = normalizeHandle(value);
+    if (!raw) return '';
+    const m = raw.match(/codechef\.com\/(?:users\/)?([^\/\?#]+)/i);
+    if (m && m[1]) return m[1].trim();
+    return raw.replace(/^@/, '');
+}
+
+function normalizeHackerRankTitle(rawTitle) {
+    const title = normalizeHandle(rawTitle);
+    if (!title) return 'HackerRank Learner';
+    // Titles like O(2^N) are fun but not useful as a learning label.
+    if (/^o\s*\(/i.test(title) || /^[a-z]\(.*\)$/i.test(title)) return 'Problem Solving';
+    return title;
+}
+
 // --- PLATFORM CONFIG PERSISTENCE ---
 function savePlatformConfig(name, platforms) {
     try {
@@ -40,16 +68,6 @@ function getSavedPlatformConfig(name) {
         const configs = JSON.parse(localStorage.getItem('platform_configs') || '{}');
         return configs[name] || null;
     } catch { return null; }
-}
-
-// --- SCORE RANK LABEL ---
-function getScoreRank(score) {
-    if (score >= 90) return { label: 'LEGENDARY', color: '#ff00aa' };
-    if (score >= 75) return { label: 'ELITE', color: '#00ff88' };
-    if (score >= 60) return { label: 'SPECIALIST', color: '#A4F000' };
-    if (score >= 40) return { label: 'OPERATIVE', color: '#FFA116' };
-    if (score >= 20) return { label: 'RECRUIT', color: '#FF6B35' };
-    return { label: 'INITIALIZING', color: '#666' };
 }
 
 // --- LEETCODE API (via alfa-leetcode-api proxy) ---
@@ -106,25 +124,98 @@ async function fetchGitHubStats(username) {
     } catch (err) { console.warn(`GitHub fetch failed for ${username}:`, err); return null; }
 }
 
-// --- CODEFORCES API ---
 // --- HACKERRANK API (using profile data) ---
 async function fetchHackerRankStats(username) {
     if (!username) return null;
+
     const cached = getCachedStats(`hr_${username}`);
     if (cached) return cached;
+
     try {
-        // HackerRank doesn't have a clean profile API for badges easily accessible via CORS without a proxy
-        // We'll use a placeholder structure or a known public scrapable endpoint if available
-        // For now, we'll return a structured layout that looks good
+        const encoded = encodeURIComponent(username);
+
+        function parseProxyJson(text) {
+            if (!text) return null;
+            const start = text.indexOf('{');
+            const end = text.lastIndexOf('}');
+            if (start === -1 || end === -1 || end <= start) return null;
+            try {
+                return JSON.parse(text.slice(start, end + 1));
+            } catch {
+                return null;
+            }
+        }
+
+        async function fetchJson(url) {
+            try {
+                const response = await fetch(url, {
+                    method: 'GET',
+                    // Browser fetch already sends a User-Agent automatically.
+                    // Setting User-Agent manually is blocked by browsers.
+                    headers: { 'Accept': 'application/json' }
+                });
+                if (response.ok) return await response.json();
+            } catch {}
+
+            // CORS/anti-bot fallback for client-side rendering.
+            try {
+                const proxyUrl = `https://r.jina.ai/http://${url.replace(/^https?:\/\//, '')}`;
+                const proxyRes = await fetch(proxyUrl, { method: 'GET' });
+                if (!proxyRes.ok) return null;
+                const proxyText = await proxyRes.text();
+                return parseProxyJson(proxyText);
+            } catch {
+                return null;
+            }
+        }
+
+        // New/working profile endpoint for public HackerRank handles.
+        const profilePayload =
+            await fetchJson(`https://www.hackerrank.com/rest/contests/master/hackers/${encoded}/profile`) ||
+            await fetchJson(`https://www.hackerrank.com/rest/contests/master/users/${encoded}`);
+
+        if (!profilePayload) {
+            throw new Error('HackerRank profile not found');
+        }
+
+        const model = profilePayload?.model || {};
+
+        // Badges endpoint can be empty for many profiles; keep it optional.
+        const badgePayload = await fetchJson(`https://www.hackerrank.com/rest/hackers/${encoded}/badges`);
+        const badgesRaw = Array.isArray(badgePayload?.models)
+            ? badgePayload.models
+            : (Array.isArray(model.badges) ? model.badges : []);
+        const recentPayload = await fetchJson(`https://www.hackerrank.com/rest/hackers/${encoded}/recent_challenges`);
+        const recentRaw = Array.isArray(recentPayload?.models) ? recentPayload.models : [];
+        const languagesRaw = Array.isArray(model.languages) ? model.languages : [];
+        const practiceFocus = languagesRaw
+            .map(l => (typeof l === 'string' ? l : l?.name || l?.language || ''))
+            .filter(Boolean)
+            .slice(0, 3);
+        const recent = recentRaw.slice(0, 3).map(item => ({
+            name: item?.name || item?.challenge?.name || item?.challenge_name || 'Challenge',
+            status: item?.status || item?.verdict || 'Attempted'
+        }));
+
         const stats = {
-            badges: ["Problem Solving", "Java", "SQL"],
-            stars: 5,
-            followers: 12,
-            rank: "Certificate Tier_01"
+            badges: badgesRaw.map(b => b.badge_name || b.name).filter(Boolean),
+            badgeStars: badgesRaw.reduce((acc, b) => Math.max(acc, Number(b.stars) || 0), 0),
+            followers: Number(model.followers_count) || 0,
+            rank: normalizeHackerRankTitle(model.title || model.personal_achievements?.highest_rank || 'N/A'),
+            totalSubmissions: Number(model.submissions_count) || 0,
+            level: Number(model.level) || 0,
+            currentPractice: practiceFocus,
+            currentLearning: normalizeHackerRankTitle(badgesRaw[0]?.badge_name || badgesRaw[0]?.name || model.title || 'General Problem Solving'),
+            recent
         };
+
         setCachedStats(`hr_${username}`, stats);
         return stats;
-    } catch (err) { console.warn(`HackerRank fetch failed for ${username}:`, err); return null; }
+
+    } catch (err) {
+        console.warn(`HackerRank fetch failed for ${username}:`, err);
+        return null;
+    }
 }
 
 // --- CODECHEF API ---
@@ -146,39 +237,6 @@ async function fetchCodeChefStats(username) {
         setCachedStats(`cc_${username}`, stats);
         return stats;
     } catch (err) { console.warn(`CodeChef fetch failed for ${username}:`, err); return null; }
-}
-
-// --- COMPOSITE SCORE ---
-function calculateCompositeScore(lc, gh, hr, cc) {
-    let totalWeight = 0, weighted = 0;
-    if (lc) {
-        const raw = (lc.easy * 1) + (lc.medium * 3) + (lc.hard * 7);
-        weighted += Math.min(100, raw / 2) * 35;
-        totalWeight += 35;
-    }
-    if (gh) {
-        const ghScore = Math.min(100, (gh.publicRepos * 4) + (gh.totalStars * 8) + (gh.followers * 3) + (gh.languages.length * 5));
-        weighted += ghScore * 25;
-        totalWeight += 25;
-    }
-    if (hr) {
-        weighted += 100 * 20; // HackerRank participation
-        totalWeight += 20;
-    }
-    if (cc && cc.rating > 0) {
-        weighted += Math.min(100, cc.rating / 20) * 20;
-        totalWeight += 20;
-    }
-    return totalWeight === 0 ? 0 : Math.round(weighted / totalWeight);
-}
-
-// --- GET SCORE COLOR ---
-function getScoreColor(score) {
-    if (score >= 80) return '#00ff88';
-    if (score >= 60) return '#A4F000';
-    if (score >= 40) return '#FFA116';
-    if (score >= 20) return '#FF6B35';
-    return '#ff3131';
 }
 
 // --- RENDER CODING STATS SECTION (returns HTML string) ---
@@ -289,17 +347,68 @@ function renderGHStats(data) {
         </div>`;
 }
 
-function renderHRStats(data) {
-    if (!data) return `<div class="stats-empty"><i class="fa-solid fa-lock text-gray-700"></i> Locked<p class="text-[9px] mt-2 text-gray-600">Sync via Dashboard</p></div>`;
+function renderHRStats(data, username = '', fallbackSkills = []) {
+    if (!data) {
+        if (username) {
+            const profileUrl = `https://www.hackerrank.com/profile/${encodeURIComponent(username)}`;
+            const safeSkills = Array.isArray(fallbackSkills) ? fallbackSkills : [];
+            const practicingList = safeSkills
+                .map(s => (typeof s === 'string' ? s : s?.name || ''))
+                .filter(Boolean)
+                .slice(0, 3);
+            const learningText = normalizeHackerRankTitle(practicingList[0] || 'General Problem Solving');
+            const practicingHTML = practicingList.length > 0
+                ? `<div class="flex flex-wrap gap-1 mt-1">${practicingList.map(p => `<span class="text-[8px] mono px-1.5 py-0.5 bg-white/5 border border-white/10 rounded text-gray-300">${p}</span>`).join('')}</div>`
+                : `<span class="text-[9px] mono text-gray-500">Building fundamentals</span>`;
+            return `
+                <div class="space-y-3.5">
+                    <div class="stat-row"><span class="text-gray-400">Status</span><span class="font-bold text-green-500">Connected</span></div>
+                    <div class="stat-row"><span class="text-gray-400">Handle</span><span class="font-bold text-white text-xs tracking-wide">${username}</span></div>
+                    <a href="${profileUrl}" target="_blank" rel="noopener" class="inline-flex items-center gap-2 text-[10px] mono px-2 py-1 bg-green-950/20 border border-green-600/30 text-green-400 hover:text-white hover:border-green-500 transition-all">
+                        <i class="fa-solid fa-arrow-up-right-from-square text-[9px]"></i> Open Profile
+                    </a>
+                    <div class="pt-2 border-t border-white/5 space-y-2">
+                        <div class="stat-row"><span class="text-gray-400">Current Learning</span><span class="font-bold text-white text-[10px] truncate ml-2">${learningText}</span></div>
+                        <div>
+                            <span class="text-[8px] text-gray-500 uppercase">Current Practicing</span>
+                            ${practicingHTML}
+                        </div>
+                    </div>
+                    <p class="text-[8px] text-gray-600">Live HackerRank sync is temporarily unavailable in browser mode.</p>
+                </div>`;
+        }
+        return `<div class="stats-empty"><i class="fa-solid fa-lock text-gray-700"></i> Locked<p class="text-[9px] mt-2 text-gray-600">Sync via Dashboard</p></div>`;
+    }
+
+    const cleanRole = normalizeHackerRankTitle(data.rank || 'HackerRank Learner');
+    const cleanLearning = normalizeHackerRankTitle(data.currentLearning || 'General Problem Solving');
+    const practiceHTML = Array.isArray(data.currentPractice) && data.currentPractice.length > 0
+        ? `<div class="flex flex-wrap gap-1 mt-1">${data.currentPractice.map(p => `<span class="text-[8px] mono px-1.5 py-0.5 bg-white/5 border border-white/10 rounded text-gray-300">${p}</span>`).join('')}</div>`
+        : `<span class="text-[9px] mono text-gray-500">Building fundamentals</span>`;
+    const recentHTML = Array.isArray(data.recent) && data.recent.length > 0
+        ? `<div class="space-y-1">${data.recent.map(r => `<div class="text-[9px] mono text-gray-300 truncate"><i class="fa-solid fa-bolt-lightning text-[8px] text-green-500 mr-1"></i>${r.name} <span class="text-gray-500">(${r.status})</span></div>`).join('')}</div>`
+        : `<span class="text-[9px] mono text-gray-500">No public recent challenges found</span>`;
+    const badgesHTML = Array.isArray(data.badges) && data.badges.length > 0
+        ? `<div class="flex flex-wrap gap-1">${data.badges.map(b => `<span class="text-[8px] mono px-1.5 py-0.5 bg-green-950/30 border border-green-600/20 text-green-500 rounded">${b}</span>`).join('')}</div>`
+        : `<span class="text-[9px] mono text-gray-500">No verified badges yet</span>`;
+
     return `
-        <div class="space-y-3">
-            <div class="stat-row"><span class="text-gray-400">Stars</span><span class="font-bold text-lg text-yellow-500">${'★'.repeat(data.stars)}</span></div>
-            <div class="stat-row"><span class="text-gray-400">Role</span><span class="font-bold text-white text-[10px]">${data.rank}</span></div>
-            <div class="stat-row border-t border-white/5 pt-2 mt-1 space-y-1">
+        <div class="space-y-3.5">
+            <div class="stat-row"><span class="text-gray-400">Level</span><span class="font-bold text-white text-[11px]">${data.level || 0}</span></div>
+            <div class="stat-row"><span class="text-gray-400">Badge Stars</span><span class="font-bold text-yellow-500 text-[11px]">${data.badgeStars ? `${'★'.repeat(Math.min(5, data.badgeStars))} (${data.badgeStars})` : '—'}</span></div>
+            <div class="stat-row"><span class="text-gray-400">Role</span><span class="font-bold text-white text-[11px]">${cleanRole}</span></div>
+            <div class="stat-row"><span class="text-gray-400">Current Learning</span><span class="font-bold text-white text-[11px] truncate ml-2">${cleanLearning}</span></div>
+            <div class="border-t border-white/5 pt-2 space-y-1.5">
+                <span class="text-[8px] text-gray-500 uppercase">Current Practicing</span>
+                ${practiceHTML}
+            </div>
+            <div class="border-t border-white/5 pt-2 space-y-1.5">
+                <span class="text-[8px] text-gray-500 uppercase">Recent Practice</span>
+                ${recentHTML}
+            </div>
+            <div class="border-t border-white/5 pt-2 space-y-1.5">
                 <span class="text-[8px] text-gray-500 uppercase">Verified Badges</span>
-                <div class="flex flex-wrap gap-1">
-                    ${data.badges.map(b => `<span class="text-[8px] mono px-1.5 py-0.5 bg-green-950/30 border border-green-600/20 text-green-500 rounded">${b}</span>`).join('')}
-                </div>
+                ${badgesHTML}
             </div>
         </div>`;
 }
@@ -316,22 +425,18 @@ function renderCCStats(data) {
         </div>`;
 }
 
-// --- UPDATE SCORE RING ---
-function updateScoreRing(score) {
-    // Score ring removed from UI
-}
-
 // --- LOAD CODING STATS (main async function) ---
 async function loadCodingStats(name) {
     const allPeople = [...(window.mentorsData || []), ...(window.studentsData || [])];
     const person = allPeople.find(p => p.name.trim().toLowerCase() === name.trim().toLowerCase());
     if (!person) return;
+    const person = allPeople.find(p => p.name === name) || {};
 
     const state = window.getDossierState(name);
-    const ghUsername = state.github_username || extractGitHubUsername(person.github);
-    const lcUsername = state.leetcode_username || person.leetcode || '';
-    const hrUsername = state.hackerrank_username || person.hackerrank || '';
-    const ccUsername = state.codechef_username || person.codechef || '';
+    const ghUsername = normalizeHandle(state.github_username || state.platforms?.github || extractGitHubUsername(person.github));
+    const lcUsername = normalizeHandle(state.leetcode_username || state.platforms?.leetcode || person.leetcode);
+    const hrUsername = extractHackerRankUsername(state.hackerrank_username || state.platforms?.hackerrank || person.hackerrank);
+    const ccUsername = extractCodeChefUsername(state.codechef_username || state.platforms?.codechef || person.codechef);
 
     // Fetch all in parallel
     const [lcData, ghData, hrData, ccData] = await Promise.all([
@@ -348,12 +453,9 @@ async function loadCodingStats(name) {
     const ccEl = document.getElementById('cc-stats-content');
     if (lcEl) lcEl.innerHTML = renderLCStats(lcData);
     if (ghEl) ghEl.innerHTML = renderGHStats(ghData);
-    if (hrEl) hrEl.innerHTML = renderHRStats(hrData);
+    if (hrEl) hrEl.innerHTML = renderHRStats(hrData, hrUsername, state.skills);
     if (ccEl) ccEl.innerHTML = renderCCStats(ccData);
 
-    // Calculate and show composite score
-    const score = calculateCompositeScore(lcData, ghData, hrData, ccData);
-    updateScoreRing(score);
 }
 
 // --- REFRESH STATS (clear cache for current subject) ---
@@ -365,19 +467,22 @@ function refreshCodingStats() {
     const person = allPeople.find(p => p.name === name);
     // Clear cached entries
     const cache = getStatsCache();
-    const ghU = state.platforms?.github || extractGitHubUsername(person?.github);
-    const lcU = state.platforms?.leetcode || person?.leetcode || '';
-    const cfU = state.platforms?.codeforces || person?.codeforces || '';
-    delete cache[`lc_${lcU}`]; delete cache[`gh_${ghU}`]; delete cache[`cf_${cfU}`];
+    const ghU = state.github_username || state.platforms?.github || extractGitHubUsername(person?.github);
+    const lcU = state.leetcode_username || state.platforms?.leetcode || person?.leetcode || '';
+    const hrU = state.hackerrank_username || state.platforms?.hackerrank || person?.hackerrank || '';
+    const ccU = state.codechef_username || state.platforms?.codechef || person?.codechef || '';
+    delete cache[`lc_${lcU}`];
+    delete cache[`gh_${ghU}`];
+    delete cache[`hr_${hrU}`];
+    delete cache[`cc_${ccU}`];
     try { localStorage.setItem('coding_stats_cache', JSON.stringify(cache)); } catch {}
     // Re-render loading state
     const grid = document.getElementById('coding-stats-grid');
     if (grid) {
         document.getElementById('lc-stats-content').innerHTML = '<div class="stats-loader"><i class="fa-solid fa-spinner fa-spin"></i> Re-syncing...</div>';
         document.getElementById('gh-stats-content').innerHTML = '<div class="stats-loader"><i class="fa-solid fa-spinner fa-spin"></i> Re-syncing...</div>';
-        document.getElementById('cf-stats-content').innerHTML = '<div class="stats-loader"><i class="fa-solid fa-spinner fa-spin"></i> Re-syncing...</div>';
-        document.getElementById('composite-score-val').textContent = '--';
-        document.getElementById('score-ring-fill').style.strokeDashoffset = 377;
+        document.getElementById('hr-stats-content').innerHTML = '<div class="stats-loader"><i class="fa-solid fa-spinner fa-spin"></i> Re-syncing...</div>';
+        document.getElementById('cc-stats-content').innerHTML = '<div class="stats-loader"><i class="fa-solid fa-spinner fa-spin"></i> Re-syncing...</div>';
     }
     // Spin the refresh button
     const btn = document.getElementById('refresh-stats-btn');
@@ -395,7 +500,8 @@ function promptConfigPlatforms() {
         state.platforms = {
             github: extractGitHubUsername(person?.github),
             leetcode: person?.leetcode || '',
-            codeforces: person?.codeforces || ''
+            hackerrank: person?.hackerrank || '',
+            codechef: person?.codechef || ''
         };
     }
     document.getElementById('input-modal-title').innerText = "PLATFORM_LINK_CONFIG";
@@ -410,15 +516,20 @@ function promptConfigPlatforms() {
                 <input type="text" id="in-gh-user" value="${state.platforms.github}" placeholder="e.g. Partha1107" class="w-full bg-black border border-white/20 p-3 text-white text-sm mono outline-none focus:border-red-600">
             </div>
             <div>
-                <label class="block text-[9px] mono text-gray-500 uppercase tracking-widest mb-1 font-bold">Codeforces Handle</label>
-                <input type="text" id="in-cf-user" value="${state.platforms.codeforces}" placeholder="e.g. ashwin_cf" class="w-full bg-black border border-white/20 p-3 text-white text-sm mono outline-none focus:border-red-600">
+                <label class="block text-[9px] mono text-gray-500 uppercase tracking-widest mb-1 font-bold">HackerRank Username</label>
+                <input type="text" id="in-hr-user" value="${state.platforms.hackerrank || ''}" placeholder="e.g. ashwin_hr" class="w-full bg-black border border-white/20 p-3 text-white text-sm mono outline-none focus:border-red-600">
+            </div>
+            <div>
+                <label class="block text-[9px] mono text-gray-500 uppercase tracking-widest mb-1 font-bold">CodeChef Username</label>
+                <input type="text" id="in-cc-user" value="${state.platforms.codechef || ''}" placeholder="e.g. ashwin_cc" class="w-full bg-black border border-white/20 p-3 text-white text-sm mono outline-none focus:border-red-600">
             </div>
         </div>`;
     document.getElementById('input-modal-save').onclick = () => {
         state.platforms = {
             leetcode: document.getElementById('in-lc-user').value.trim(),
             github: document.getElementById('in-gh-user').value.trim(),
-            codeforces: document.getElementById('in-cf-user').value.trim()
+            hackerrank: document.getElementById('in-hr-user').value.trim(),
+            codechef: document.getElementById('in-cc-user').value.trim()
         };
         savePlatformConfig(name, state.platforms);
         closeInputModal();

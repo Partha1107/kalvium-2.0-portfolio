@@ -335,6 +335,65 @@ function extractGitHubUsername(url) {
   return parts[parts.length - 1];
 }
 
+const SUPABASE_BUCKET_IMAGE_BASE =
+  "https://gjkbbbklxqgxvjoqhvue.supabase.co/storage/v1/object/public/dossier_assets/Profile/profile_picture/";
+
+function resolveDossierImageSrc(src) {
+  if (!src) return src;
+  if (src.startsWith("http://") || src.startsWith("https://")) return src;
+
+  const fileName = src.replace(/^\.\/Src\//, "");
+  if (!fileName || fileName === src) return src;
+
+  return `${SUPABASE_BUCKET_IMAGE_BASE}${encodeURIComponent(fileName)}`;
+}
+
+window.getDossierState = function (n) {
+  if (!window.dossierStates[n]) {
+    const p = [...mentorsData, ...studentsData].find((x) => x.name === n);
+    const ghUsername = p ? extractGitHubUsername(p.github) : "";
+    window.dossierStates[n] = {
+      projects: [],
+      certs: [],
+      skills: [
+        { name: "JavaScript / TS", pct: 75 },
+        { name: "Python", pct: 60 },
+        { name: "C++ / Algorithms", pct: 85 },
+      ],
+      platforms: {
+        github: ghUsername,
+        leetcode: p?.leetcode || "",
+        hackerrank: p?.hackerrank || "",
+        codechef: p?.codechef || "",
+      },
+    };
+  }
+
+  if (window.remoteDossier && window.currentActiveSubject === n) {
+    const remote = window.remoteDossier;
+    const localState = window.dossierStates[n];
+    const normalizedSkills = Array.isArray(remote.skills)
+      ? remote.skills.map((s) => (typeof s === "string" ? { name: s, pct: 85 } : s))
+      : localState.skills;
+
+    window.dossierStates[n] = {
+      ...localState,
+      projects: Array.isArray(remote.projects) ? remote.projects : localState.projects,
+      certs: Array.isArray(remote.certs) ? remote.certs : localState.certs,
+      skills: normalizedSkills,
+      platforms: {
+        ...(localState.platforms || {}),
+        github: remote.github_username || localState.platforms?.github || "",
+        leetcode: remote.leetcode_username || localState.platforms?.leetcode || "",
+        hackerrank: remote.hackerrank_username || localState.platforms?.hackerrank || "",
+        codechef: remote.codechef_username || localState.platforms?.codechef || "",
+      },
+    };
+  }
+
+  return window.dossierStates[n];
+};
+
 // --- INIT: Read URL params and render ---
 document.addEventListener("DOMContentLoaded", async () => {
   const params = new URLSearchParams(window.location.search);
@@ -409,6 +468,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
       if (data) {
         remoteDossier = data;
+        window.remoteDossier = data;
         // Normalize Skills (Dashboard saves strings, UI needs objects)
         if (remoteDossier.skills && Array.isArray(remoteDossier.skills)) {
           remoteDossier.skills = remoteDossier.skills.map(s => {
@@ -418,6 +478,22 @@ document.addEventListener("DOMContentLoaded", async () => {
         }
         if (!remoteDossier.certs) remoteDossier.certs = [];
         if (!remoteDossier.projects) remoteDossier.projects = [];
+        if (!window.dossierStates[name]) {
+          window.dossierStates[name] = {};
+        }
+        window.dossierStates[name] = {
+          ...window.dossierStates[name],
+          projects: remoteDossier.projects,
+          certs: remoteDossier.certs,
+          skills: remoteDossier.skills || window.dossierStates[name].skills || [],
+          platforms: {
+            ...(window.dossierStates[name].platforms || {}),
+            github: remoteDossier.github_username || window.dossierStates[name].platforms?.github || "",
+            leetcode: remoteDossier.leetcode_username || window.dossierStates[name].platforms?.leetcode || "",
+            hackerrank: remoteDossier.hackerrank_username || window.dossierStates[name].platforms?.hackerrank || "",
+            codechef: remoteDossier.codechef_username || window.dossierStates[name].platforms?.codechef || "",
+          },
+        };
 
         // Redraw page header components that might have changed
         const innerBio = document.querySelector("#profileHeader p");
@@ -465,7 +541,7 @@ document.addEventListener("DOMContentLoaded", async () => {
             <div class="flex flex-col sm:flex-row items-center gap-8 p-4">
                 <div class="relative group flex-shrink-0">
                     <div class="absolute inset-0 border-2 border-red-600/20 rounded-full group-hover:border-red-600/60 transition-all duration-500 animate-[spin_8s_linear_infinite]"></div>
-                    <img src="${person.img}" class="w-28 h-28 rounded-full object-cover p-2 transition-all duration-700 shadow-[0_0_30px_rgba(255,0,0,0.15)]" alt="${person.name}">
+            <img src="${resolveDossierImageSrc(person.img)}" class="w-28 h-28 rounded-full object-cover p-2 transition-all duration-700 shadow-[0_0_30px_rgba(255,0,0,0.15)]" alt="${person.name}">
                 </div>
                 <div class="text-center sm:text-left flex-grow">
                     <div class="flex items-center gap-3 mb-2 justify-center sm:justify-start">
@@ -486,26 +562,6 @@ document.addEventListener("DOMContentLoaded", async () => {
                 </div>
             </div>
         </div>`;
-
-  // getDossierState (Fallback to local if no remote)
-  window.getDossierState = function (n) {
-    if (remoteDossier) return remoteDossier;
-    
-    if (!window.dossierStates[n]) {
-      const p = allPeople.find((x) => x.name === n);
-      const ghUsername = p ? extractGitHubUsername(p.github) : "";
-      window.dossierStates[n] = {
-        projects: [],
-        certs: [],
-        skills: [
-          { name: "JavaScript / TS", pct: 75 },
-          { name: "Python", pct: 60 },
-          { name: "C++ / Algorithms", pct: 85 },
-        ],
-      };
-    }
-    return window.dossierStates[n];
-  };
 
   // Render dossier content
   renderDossier();
@@ -700,58 +756,4 @@ function removeSkill(idx) {
   window.getDossierState(window.currentActiveSubject).skills.splice(idx, 1);
   renderDossier();
   loadCodingStats(window.currentActiveSubject);
-}
-
-// --- HACKERRANK SIMULATION ---
-function simulateHackerRankTest(skillIndex, skillName) {
-  const terminal = document.getElementById("terminal-modal");
-  const termText = document.getElementById("terminal-text");
-  const status = document.getElementById("term-status");
-  terminal.style.display = "flex";
-  termText.innerHTML = "";
-  status.innerText = "CONNECTING...";
-  status.className = "text-yellow-500 animate-pulse";
-
-  const lines = [
-    `> ESTABLISHING SECURE LINK TO HACKERRANK_API...`,
-    `> AUTHENTICATING USER PROFILE... [OK]`,
-    `> FETCHING ALGORITHMIC CHALLENGE: ${skillName.toUpperCase()} [LEVEL: MODERATE]...`,
-    `> COMPILING SUBMITTED SOURCE CODE...`,
-    `> RUNNING TEST CASES (0/15)...`,
-    `> TEST CASES PASSED: 12/15. TIME COMPLEXITY: O(N log N).`,
-  ];
-  let delay = 0;
-  lines.forEach((line) => {
-    setTimeout(() => {
-      const p = document.createElement("p");
-      p.innerText = line;
-      termText.appendChild(p);
-    }, delay);
-    delay += Math.random() * 500 + 400;
-  });
-
-  setTimeout(() => {
-    const newScore = Math.floor(Math.random() * 20) + 80;
-    const p = document.createElement("p");
-    p.innerHTML = `<span class="text-white bg-green-600 px-2 mt-2 inline-block">ASSESSMENT COMPLETE. NEW SCORE: ${newScore}%</span>`;
-    termText.appendChild(p);
-    status.innerText = "SYNC_COMPLETE";
-    status.className = "text-green-500";
-    window.getDossierState(window.currentActiveSubject).skills[skillIndex].pct =
-      newScore;
-    setTimeout(() => {
-      terminal.style.display = "none";
-      document.getElementById(`skill-val-${skillIndex}`).innerText =
-        `${newScore}%`;
-      document.getElementById(`skill-bar-${skillIndex}`).style.width =
-        `${newScore}%`;
-      const bar = document.getElementById(`skill-bar-${skillIndex}`);
-      bar.style.backgroundColor = "#0f0";
-      bar.style.boxShadow = "0 0 20px #0f0";
-      setTimeout(() => {
-        bar.style.backgroundColor = "var(--k-red)";
-        bar.style.boxShadow = "0 0 10px var(--k-red)";
-      }, 1000);
-    }, 1500);
-  }, delay + 500);
 }
