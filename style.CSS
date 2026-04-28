@@ -379,56 +379,6 @@ body.light-mode .chat-bot-bubble { color: #111; }
    CODING STATS ENGINE STYLES
    ========================================================================= */
 
-/* Score Ring */
-.score-ring-wrap {
-    position: relative;
-    width: 140px;
-    height: 140px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-.score-ring {
-    transform: rotate(-90deg);
-    position: absolute;
-    top: 0;
-    left: 0;
-}
-.score-ring-bg {
-    fill: none;
-    stroke: rgba(255, 255, 255, 0.05);
-    stroke-width: 8;
-}
-.score-ring-fill {
-    fill: none;
-    stroke: var(--k-red);
-    stroke-width: 8;
-    stroke-linecap: round;
-    transition: stroke-dashoffset 1.8s cubic-bezier(0.4, 0, 0.2, 1), stroke 0.5s;
-    filter: drop-shadow(0 0 6px var(--k-red-glow));
-}
-.score-center {
-    position: relative;
-    z-index: 2;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-}
-.score-val {
-    font-size: 2.8rem;
-    font-weight: 900;
-    color: white;
-    line-height: 1;
-    transition: color 0.5s, text-shadow 0.5s;
-}
-.score-max {
-    font-size: 11px;
-    color: rgba(255, 255, 255, 0.3);
-    font-family: 'JetBrains Mono', monospace;
-    margin-top: 2px;
-}
-
 /* Platform Cards */
 .platform-card {
     min-height: 200px;
@@ -474,19 +424,7 @@ body.light-mode .chat-bot-bubble { color: #111; }
     letter-spacing: 0.2em;
 }
 
-/* Score Ring Pulse Animation */
-@keyframes ring-pulse {
-    0%, 100% { filter: drop-shadow(0 0 6px var(--k-red-glow)); }
-    50% { filter: drop-shadow(0 0 15px var(--k-red-glow)); }
-}
-.score-ring-fill {
-    animation: ring-pulse 3s ease-in-out infinite;
-}
-
 /* Light Mode Overrides */
-body.light-mode .score-ring-bg { stroke: rgba(0, 0, 0, 0.06); }
-body.light-mode .score-val { color: #111; }
-body.light-mode .score-max { color: rgba(0, 0, 0, 0.3); }
 body.light-mode .stat-row { border-bottom-color: rgba(0, 0, 0, 0.06); }
 body.light-mode .stats-empty { color: rgba(0, 0, 0, 0.2); }
 body.light-mode .platform-card { background: rgba(0, 0, 0, 0.02); }
