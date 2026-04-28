@@ -428,6 +428,8 @@ function renderCCStats(data) {
 // --- LOAD CODING STATS (main async function) ---
 async function loadCodingStats(name) {
     const allPeople = [...(window.mentorsData || []), ...(window.studentsData || [])];
+    const person = allPeople.find(p => p.name.trim().toLowerCase() === name.trim().toLowerCase());
+    if (!person) return;
     const person = allPeople.find(p => p.name === name) || {};
 
     const state = window.getDossierState(name);
