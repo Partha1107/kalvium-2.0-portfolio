@@ -76,7 +76,6 @@
                 class="w-20 h-20 rounded-full border-2 border-red-600/50 object-cover"
               />
               <input type="file" id="avatar-input" class="hidden" accept="image/*" onchange="handleAvatarUpload(this)">
-              <button onclick="document.getElementById('avatar-input').click()" class="absolute inset-0 flex items-center justify-center bg-black/60 rounded-full opacity-0 group-hover:opacity-100 transition-opacity text-[8px] mono text-white">UPGRADE_AVATAR</button>
             </div>
             <div>
               <p
@@ -90,6 +89,24 @@
                 VERIFYING...
               </p>
             </div>
+          </div>
+
+          <div class="mb-6 rounded-xl border border-green-500/20 bg-green-500/5 p-4">
+            <div class="flex items-center justify-between gap-4 mb-3">
+              <div>
+                <p class="text-green-400 mono text-[10px] uppercase tracking-[0.35em] font-bold">Profile_Verified</p>
+                <p class="text-gray-500 mono text-[8px] uppercase tracking-[0.25em] mt-1">Portfolio picture only</p>
+              </div>
+              <button
+                onclick="document.getElementById('avatar-input').click()"
+                class="px-4 py-2 rounded-md border border-green-500/40 text-green-400 hover:bg-green-500 hover:text-black transition-all mono text-[9px] uppercase tracking-[0.25em]"
+              >
+                Upload_Picture
+              </button>
+            </div>
+            <p class="text-gray-400 mono text-[8px] leading-relaxed uppercase tracking-[0.2em]">
+              This updates the portfolio profile image only and does not change your Google account avatar.
+            </p>
           </div>
 
           <div class="flex flex-col gap-2 mt-4">
@@ -261,6 +278,204 @@
       const supabaseClient = window.supabase
         ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
         : null;
+      const AVATAR_BUCKET_BASE = "Profile/profile_picture/";
+      const DASHBOARD_AVATAR_PLACEHOLDER = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==';
+      const dashboardAvatarLookupCache = new Map();
+
+      function findDashboardAvatarUrl(email) {
+        const normalized = (email || "").trim().toLowerCase();
+        if (!normalized) return Promise.resolve("");
+        if (dashboardAvatarLookupCache.has(normalized)) {
+          return dashboardAvatarLookupCache.get(normalized);
+        }
+
+        const promise = (async () => {
+          if (!supabaseClient) return "";
+
+          const { data, error } = await supabaseClient
+            .storage
+            .from('dossier_assets')
+            .list('Profile/profile_picture', { limit: 1000 });
+
+          if (error || !Array.isArray(data)) return "";
+
+          const match = data.find((file) => {
+            const fileName = (file?.name || "").toLowerCase();
+            return fileName.includes(normalized);
+          });
+
+          if (!match) return "";
+
+          return supabaseClient.storage
+            .from('dossier_assets')
+            .getPublicUrl(`Profile/profile_picture/${match.name}`).data.publicUrl;
+        })().catch(() => "");
+
+        dashboardAvatarLookupCache.set(normalized, promise);
+        return promise;
+      }
+
+      async function setDashboardAvatar(email) {
+        const avatarEl = document.getElementById("dashboard-avatar");
+        if (!avatarEl) return;
+
+        avatarEl.src = DASHBOARD_AVATAR_PLACEHOLDER;
+
+        // 1) Try Supabase storage match
+        const resolvedUrl = await findDashboardAvatarUrl(email);
+        if (resolvedUrl) {
+          avatarEl.src = resolvedUrl;
+          avatarEl.classList.remove("hidden");
+          return;
+        }
+
+        // 2) Try Google profile picture from the signed-in user's metadata
+        try {
+          if (supabaseClient) {
+            const { data: { session } } = await supabaseClient.auth.getSession();
+            const userMeta = session?.user?.user_metadata || {};
+            const googlePic = userMeta?.avatar_url || userMeta?.picture || userMeta?.picture_url || session?.user?.user_metadata?.photo_url || null;
+            if (googlePic) {
+              avatarEl.src = googlePic;
+              avatarEl.classList.remove("hidden");
+              return;
+            }
+          }
+        } catch (e) {
+          console.warn('Could not read session metadata for fallback avatar', e);
+        }
+
+        // 3) Final lightweight fallback: Gravatar (identicon) using email hash
+        try {
+          const normalized = (email || '').trim().toLowerCase();
+          if (normalized) {
+            function md5(s) {
+              function L(k, d) { return (k << d) | (k >>> (32 - d)); }
+              function K(G, k) { var I, d, F, H, x; F = (G & 2147483648); H = (k & 2147483648); I = (G & 1073741824); d = (k & 1073741824); x = (G & 1073741823) + (k & 1073741823); if (I & d) return (x ^ 2147483648 ^ F ^ H); if (I | d) { if (x & 1073741824) return (x ^ 3221225472 ^ F ^ H); else return (x ^ 1073741824 ^ F ^ H); } else return (x ^ F ^ H); }
+              function r(d, F, k) { return (d & F) | ((~d) & k); }
+              function q(d, F, k) { return (d & k) | (F & (~k)); }
+              function p(d, F, k) { return d ^ F ^ k; }
+              function n(d, F, k) { return F ^ (d | (~k)); }
+              function u(G, F, aa, Z, k, H, I) { G = K(G, K(K(r(F, aa, Z), k), I)); return K(L(G, H), F); }
+              function f(G, F, aa, Z, k, H, I) { G = K(G, K(K(q(F, aa, Z), k), I)); return K(L(G, H), F); }
+              function D(G, F, aa, Z, k, H, I) { G = K(G, K(K(p(F, aa, Z), k), I)); return K(L(G, H), F); }
+              function t(G, F, aa, Z, k, H, I) { G = K(G, K(K(n(F, aa, Z), k), I)); return K(L(G, H), F); }
+              function e(G) {
+                var j, T = G.length, Y = T + 8, n = (Y - (Y % 64)) / 64, o = new Array((n + 1) * 16), i = 0, c = 0;
+                for (j = 0; j < T; j++) {
+                  c = (c << 8) | G.charCodeAt(j);
+                  if ((j % 4) === 3) { o[i++] = c; c = 0; }
+                }
+                if ((T % 4) !== 0) o[i++] = c;
+                o[i++] = 0x80 << ((T % 4) * 8);
+                while (i % 16 !== 14) o[i++] = 0;
+                o[i++] = T << 3; o[i++] = T >>> 29;
+                return o;
+              }
+              function B(n) {
+                var j = '', q = '';
+                for (var i = 0; i < n.length * 4; i++) {
+                  q = (n[i >> 2] >>> ((i % 4) * 8)) & 255; j += (q < 16 ? '0' : '') + q.toString(16);
+                }
+                return j;
+              }
+              var x = e(unescape(encodeURIComponent(s)));
+              var a = 1732584193, b = 4023233417, c = 2562383102, d = 271733878;
+              for (var i = 0; i < x.length; i += 16) {
+                var olda = a, oldb = b, oldc = c, oldd = d;
+                a = u(a, b, c, d, x[i + 0], 7, 3614090360);
+                d = u(d, a, b, c, x[i + 1], 12, 3905402710);
+                c = u(c, d, a, b, x[i + 2], 17, 606105819);
+                b = u(b, c, d, a, x[i + 3], 22, 3250441966);
+                a = u(a, b, c, d, x[i + 4], 7, 4118548399);
+                d = u(d, a, b, c, x[i + 5], 12, 1200080426);
+                c = u(c, d, a, b, x[i + 6], 17, 2821735955);
+                b = u(b, c, d, a, x[i + 7], 22, 4249261313);
+                a = u(a, b, c, d, x[i + 8], 7, 1770035416);
+                d = u(d, a, b, c, x[i + 9], 12, 2336552879);
+                c = u(c, d, a, b, x[i + 10], 17, 4294925233);
+                b = u(b, c, d, a, x[i + 11], 22, 2304563134);
+                a = u(a, b, c, d, x[i + 12], 7, 1804603682);
+                d = u(d, a, b, c, x[i + 13], 12, 4254626195);
+                c = u(c, d, a, b, x[i + 14], 17, 2792965006);
+                b = u(b, c, d, a, x[i + 15], 22, 1236535329);
+                a = f(a, b, c, d, x[i + 1], 5, 4129170786);
+                d = f(d, a, b, c, x[i + 6], 9, 3225465664);
+                c = f(c, d, a, b, x[i + 11], 14, 643717713);
+                b = f(b, c, d, a, x[i + 0], 20, 3921069994);
+                a = f(a, b, c, d, x[i + 5], 5, 3593408605);
+                d = f(d, a, b, c, x[i + 10], 9, 38016083);
+                c = f(c, d, a, b, x[i + 15], 14, 3634488961);
+                b = f(b, c, d, a, x[i + 4], 20, 3889429448);
+                a = f(a, b, c, d, x[i + 9], 5, 568446438);
+                d = f(d, a, b, c, x[i + 14], 9, 3275163606);
+                c = f(c, d, a, b, x[i + 3], 14, 4107603335);
+                b = f(b, c, d, a, x[i + 8], 20, 1163531501);
+                a = f(a, b, c, d, x[i + 13], 5, 2850285829);
+                d = f(d, a, b, c, x[i + 2], 9, 4243563512);
+                c = f(c, d, a, b, x[i + 7], 14, 1735328473);
+                b = f(b, c, d, a, x[i + 12], 20, 2368359562);
+                a = D(a, b, c, d, x[i + 5], 4, 4294588738);
+                d = D(d, a, b, c, x[i + 8], 11, 2272392833);
+                c = D(c, d, a, b, x[i + 11], 16, 1839030562);
+                b = D(b, c, d, a, x[i + 14], 23, 4259657740);
+                a = D(a, b, c, d, x[i + 1], 4, 2763975236);
+                d = D(d, a, b, c, x[i + 4], 11, 1272893353);
+                c = D(c, d, a, b, x[i + 7], 16, 4139469664);
+                b = D(b, c, d, a, x[i + 10], 23, 3200236656);
+                a = D(a, b, c, d, x[i + 13], 4, 681279174);
+                d = D(d, a, b, c, x[i + 0], 11, 3936430074);
+                c = D(c, d, a, b, x[i + 3], 16, 3572445317);
+                b = D(b, c, d, a, x[i + 6], 23, 76029189);
+                a = D(a, b, c, d, x[i + 9], 4, 3654602809);
+                d = D(d, a, b, c, x[i + 12], 11, 3873151461);
+                c = D(c, d, a, b, x[i + 15], 16, 530742520);
+                b = D(b, c, d, a, x[i + 2], 23, 3299628645);
+                a = t(a, b, c, d, x[i + 0], 6, 4096336452);
+                d = t(d, a, b, c, x[i + 7], 10, 1126891415);
+                c = t(c, d, a, b, x[i + 14], 15, 2878612391);
+                b = t(b, c, d, a, x[i + 5], 21, 4237533241);
+                a = t(a, b, c, d, x[i + 12], 6, 1700485571);
+                d = t(d, a, b, c, x[i + 3], 10, 2399980690);
+                c = t(c, d, a, b, x[i + 10], 15, 4293915773);
+                b = t(b, c, d, a, x[i + 1], 21, 2240044497);
+                a = t(a, b, c, d, x[i + 8], 6, 1873313359);
+                d = t(d, a, b, c, x[i + 15], 10, 4264355552);
+                c = t(c, d, a, b, x[i + 6], 15, 2734768916);
+                b = t(b, c, d, a, x[i + 13], 21, 1309151649);
+                a = t(a, b, c, d, x[i + 4], 6, 4149444226);
+                d = t(d, a, b, c, x[i + 11], 10, 3174756917);
+                c = t(c, d, a, b, x[i + 2], 15, 718787259);
+                b = t(b, c, d, a, x[i + 9], 21, 3951481745);
+                a = K(a, olda);
+                b = K(b, oldb);
+                c = K(c, oldc);
+                d = K(d, oldd);
+              }
+              return B([a, b, c, d]);
+            }
+
+            const hash = md5(normalized);
+            avatarEl.src = `https://www.gravatar.com/avatar/${hash}?d=identicon&s=200`;
+            avatarEl.classList.remove('hidden');
+            return;
+          }
+        } catch (e) {
+          console.warn('Gravatar fallback failed', e);
+        }
+      }
+
+      function getAvatarStoragePath(email) {
+        return `${AVATAR_BUCKET_BASE}${(email || "unknown").trim().toLowerCase()}`;
+      }
+
+      function getStoragePathFromUrl(publicUrl) {
+        if (!publicUrl) return "";
+        const marker = "/storage/v1/object/public/dossier_assets/";
+        const index = publicUrl.indexOf(marker);
+        if (index === -1) return "";
+        return publicUrl.slice(index + marker.length);
+      }
 
       async function checkSession() {
         if (!supabaseClient) return;
@@ -277,11 +492,8 @@
         document.getElementById("dashboard-email").innerText = user.email || "AGENT_UNKNOWN";
         document.getElementById("dashboard-name").innerText = user.user_metadata?.full_name || "CLASSIFIED";
         
-        if (user.user_metadata?.avatar_url) {
-          const avatar = document.getElementById("dashboard-avatar");
-          avatar.src = user.user_metadata.avatar_url;
-          avatar.classList.remove("hidden");
-        }
+        // Use the same email-based lookup as the popup and dossier.
+        // This avoids relying on Google profile pictures entirely.
 
         // --- FETCH OR INITIALIZE DOSSIER ---
         let { data: dossier, error } = await supabaseClient
@@ -313,9 +525,9 @@
           if (document.getElementById("in-codechef")) document.getElementById("in-codechef").value = dossier.codechef_username || "";
           if (document.getElementById("in-linkedin")) document.getElementById("in-linkedin").value = dossier.linkedin_url || "";
           
-          if (dossier.avatar_url) {
-            document.getElementById("dashboard-avatar").src = dossier.avatar_url;
-          }
+          // Resolve the avatar from Supabase storage using the email address.
+          // If the filename includes an extension, the resolver will find it.
+          setDashboardAvatar(user.email || dossier.email || "");
           
           // Populate Skills
           if (dossier.skills && Array.isArray(dossier.skills)) {
@@ -342,6 +554,10 @@
           } else {
              addProjectRow(); // Add one empty row if none
           }
+        }
+
+        if (!dossier) {
+          setDashboardAvatar(user.email || "");
         }
       }
 
@@ -443,28 +659,53 @@
         const imgEl = document.getElementById("dashboard-avatar");
         imgEl.style.opacity = "0.5";
 
-        // Path: USER_ID/avatars/FILENAME
-        const fileName = `${session.user.id}/avatars/profile_${Date.now()}.png`;
+        const normalized = (session.user.email || "unknown").trim().toLowerCase();
 
-        const { data, error } = await supabaseClient.storage
+        // 1) Find and remove any existing objects that contain the user's email
+        try {
+          const { data: listData, error: listErr } = await supabaseClient.storage.from('dossier_assets').list('Profile/profile_picture', { limit: 1000 });
+          if (!listErr && Array.isArray(listData) && listData.length) {
+            const toDelete = listData
+              .filter((f) => (f?.name || "").toLowerCase().includes(normalized))
+              .map((f) => `Profile/profile_picture/${f.name}`);
+            if (toDelete.length) {
+              await supabaseClient.storage.from('dossier_assets').remove(toDelete);
+            }
+          }
+        } catch (e) {
+          // Non-fatal: proceed to upload
+          console.warn('Avatar cleanup failed', e);
+        }
+
+        // 2) Upload new file preserving extension
+        const extMatch = (file.name || '').match(/(\.[^.]+)$/);
+        const ext = extMatch ? extMatch[1].toLowerCase() : '';
+        const uploadPath = `Profile/profile_picture/${normalized}${ext}`;
+
+        const { data: upData, error: upErr } = await supabaseClient.storage
           .from('dossier_assets')
-          .upload(fileName, file, { upsert: true });
+          .upload(uploadPath, file, { upsert: true, cacheControl: '3600' });
 
-        if (error) {
-          alert("Avatar sync failed: " + error.message);
-          imgEl.style.opacity = "1";
+        if (upErr) {
+          alert('Avatar sync failed: ' + upErr.message);
+          imgEl.style.opacity = '1';
           return;
         }
 
+        // 3) Obtain public URL and save to DB
         const { data: { publicUrl } } = supabaseClient.storage
           .from('dossier_assets')
-          .getPublicUrl(fileName);
+          .getPublicUrl(uploadPath);
 
-        // Update DB immediately for avatar
         await supabaseClient.from('dossiers').update({ avatar_url: publicUrl }).eq('id', session.user.id);
-        
-        imgEl.src = publicUrl;
-        imgEl.style.opacity = "1";
+
+        // 4) Invalidate dashboard lookup cache for this email and refresh avatar
+        if (dashboardAvatarLookupCache && typeof dashboardAvatarLookupCache.delete === 'function') {
+          dashboardAvatarLookupCache.delete(normalized);
+        }
+
+        await setDashboardAvatar(session.user.email);
+        imgEl.style.opacity = '1';
       }
 
       async function saveDossier() {
