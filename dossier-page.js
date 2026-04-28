@@ -346,7 +346,31 @@ document.addEventListener("DOMContentLoaded", async () => {
     return;
   }
 
-  // Find the person locally first for basic UI (img, email)
+  // 1. Fetch Remote operative data to ensure sync
+  if (supabaseClient) {
+    try {
+      const [mRes, sRes] = await Promise.all([
+        supabaseClient.from('mentors').select('*'),
+        supabaseClient.from('students').select('*')
+      ]);
+      if (mRes.data?.length > 0) {
+        mentorsData.length = 0;
+        mRes.data.forEach(m => mentorsData.push({
+          name: m.full_name, role: m.role, img: m.img_url, linkedin: m.linkedin_url, email: m.email
+        }));
+      }
+      if (sRes.data?.length > 0) {
+        studentsData.length = 0;
+        sRes.data.forEach(s => studentsData.push({
+          name: s.full_name, role: s.role, img: s.img_url, github: s.github_url, linkedin: s.linkedin_url, email: s.email
+        }));
+      }
+    } catch (e) {
+      console.warn("Dossier Match Protocol: Offline Mode.");
+    }
+  }
+
+  // Find the person locally (now synced with database)
   const allPeople = [...mentorsData, ...studentsData];
   const person = allPeople.find((p) => p.name.trim().toLowerCase() === name.trim().toLowerCase());
 

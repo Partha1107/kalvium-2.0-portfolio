@@ -534,27 +534,58 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // --- INIT ---
   async function init() {
-    // 1. Fetch updated avatars from Mainframe
+    // 1. Fetch Remote Data from Dedicated Tables
     if (supabaseClient) {
-      const { data: remoteData } = await supabaseClient.from('dossiers').select('full_name, avatar_url');
-      if (remoteData) {
-        remoteData.forEach(remote => {
-          if (remote.avatar_url) {
-            // Check students
-            const s = studentsData.find(st => st.name.trim().toLowerCase() === remote.full_name.trim().toLowerCase());
-            if (s) s.img = remote.avatar_url;
-            // Check mentors
-            const m = mentorsData.find(mn => mn.name === remote.full_name);
-            if (m) m.img = remote.avatar_url;
-          }
-        });
+      try {
+        const [mRes, sRes] = await Promise.all([
+          supabaseClient.from('mentors').select('*'),
+          supabaseClient.from('students').select('*')
+        ]);
+
+        if (mRes.data && mRes.data.length > 0) {
+          mentorsData.length = 0; // Clear hardcoded
+          mRes.data.forEach(m => mentorsData.push({
+            name: m.full_name,
+            role: m.role,
+            img: m.img_url,
+            linkedin: m.linkedin_url,
+            email: m.email
+          }));
+        }
+
+        if (sRes.data && sRes.data.length > 0) {
+          studentsData.length = 0; // Clear hardcoded
+          sRes.data.forEach(s => studentsData.push({
+            name: s.full_name,
+            role: s.role,
+            img: s.img_url,
+            github: s.github_url,
+            linkedin: s.linkedin_url,
+            email: s.email
+          }));
+        }
+
+        // 2. Fetch avatar overrides from dossiers (for dashboard users)
+        const { data: remoteDossiers } = await supabaseClient.from('dossiers').select('full_name, avatar_url');
+        if (remoteDossiers) {
+          remoteDossiers.forEach(remote => {
+            if (remote.avatar_url) {
+              const s = studentsData.find(st => st.name.trim().toLowerCase() === remote.full_name.trim().toLowerCase());
+              if (s) s.img = remote.avatar_url;
+              const m = mentorsData.find(mn => mn.name === remote.full_name);
+              if (m) m.img = remote.avatar_url;
+            }
+          });
+        }
+      } catch (e) {
+        console.warn("Matrix Sync Error: Falling back to local cache.", e);
       }
     }
 
     setTimeout(() => {
-      window.scrollTo(0, 0); // Force to top one last time before revealing
+      window.scrollTo(0, 0); 
       document.getElementById("loader").style.display = "none";
-      document.body.style.overflow = ""; // Re-enable window-level scrolling natively
+      document.body.style.overflow = ""; 
       if (!localStorage.getItem("cyber_v22"))
         document.getElementById("instruction-overlay").style.display = "flex";
     }, 3000);
@@ -576,15 +607,15 @@ document.addEventListener("DOMContentLoaded", () => {
       proverbsList[currentProverbIdx];
     setInterval(cycleProverbs, 20000);
 
-    // Sync UI Toggles with localStorage state
-    document
-      .getElementById(`btn-theme-${currentTheme}`)
-      .classList.add("active");
-    document.getElementById(`swatch-${currentAccent}`).classList.add("active");
-    document.getElementById(`btn-font-${currentFont}`).classList.add("active");
-    document
-      .getElementById(`btn-size-${currentFontSize}`)
-      .classList.add("active");
+    // Sync UI Toggles
+    const themeBtn = document.getElementById(`btn-theme-${currentTheme}`);
+    if (themeBtn) themeBtn.classList.add("active");
+    const accentBtn = document.getElementById(`swatch-${currentAccent}`);
+    if (accentBtn) accentBtn.classList.add("active");
+    const fontBtn = document.getElementById(`btn-font-${currentFont}`);
+    if (fontBtn) fontBtn.classList.add("active");
+    const sizeBtn = document.getElementById(`btn-size-${currentFontSize}`);
+    if (sizeBtn) sizeBtn.classList.add("active");
   }
 
   // --- PROVERBS ---
