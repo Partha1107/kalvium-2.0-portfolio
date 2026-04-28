@@ -1226,14 +1226,14 @@ const chatKnowledge = {
   about: {
     triggers: ["about", "what is this", "what is kalvium", "tell me about", "explain", "purpose", "what does this"],
     responses: [
-      "📡 <b>Kalvium 2.0 Portfolio</b> — Squad 138's tactical showcase. Built by Ashwin Raj, Dhinesh Babu & Sanjay Chelliah. Features include:<br>• Interactive student/mentor profiles<br>• Real-time coding stats (LeetCode, GitHub, Codeforces)<br>• Customizable themes & fonts<br>• Editable dossier system<br>• This Neural Assist chatbot"
+      "📡 <b>Kalvium 2.0 Portfolio</b> — Squad 138's tactical showcase. Built by Ashwin Raj, Dhinesh Babu & Sanjay Chelliah. Features include:<br>• Interactive student/mentor profiles<br>• Real-time coding stats (LeetCode, GitHub, HackerRank, CodeChef)<br>• Customizable themes & fonts<br>• Editable dossier system<br>• This Neural Assist chatbot"
     ],
     suggestions: ["Who built this?", "Show features", "Open settings"]
   },
   features: {
     triggers: ["features", "what can you do", "capabilities", "function", "tools", "options"],
     responses: [
-      "⚡ <b>Available Systems:</b><br><br>🎨 <b>Theme Engine</b> — 3 modes, 10 accents, 7 fonts<br>📊 <b>Coding Intelligence</b> — Live stats from LeetCode/GitHub/Codeforces<br>📁 <b>Subject Dossiers</b> — Editable projects, certs & skills<br>🔍 <b>Database Scanner</b> — Real-time student search<br>🤖 <b>Neural Assist</b> — That's me!<br>🗺️ <b>Guided Tour</b> — Interactive walkthrough<br><br>Try asking me to navigate somewhere!"
+      "⚡ <b>Available Systems:</b><br><br>🎨 <b>Theme Engine</b> — 3 modes, 10 accents, 7 fonts<br>📊 <b>Coding Intelligence</b> — Live stats from LeetCode/GitHub/HackerRank/CodeChef<br>📁 <b>Subject Dossiers</b> — Editable projects, certs & skills<br>🔍 <b>Database Scanner</b> — Real-time student search<br>🤖 <b>Neural Assist</b> — That's me!<br>🗺️ <b>Guided Tour</b> — Interactive walkthrough<br><br>Try asking me to navigate somewhere!"
     ],
     suggestions: ["Start tour", "Open settings", "Go to students"]
   },
@@ -1259,9 +1259,9 @@ const chatKnowledge = {
     suggestions: ["Open Ashwin's profile", "Show features", "About Kalvium"]
   },
   coding: {
-    triggers: ["coding", "leetcode", "github", "codeforces", "score", "coding stats", "rank", "dossier stats", "programming"],
+    triggers: ["coding", "leetcode", "github", "hackerrank", "codechef", "score", "coding stats", "rank", "dossier stats", "programming"],
     responses: [
-      "📊 <b>Coding Intelligence System:</b><br><br>The portfolio tracks real-time coding skills across 3 platforms:<br><br>• <b>LeetCode</b> (40% weight) — Problem difficulty breakdown<br>• <b>GitHub</b> (30% weight) — Repos, stars, languages<br>• <b>Codeforces</b> (30% weight) — Rating & rank<br><br>Composite scores range from 0–100 with ranks: RECRUIT → OPERATIVE → SPECIALIST → ELITE → LEGENDARY<br><br>Open any student's <b>Dossier</b> to see their score!"
+      "📊 <b>Coding Intelligence System:</b><br><br>The portfolio tracks real-time coding skills across 4 platforms:<br><br>• <b>LeetCode</b> (35% weight) — Problem difficulty breakdown<br>• <b>GitHub</b> (25% weight) — Repos, stars, languages<br>• <b>HackerRank</b> (20% weight) — Profile level, practice signals<br>• <b>CodeChef</b> (20% weight) — Rating & ranks<br><br>Composite scores range from 0–100 with ranks: RECRUIT → OPERATIVE → SPECIALIST → ELITE → LEGENDARY<br><br>Open any student's <b>Dossier</b> to see their score!"
     ],
     suggestions: ["What ranks exist?", "Go to students", "About features"]
   },
