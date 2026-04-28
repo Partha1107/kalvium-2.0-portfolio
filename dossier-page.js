@@ -338,6 +338,79 @@ function extractGitHubUsername(url) {
 const SUPABASE_BUCKET_IMAGE_BASE =
   "https://gjkbbbklxqgxvjoqhvue.supabase.co/storage/v1/object/public/dossier_assets/Profile/profile_picture/";
 
+const PROFILE_PLACEHOLDER = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==';
+
+let profilePictureLookupClient = null;
+const profilePictureLookupCache = new Map();
+
+function getProfilePictureLookupClient() {
+  if (profilePictureLookupClient) return profilePictureLookupClient;
+  if (!window.supabase) return null;
+
+  profilePictureLookupClient = window.supabase.createClient(
+    "https://gjkbbbklxqgxvjoqhvue.supabase.co",
+    "sb_publishable_Z-ZLJ1kdtSnjYqXFwwDAQw_JKMikQQr",
+  );
+
+  return profilePictureLookupClient;
+}
+
+function findProfilePictureUrlByEmail(email) {
+  const normalized = (email || "").trim().toLowerCase();
+  if (!normalized) return Promise.resolve("");
+  if (profilePictureLookupCache.has(normalized)) {
+    return profilePictureLookupCache.get(normalized);
+  }
+
+  const promise = (async () => {
+    const client = getProfilePictureLookupClient();
+    if (!client) return "";
+
+    const { data, error } = await client
+      .storage
+      .from("dossier_assets")
+      .list("Profile/profile_picture", { limit: 1000 });
+
+    if (error || !Array.isArray(data)) return "";
+
+    const match = data.find((file) => {
+      const fileName = (file?.name || "").toLowerCase();
+      return fileName.includes(normalized);
+    });
+
+    if (!match) return "";
+
+    return client.storage
+      .from("dossier_assets")
+      .getPublicUrl(`Profile/profile_picture/${match.name}`).data.publicUrl;
+  })().catch(() => "");
+
+  profilePictureLookupCache.set(normalized, promise);
+  return promise;
+}
+
+async function tryResolveProfileImage(imgEl, email, localSrc) {
+  if (!imgEl) return;
+  const resolvedUrl = await findProfilePictureUrlByEmail(email);
+  if (resolvedUrl) {
+    imgEl.src = resolvedUrl;
+    return;
+  }
+
+  if (localSrc && localSrc.startsWith("./Src/")) {
+    imgEl.src = resolveDossierImageSrc(localSrc);
+    return;
+  }
+
+  imgEl.src = PROFILE_PLACEHOLDER;
+}
+
+function resolveAllProfileImages() {
+  document.querySelectorAll("img[data-profile-email]").forEach((img) => {
+    tryResolveProfileImage(img, img.dataset.profileEmail, img.dataset.localSrc);
+  });
+}
+
 function resolveDossierImageSrc(src) {
   if (!src) return src;
   if (src.startsWith("http://") || src.startsWith("https://")) return src;
@@ -346,6 +419,12 @@ function resolveDossierImageSrc(src) {
   if (!fileName || fileName === src) return src;
 
   return `${SUPABASE_BUCKET_IMAGE_BASE}${encodeURIComponent(fileName)}`;
+}
+
+function getProfilePictureSrc(email) {
+  if (!email) return "";
+  const normalizedEmail = email.trim().toLowerCase();
+  return `${SUPABASE_BUCKET_IMAGE_BASE}${normalizedEmail}`;
 }
 
 window.getDossierState = function (n) {
@@ -534,6 +613,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   const displayEmail = person.email;
   const displayLinkedIn = remoteDossier?.linkedin_url || person.linkedin;
   const displayGitHub = remoteDossier?.github_username ? `https://github.com/${remoteDossier.github_username}` : person.github;
+  const displayAvatar = PROFILE_PLACEHOLDER;
 
   document.getElementById("profileHeader").innerHTML = `
         <div class="dossier-card relative overflow-hidden">
@@ -541,7 +621,7 @@ document.addEventListener("DOMContentLoaded", async () => {
             <div class="flex flex-col sm:flex-row items-center gap-8 p-4">
                 <div class="relative group flex-shrink-0">
                     <div class="absolute inset-0 border-2 border-red-600/20 rounded-full group-hover:border-red-600/60 transition-all duration-500 animate-[spin_8s_linear_infinite]"></div>
-            <img src="${resolveDossierImageSrc(person.img)}" class="w-28 h-28 rounded-full object-cover p-2 transition-all duration-700 shadow-[0_0_30px_rgba(255,0,0,0.15)]" alt="${person.name}">
+        <img src="${displayAvatar}" data-profile-email="${person.email || ''}" data-local-src="${person.img || ''}" class="w-28 h-28 rounded-full object-cover p-2 transition-all duration-700 shadow-[0_0_30px_rgba(255,0,0,0.15)]" alt="${person.name}">
                 </div>
                 <div class="text-center sm:text-left flex-grow">
                     <div class="flex items-center gap-3 mb-2 justify-center sm:justify-start">
@@ -563,6 +643,8 @@ document.addEventListener("DOMContentLoaded", async () => {
             </div>
         </div>`;
 
+  // Resolve profile image candidates then render dossier content
+  resolveAllProfileImages();
   // Render dossier content
   renderDossier();
   loadCodingStats(name);

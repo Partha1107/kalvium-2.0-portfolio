@@ -72,6 +72,79 @@ let currentFontSize = localStorage.getItem("cyber_fontsize") || "md";
 const SUPABASE_BUCKET_IMAGE_BASE =
   "https://gjkbbbklxqgxvjoqhvue.supabase.co/storage/v1/object/public/dossier_assets/Profile/profile_picture/";
 
+const PROFILE_PLACEHOLDER = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==';
+
+let profilePictureLookupClient = null;
+const profilePictureLookupCache = new Map();
+
+function getProfilePictureLookupClient() {
+  if (profilePictureLookupClient) return profilePictureLookupClient;
+  if (!window.supabase) return null;
+
+  profilePictureLookupClient = window.supabase.createClient(
+    "https://gjkbbbklxqgxvjoqhvue.supabase.co",
+    "sb_publishable_Z-ZLJ1kdtSnjYqXFwwDAQw_JKMikQQr",
+  );
+
+  return profilePictureLookupClient;
+}
+
+function findProfilePictureUrlByEmail(email) {
+  const normalized = (email || "").trim().toLowerCase();
+  if (!normalized) return Promise.resolve("");
+  if (profilePictureLookupCache.has(normalized)) {
+    return profilePictureLookupCache.get(normalized);
+  }
+
+  const promise = (async () => {
+    const client = getProfilePictureLookupClient();
+    if (!client) return "";
+
+    const { data, error } = await client
+      .storage
+      .from("dossier_assets")
+      .list("Profile/profile_picture", { limit: 1000 });
+
+    if (error || !Array.isArray(data)) return "";
+
+    const match = data.find((file) => {
+      const fileName = (file?.name || "").toLowerCase();
+      return fileName.includes(normalized);
+    });
+
+    if (!match) return "";
+
+    return client.storage
+      .from("dossier_assets")
+      .getPublicUrl(`Profile/profile_picture/${match.name}`).data.publicUrl;
+  })().catch(() => "");
+
+  profilePictureLookupCache.set(normalized, promise);
+  return promise;
+}
+
+async function tryResolveProfileImage(imgEl, email, localSrc) {
+  if (!imgEl) return;
+  const resolvedUrl = await findProfilePictureUrlByEmail(email);
+  if (resolvedUrl) {
+    imgEl.src = resolvedUrl;
+    return;
+  }
+
+  if (localSrc && localSrc.startsWith("./Src/")) {
+    imgEl.src = resolveDossierImageSrc(localSrc);
+    return;
+  }
+
+  imgEl.src = PROFILE_PLACEHOLDER;
+}
+
+function resolveAllProfileImages() {
+  document.querySelectorAll("img[data-profile-email]").forEach((img) => {
+    tryResolveProfileImage(img, img.dataset.profileEmail, img.dataset.localSrc);
+  });
+}
+
 function resolveDossierImageSrc(src) {
   if (!src) return src;
   if (src.startsWith("http://") || src.startsWith("https://")) return src;
@@ -80,6 +153,12 @@ function resolveDossierImageSrc(src) {
   if (!fileName || fileName === src) return src;
 
   return `${SUPABASE_BUCKET_IMAGE_BASE}${encodeURIComponent(fileName)}`;
+}
+
+function getProfilePictureSrc(email) {
+  if (!email) return "";
+  const normalizedEmail = email.trim().toLowerCase();
+  return `${SUPABASE_BUCKET_IMAGE_BASE}${normalizedEmail}`;
 }
 
 function applyTheme(mode) {
@@ -608,6 +687,7 @@ document.addEventListener("DOMContentLoaded", () => {
     document.getElementById("mentorGrid").innerHTML = mentorsData
       .map((m) => renderCard(m, true))
       .join("");
+    resolveAllProfileImages();
 
     // Defer rendering of the heavy students section until it's in view.
     // Place lightweight placeholders so first paint is fast.
@@ -621,6 +701,7 @@ document.addEventListener("DOMContentLoaded", () => {
       const io = new IntersectionObserver((entries, obs) => {
         if (entries[0].isIntersecting) {
           renderStudents();
+          resolveAllProfileImages();
           obs.disconnect();
         }
       }, { rootMargin: '400px' });
@@ -628,6 +709,7 @@ document.addEventListener("DOMContentLoaded", () => {
     } else {
       // Fallback: render immediately
       renderStudents();
+      resolveAllProfileImages();
     }
 
     document.getElementById("proverbDisplay").innerText =
@@ -698,6 +780,9 @@ document.addEventListener("DOMContentLoaded", () => {
     const chunk = studentsData.slice(next, next + 12);
     if (!gridEl) return;
     gridEl.insertAdjacentHTML('beforeend', chunk.map(s => renderCard(s, false, 'grid')).join(''));
+    requestAnimationFrame(() => {
+      resolveAllProfileImages();
+    });
     window._studentsLoadedCount = next + chunk.length;
     if (window._studentsLoadedCount >= studentsData.length) {
       const btn = document.getElementById('load-more-students');
@@ -721,7 +806,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 <div class="tactical-card group" onmousemove="handleCardMove(event, this)" onclick="openModal(&quot;${p.name}&quot;, ${isMentor})" data-name="${p.name.toLowerCase()}">                         
                     <div class="card-glare"></div>                         
                     <div class="card-watermark">${watermark}</div>                         
-                    <img src="${resolveDossierImageSrc(p.img)}" class="w-32 h-32 mb-6 border border-red-600/30 p-1 transition-all duration-500 grayscale group-hover:grayscale-0 group-hover:border-red-600 rounded-full z-10" loading="lazy">                         
+                    <img src="${PROFILE_PLACEHOLDER}" data-profile-email="${p.email || ''}" data-local-src="${p.img || ''}" class="w-32 h-32 mb-6 border border-red-600/30 p-1 transition-all duration-500 grayscale group-hover:grayscale-0 group-hover:border-red-600 rounded-full z-10" loading="lazy">                         
                     <div class="text-center z-10 px-4">                             
                         <p class="text-red-600 mono text-[9px] uppercase font-bold tracking-widest mb-1 transition-colors duration-500 group-hover:text-white">${isMentor ? p.role : "KALVIAN"}</p>
                         <h3 class="text-xl font-black uppercase tracking-tighter">${p.name}</h3>
@@ -895,7 +980,7 @@ function openModal(name, isMentor) {
             <div class="w-56 h-56 md:w-72 md:h-72 flex-shrink-0 relative group">                         
                 <div class="absolute inset-0 border-2 border-red-600/20 rounded-full group-hover:border-red-600/60 transition-all duration-500 animate-[spin_8s_linear_infinite]"></div>                         
                 <div class="absolute inset-3 border border-red-600/40 rounded-full border-dashed animate-[spin_12s_linear_infinite_reverse]"></div>                         
-                <img src="${resolveDossierImageSrc(p.img)}" loading="lazy" class="w-full h-full object-cover rounded-full p-5 transition-all duration-700 shadow-[0_0_30px_rgba(255,0,0,0.15)]">                         
+                <img src="${PROFILE_PLACEHOLDER}" data-profile-email="${p.email || ''}" data-local-src="${p.img || ''}" loading="lazy" class="w-full h-full object-cover rounded-full p-5 transition-all duration-700 shadow-[0_0_30px_rgba(255,0,0,0.15)]">                         
             </div>                     
             <div class="text-left max-w-xl w-full">                         
                 <div class="flex items-center gap-3 mb-3">                             
@@ -943,64 +1028,34 @@ function openModal(name, isMentor) {
   document.getElementById("modal-overlay").classList.add("active");
   document.body.style.overflow = "hidden";
 
+  // Resolve modal image candidates (tries multiple filename variants)
+  const modalImg = document.querySelector('#modalContent img[data-profile-email]');
+  if (modalImg) tryResolveProfileImage(modalImg, p.email, p.img);
+
   // Background Sync for Bio if not mentor
-  if (!isMentor) {
-    const bioEl = document.getElementById("modalBioText");
-
-    // Prefer any locally-merged dossier bio first (set by dossier-page or earlier sync)
-    const localBio = (window.dossierStates && window.dossierStates[name] && window.dossierStates[name].bio) || p.bio || "";
-    if (bioEl) {
-      if (localBio && localBio.trim() !== "") {
-        bioEl.innerText = localBio;
-        bioEl.classList.remove('text-red-900/40', 'italic');
-      } else {
-        bioEl.innerText = ">> SYNCING_WITH_MAINFRAME...";
-        bioEl.classList.add('opacity-50');
-      }
-    }
-
-    // If Supabase is available, try to fetch authoritative bio (email first, then name)
-    if (supabaseClient) {
+  if (!isMentor && supabaseClient) {
+      // Set temporary state while syncing
+      const bioEl = document.getElementById("modalBioText");
       if (bioEl) bioEl.classList.add('opacity-50');
-      (async () => {
-        try {
-          let resp = await supabaseClient.from('dossiers').select('bio').eq('email', p.email).maybeSingle();
-          let data = resp && resp.data ? resp.data : null;
-          if (!data) {
-            const nameResp = await supabaseClient.from('dossiers').select('bio').ilike('full_name', name).maybeSingle();
-            data = nameResp && nameResp.data ? nameResp.data : null;
-          }
 
+      supabaseClient.from('dossiers').select('bio').eq('full_name', name).maybeSingle()
+      .then(({data}) => {
           if (bioEl) {
-            bioEl.classList.remove('opacity-50');
-            if (data && data.bio && data.bio.trim() !== "") {
-              bioEl.innerText = data.bio;
-              bioEl.classList.remove('text-red-900/40', 'italic');
-            } else if (!localBio || localBio.trim() === "") {
-              bioEl.innerText = ">> NO_ANY_BIO_ADDED // PLEASE_UPDATE_VIA_DASHBOARD";
-              bioEl.classList.add('text-red-900/40', 'italic');
-            }
-
-            const toggleBtn = document.getElementById("modalBioToggle");
-            if (toggleBtn) {
-              toggleBtn.style.display = bioEl.scrollHeight > bioEl.clientHeight ? "flex" : "none";
-            }
+              bioEl.classList.remove('opacity-50');
+              if (data && data.bio && data.bio.trim() !== "") {
+                  bioEl.innerText = data.bio;
+                  bioEl.classList.remove('text-red-900/40', 'italic');
+              } else {
+                  bioEl.innerText = ">> NO_ANY_BIO_ADDED // PLEASE_UPDATE_VIA_DASHBOARD";
+                  bioEl.classList.add('text-red-900/40', 'italic');
+              }
+              // Re-check read more button after content load
+              const toggleBtn = document.getElementById("modalBioToggle");
+              if (toggleBtn) {
+                  toggleBtn.style.display = bioEl.scrollHeight > bioEl.clientHeight ? "flex" : "none";
+              }
           }
-        } catch (e) {
-          console.error('Bio sync error', e);
-          if (bioEl) bioEl.classList.remove('opacity-50');
-        }
-      })();
-    } else {
-      // No supabase available — re-evaluate toggle button based on whatever content we have
-      setTimeout(() => {
-        const toggleBtn = document.getElementById("modalBioToggle");
-        const bioEl2 = document.getElementById("modalBioText");
-        if (toggleBtn && bioEl2) {
-          toggleBtn.style.display = bioEl2.scrollHeight > bioEl2.clientHeight ? "flex" : "none";
-        }
-      }, 60);
-    }
+      });
   }
 
   setTimeout(() => {
@@ -1454,9 +1509,8 @@ function generateReply(msg) {
   if (nameMatch && lower.length > 3 && (lower.includes("who") || lower.includes("tell") || lower.includes("find") || lower.includes("about"))) {
     const isMentor = (window.mentorsData || []).some(m => m.name === nameMatch.name);
     const role = isMentor ? nameMatch.role : 'Kalvian';
-    const safeBio = (nameMatch.bio || "").toString();
     return {
-      text: `👤 <b>${nameMatch.name}</b><br>Role: ${role}<br><br>"${safeBio.substring(0, 150)}${safeBio.length > 150 ? '...' : ''}"<br><br>${nameMatch.github ? `<a href="${nameMatch.github}" target="_blank" class="text-red-500 hover:underline">GitHub ↗</a> · ` : ''}<a href="${nameMatch.linkedin}" target="_blank" class="text-red-500 hover:underline">LinkedIn ↗</a>`,
+      text: `👤 <b>${nameMatch.name}</b><br>Role: ${role}<br><br>"${nameMatch.bio.substring(0, 150)}${nameMatch.bio.length > 150 ? '...' : ''}"<br><br>${nameMatch.github ? `<a href="${nameMatch.github}" target="_blank" class="text-red-500 hover:underline">GitHub ↗</a> · ` : ''}<a href="${nameMatch.linkedin}" target="_blank" class="text-red-500 hover:underline">LinkedIn ↗</a>`,
       suggestions: [`Open ${nameMatch.name.split(' ')[0]}'s profile`, "Show all students", "Back to help"]
     };
   }
