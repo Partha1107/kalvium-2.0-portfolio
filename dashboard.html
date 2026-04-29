@@ -124,6 +124,22 @@
 
           <div id="dashboard-actions" class="flex flex-col gap-2 mt-4">
             <button
+              id="mentor-add-folk-btn"
+              onclick="openNewFolkModal()"
+              class="w-full py-3 border border-emerald-600/50 text-emerald-400 hover:bg-emerald-600 hover:text-black font-bold uppercase tracking-widest transition-all text-xs flex justify-center items-center gap-3 hidden"
+            >
+              <i class="fa-solid fa-user-plus"></i> Add_New_Folk
+            </button>
+
+            <button
+              id="mentor-delete-folk-btn"
+              onclick="openDeleteKalvianModal()"
+              class="w-full py-3 border border-rose-600/50 text-rose-400 hover:bg-rose-600 hover:text-white font-bold uppercase tracking-widest transition-all text-xs flex justify-center items-center gap-3 hidden"
+            >
+              <i class="fa-solid fa-trash-can"></i> Delete_Kalvian
+            </button>
+
+            <button
               onclick="viewPublicDossier()"
               class="w-full py-3 border border-blue-600/50 text-blue-500 hover:bg-blue-600 hover:text-white font-bold uppercase tracking-widest transition-all text-xs flex justify-center items-center gap-3"
             >
@@ -154,14 +170,14 @@
           <div class="grid grid-cols-1 lg:grid-cols-2 gap-12">
             <!-- Left Side: Basic Info -->
             <div class="space-y-8">
-              <div class="input-group">
+              <div id="dashboard-bio-group" class="input-group">
                 <label class="block text-[10px] text-gray-500 mono uppercase mb-2 tracking-widest">Subject_Biography</label>
                 <textarea id="in-bio" class="w-full bg-black/60 border border-white/10 p-4 text-white mono text-xs focus:border-red-600 outline-none transition-all h-32 leading-relaxed" placeholder="Biometric description..."></textarea>
               </div>
 
-              <div class="p-6 border border-white/5 bg-white/[0.02] space-y-4">
+              <div id="dashboard-identifiers-group" class="p-6 border border-white/5 bg-white/[0.02] space-y-4">
                 <p class="mono text-[10px] text-gray-600 uppercase tracking-[0.3em] mb-4">Coding_Signal_Identifiers</p>
-                <div class="grid grid-cols-2 gap-6">
+                <div id="dashboard-coding-ids-group" class="grid grid-cols-2 gap-6">
                   <div class="input-group">
                     <label class="block text-[9px] text-gray-500 mono uppercase mb-1">GitHub_ID</label>
                     <input id="in-github" class="w-full bg-black/40 border border-white/10 p-3 text-white mono text-xs focus:border-red-600 outline-none transition-all" placeholder="username" />
@@ -179,13 +195,15 @@
                     <input id="in-codechef" class="w-full bg-black/40 border border-white/10 p-3 text-white mono text-xs focus:border-red-600 outline-none transition-all" placeholder="id" />
                   </div>
                 </div>
-                <div class="input-group pt-2">
+                <div id="dashboard-social-links-group" class="input-group pt-2">
                   <label class="block text-[9px] text-gray-500 mono uppercase mb-1">LinkedIn_Profile_Protocol</label>
                   <input id="in-linkedin" class="w-full bg-black/40 border border-white/10 p-3 text-white mono text-xs focus:border-red-600 outline-none transition-all" placeholder="https://linkedin.com/in/..." />
+                  <label class="block text-[9px] text-gray-500 mono uppercase mb-1 mt-4">GitHub_Profile (managers/mentors)</label>
+                  <input id="in-github-social" class="w-full bg-black/40 border border-white/10 p-3 text-white mono text-xs focus:border-red-600 outline-none transition-all" placeholder="username or https://github.com/username" />
                 </div>
               </div>
 
-              <div class="space-y-6">
+              <div id="dashboard-skills-group" class="space-y-6">
                 <div class="input-group">
                   <label class="block text-[10px] text-gray-500 mono uppercase mb-2 tracking-widest">Neural_Capability_Array (Skills)</label>
                   <input id="in-skills" class="w-full bg-black/60 border border-white/10 p-4 text-white mono text-xs focus:border-red-600 outline-none transition-all" placeholder="React, Node.js, Python..." />
@@ -194,9 +212,9 @@
             </div>
 
             <!-- Right Side: dynamic Lists -->
-            <div class="space-y-12 flex flex-col">
+            <div id="dashboard-lists-column" class="space-y-12 flex flex-col">
               <!-- Advancements -->
-              <div class="space-y-4">
+              <div id="dashboard-certs-section" class="space-y-4">
                 <div class="flex justify-between items-center mb-4 bg-white/[0.03] p-4 border border-white/5">
                   <div>
                     <label class="block text-[10px] text-white mono uppercase font-bold tracking-[0.2em]">Advancement_Clearances</label>
@@ -210,7 +228,7 @@
               </div>
 
               <!-- Projects -->
-              <div class="space-y-4 flex flex-col">
+              <div id="dashboard-projects-section" class="space-y-4 flex flex-col">
                 <div class="flex justify-between items-center mb-4 bg-white/[0.03] p-4 border border-white/5">
                   <div>
                     <label class="block text-[10px] text-white mono uppercase font-bold tracking-[0.2em]">Deployed_Project_Matrix</label>
@@ -294,13 +312,21 @@
       const AVATAR_BUCKET_BASE = "Profile/profile_picture/";
       const DASHBOARD_AVATAR_PLACEHOLDER = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==';
       const dashboardAvatarLookupCache = new Map();
+      let currentDashboardView = 'default';
 
       function applyDashboardView(view) {
         const normalized = ['manager', 'mentor'].includes((view || '').toLowerCase()) ? view.toLowerCase() : 'default';
+        currentDashboardView = normalized;
         const welcomeEl = document.querySelector('#dashboard-welcome');
         const titleEl = document.querySelector('#dashboard-title');
         const subtitleEl = document.querySelector('#dashboard-subtitle');
         const configPanel = document.querySelector('#dashboard-config-panel');
+        const bioGroup = document.querySelector('#dashboard-bio-group');
+        const codingIdsGroup = document.querySelector('#dashboard-coding-ids-group');
+        const socialLinksGroup = document.querySelector('#dashboard-social-links-group');
+        const skillsGroup = document.querySelector('#dashboard-skills-group');
+        const certsSection = document.querySelector('#dashboard-certs-section');
+        const projectsSection = document.querySelector('#dashboard-projects-section');
         if (titleEl) {
           titleEl.textContent = normalized === 'manager' ? 'Manager Dashboard' : normalized === 'mentor' ? 'Mentor Dashboard' : 'User Dashboard';
         }
@@ -324,6 +350,117 @@
         }
         if (actionsPanel) {
           actionsPanel.classList.toggle('hidden', normalized === 'default');
+        }
+        const mentorAddFolkBtn = document.querySelector('#mentor-add-folk-btn');
+        if (mentorAddFolkBtn) {
+          mentorAddFolkBtn.classList.toggle('hidden', normalized !== 'mentor');
+        }
+        const mentorDeleteFolkBtn = document.querySelector('#mentor-delete-folk-btn');
+        if (mentorDeleteFolkBtn) {
+          mentorDeleteFolkBtn.classList.toggle('hidden', normalized !== 'mentor');
+        }
+        const socialOnlyMode = normalized === 'manager' || normalized === 'mentor';
+        if (bioGroup) bioGroup.classList.toggle('hidden', false);
+        if (codingIdsGroup) codingIdsGroup.classList.toggle('hidden', socialOnlyMode);
+        if (socialLinksGroup) socialLinksGroup.classList.toggle('hidden', false);
+        if (skillsGroup) skillsGroup.classList.toggle('hidden', socialOnlyMode);
+        if (certsSection) certsSection.classList.toggle('hidden', socialOnlyMode);
+        if (projectsSection) projectsSection.classList.toggle('hidden', socialOnlyMode);
+      }
+
+      function getDashboardBioTable(view) {
+        return ['manager', 'mentor'].includes((view || '').toLowerCase()) ? 'management' : 'kalvian';
+      }
+
+      async function fetchBioFromTable(tableName, email, fullName) {
+        if (!supabaseClient) return '';
+
+        const normalizedEmail = (email || '').trim().toLowerCase();
+        const normalizedName = (fullName || '').trim();
+        const filters = [];
+
+        if (normalizedEmail) {
+          filters.push({ column: 'email', value: normalizedEmail });
+        }
+        if (normalizedName) {
+          filters.push({ column: 'full_name', value: normalizedName });
+        }
+
+        for (const filter of filters) {
+          const { data, error } = await supabaseClient
+            .from(tableName)
+            .select('*')
+            .ilike(filter.column, filter.value)
+            .maybeSingle();
+
+          if (!error && data && typeof data.bio === 'string' && data.bio.trim()) {
+            return data.bio;
+          }
+        }
+
+        return '';
+      }
+
+      async function resolveDashboardBio(view, email, fullName, fallbackBio) {
+        const tableName = getDashboardBioTable(view);
+        const tableBio = await fetchBioFromTable(tableName, email, fullName);
+        return tableBio || fallbackBio || '';
+      }
+
+      async function syncDashboardBioTables(view, email, fullName, bio) {
+        if (!supabaseClient || typeof bio !== 'string') return;
+
+        const normalizedEmail = (email || '').trim().toLowerCase();
+        const normalizedName = (fullName || '').trim();
+        const roleTable = getDashboardBioTable(view);
+        const targets = ['dossiers'];
+
+        if (roleTable && roleTable !== 'dossiers') {
+          targets.push(roleTable);
+        }
+
+        for (const tableName of targets) {
+          let query = supabaseClient.from(tableName).update({ bio });
+          if (normalizedEmail) {
+            query = query.ilike('email', normalizedEmail);
+          } else if (normalizedName) {
+            query = query.ilike('full_name', normalizedName);
+          } else {
+            continue;
+          }
+
+          const { error } = await query;
+          if (error) {
+            console.warn(`Bio sync failed for ${tableName}:`, error.message);
+          }
+        }
+      }
+
+      async function syncDashboardGithubTables(view, email, fullName, github) {
+        if (!supabaseClient || typeof github !== 'string') return;
+
+        const normalizedEmail = (email || '').trim().toLowerCase();
+        const normalizedName = (fullName || '').trim();
+        if (!normalizedEmail && !normalizedName) return;
+
+        const dossierResult = await supabaseClient
+          .from('dossiers')
+          .update({ github_username: github })
+          .ilike(normalizedEmail ? 'email' : 'full_name', normalizedEmail || normalizedName);
+
+        if (dossierResult.error) {
+          console.warn('GitHub sync failed for dossiers:', dossierResult.error.message);
+        }
+
+        if (!['manager', 'mentor'].includes((view || '').toLowerCase())) return;
+
+        const managementResult = await supabaseClient
+          .from('management')
+          .update({ github_url: github })
+          .ilike(normalizedEmail ? 'email' : 'full_name', normalizedEmail || normalizedName);
+
+        if (managementResult.error) {
+          console.warn('GitHub sync failed for management:', managementResult.error.message);
         }
       }
 
@@ -353,29 +490,31 @@
         }
 
         const promise = (async () => {
-          if (!supabaseClient) return '';
+            if (!supabaseClient) return '';
 
-          const { data, error } = await supabaseClient
-            .storage
-            .from('dossier_assets')
-            .list('Profile/profile_picture', { limit: 1000 });
+            const { data, error } = await supabaseClient
+              .storage
+              .from('dossier_assets')
+              .list('Profile/profile_picture', { limit: 1000 });
 
-          if (error || !Array.isArray(data)) return '';
+            if (error || !Array.isArray(data)) return '';
 
-          const match = data.find((file) => {
-            const fileName = (file?.name || '').toLowerCase();
-            return fileName.includes(normalized);
-          });
+            const match = data.find((file) => {
+              const fileName = (file?.name || '').toLowerCase();
+              return fileName.includes(normalized);
+            });
 
-          if (!match) return '';
+            if (!match) return '';
 
-          return supabaseClient.storage
-            .from('dossier_assets')
-            .getPublicUrl(`Profile/profile_picture/${match.name}`).data.publicUrl;
-        })().catch(() => '');
+            const base = supabaseClient.storage
+              .from('dossier_assets')
+              .getPublicUrl(`Profile/profile_picture/${match.name}`).data.publicUrl;
+            // Append cache-buster so browsers fetch the latest image after updates
+            return base ? `${base}${base.includes('?') ? '&' : '?'}t=${Date.now()}` : '';
+          })().catch(() => '');
 
-        dashboardAvatarLookupCache.set(normalized, promise);
-        return promise;
+          // Intentionally do not cache dashboard avatar URLs so uploads appear immediately
+          return promise;
       }
 
       async function setDashboardAvatar(email) {
@@ -584,8 +723,15 @@
         }
 
         if (dossier) {
-          if (document.getElementById("in-bio")) document.getElementById("in-bio").value = dossier.bio || "";
+          const resolvedBio = await resolveDashboardBio(
+            dashboardView,
+            user.email,
+            user.user_metadata?.full_name,
+            dossier.bio,
+          );
+          if (document.getElementById("in-bio")) document.getElementById("in-bio").value = resolvedBio || "";
           if (document.getElementById("in-github")) document.getElementById("in-github").value = dossier.github_username || "";
+          if (document.getElementById("in-github-social")) document.getElementById("in-github-social").value = dossier.github_username || "";
           if (document.getElementById("in-leetcode")) document.getElementById("in-leetcode").value = dossier.leetcode_username || "";
           if (document.getElementById("in-hackerrank")) document.getElementById("in-hackerrank").value = dossier.hackerrank_username || "";
           if (document.getElementById("in-codechef")) document.getElementById("in-codechef").value = dossier.codechef_username || "";
@@ -699,7 +845,7 @@
           .upload(fileName, file, { upsert: true });
 
         if (error) {
-          alert("Upload failed: " + error.message);
+          showDashboardAlert("Upload failed: " + error.message, 'error', 'Upload Failed');
           statusLabel.innerText = "FAILED";
           statusLabel.className = "c-status text-[8px] mono text-red-500 truncate flex-1";
           return;
@@ -743,17 +889,15 @@
           console.warn('Avatar cleanup failed', e);
         }
 
-        // 2) Upload new file preserving extension
-        const extMatch = (file.name || '').match(/(\.[^.]+)$/);
-        const ext = extMatch ? extMatch[1].toLowerCase() : '';
-        const uploadPath = `Profile/profile_picture/${normalized}${ext}`;
+        // 2) Upload to the fixed email-based path
+        const uploadPath = `Profile/profile_picture/${normalized}`;
 
         const { data: upData, error: upErr } = await supabaseClient.storage
           .from('dossier_assets')
           .upload(uploadPath, file, { upsert: true, cacheControl: '3600' });
 
         if (upErr) {
-          alert('Avatar sync failed: ' + upErr.message);
+          showDashboardAlert('Avatar sync failed: ' + upErr.message, 'error', 'Avatar Sync Failed');
           imgEl.style.opacity = '1';
           return;
         }
@@ -765,6 +909,18 @@
 
         await supabaseClient.from('dossiers').update({ avatar_url: publicUrl }).eq('id', session.user.id);
 
+        const normalizedEmail = (session.user.email || '').trim().toLowerCase();
+        const normalizedName = (session.user.user_metadata?.full_name || '').trim();
+        const kalvianQuery = supabaseClient
+          .from('kalvian')
+          .update({ img_url: uploadPath });
+
+        if (normalizedEmail) {
+          await kalvianQuery.ilike('email', normalizedEmail);
+        } else if (normalizedName) {
+          await kalvianQuery.ilike('full_name', normalizedName);
+        }
+
         // 4) Invalidate dashboard lookup cache for this email and refresh avatar
         if (dashboardAvatarLookupCache && typeof dashboardAvatarLookupCache.delete === 'function') {
           dashboardAvatarLookupCache.delete(normalized);
@@ -772,6 +928,7 @@
 
         await setDashboardAvatar(session.user.email);
         imgEl.style.opacity = '1';
+        bumpPortfolioDataVersion();
       }
 
       async function saveDossier() {
@@ -779,7 +936,14 @@
         if (!session) return;
 
         const bio = document.getElementById("in-bio").value;
-        const github = document.getElementById("in-github").value;
+        let github = '';
+        const socialGithubEl = document.getElementById("in-github-social");
+        if (socialGithubEl && (currentDashboardView === 'manager' || currentDashboardView === 'mentor')) {
+          github = socialGithubEl.value.trim();
+        } else {
+          const githubEl = document.getElementById("in-github");
+          github = githubEl ? githubEl.value.trim() : '';
+        }
         const leetcode = document.getElementById("in-leetcode").value;
         const hackerrank = document.getElementById("in-hackerrank").value;
         const codechef = document.getElementById("in-codechef").value;
@@ -838,9 +1002,38 @@
 
         if (error) {
           console.error("Save Error:", error);
-          alert("Error saving dossier: " + error.message);
+          showDashboardAlert("Error saving dossier: " + error.message, 'error', 'Save Failed');
         } else {
-          alert("System profile synchronized successfully!");
+          await syncDashboardBioTables(currentDashboardView, session.user.email, session.user.user_metadata?.full_name, bio);
+          await syncDashboardGithubTables(currentDashboardView, session.user.email, session.user.user_metadata?.full_name, github);
+
+          if (currentDashboardView === 'manager' || currentDashboardView === 'mentor') {
+            const avatarEl = document.getElementById('dashboard-avatar');
+            const managementPayload = {
+              email: session.user.email,
+              full_name: session.user.user_metadata?.full_name || session.user.email,
+              role: currentDashboardView === 'manager' ? 'MANAGER' : 'MENTOR',
+              bio,
+              github_url: github,
+              github_username: github,
+              linkedin_url: linkedin,
+              avatar_url: (avatarEl && avatarEl.src) ? avatarEl.src : '',
+              img_url: (avatarEl && avatarEl.src) ? avatarEl.src : '',
+              updated_at: new Date(),
+            };
+
+            const managementUpsert = await supabaseClient
+              .from('management')
+              .upsert(managementPayload, { onConflict: 'email' });
+
+            if (managementUpsert.error) {
+              console.warn('Management upsert failed:', managementUpsert.error.message);
+            }
+          }
+
+          bumpPortfolioDataVersion();
+
+          showDashboardAlert("System profile synchronized successfully!", 'success', 'Saved');
         }
       }
 
@@ -857,7 +1050,395 @@
         }
       }
 
+      function openNewFolkModal() {
+        const modal = document.getElementById('new-folk-modal');
+        if (!modal) return;
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+      }
+
+      function closeNewFolkModal() {
+        const modal = document.getElementById('new-folk-modal');
+        if (!modal) return;
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+      }
+
+      function bumpPortfolioDataVersion() {
+        try {
+          localStorage.setItem('portfolio_data_version', String(Date.now()));
+        } catch (error) {
+          console.warn('Could not broadcast portfolio data update:', error);
+        }
+      }
+
+      function showDashboardAlert(message, tone = 'info', title = 'Notice') {
+        const modal = document.getElementById('dashboard-alert-modal');
+        const titleEl = document.getElementById('dashboard-alert-title');
+        const messageEl = document.getElementById('dashboard-alert-message');
+        const accentEl = document.getElementById('dashboard-alert-accent');
+        const panel = modal ? modal.querySelector('[data-alert-panel]') : null;
+        if (!modal || !titleEl || !messageEl || !accentEl || !panel) {
+          console.log(title, message);
+          return;
+        }
+
+        const toneMap = {
+          info: { border: 'border-blue-500/40', accent: 'text-blue-400', bg: 'bg-blue-500/10' },
+          success: { border: 'border-emerald-500/40', accent: 'text-emerald-400', bg: 'bg-emerald-500/10' },
+          error: { border: 'border-rose-500/40', accent: 'text-rose-400', bg: 'bg-rose-500/10' },
+          warning: { border: 'border-amber-500/40', accent: 'text-amber-400', bg: 'bg-amber-500/10' },
+        };
+        const theme = toneMap[tone] || toneMap.info;
+
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+        panel.className = `w-full max-w-md dossier-card relative border ${theme.border} bg-zinc-950/95`;
+        accentEl.className = `inline-flex items-center gap-2 px-3 py-1 rounded-full text-[9px] mono uppercase tracking-[0.25em] ${theme.bg} ${theme.accent}`;
+        titleEl.textContent = title;
+        messageEl.textContent = message;
+      }
+
+      function closeDashboardAlert() {
+        const modal = document.getElementById('dashboard-alert-modal');
+        if (!modal) return;
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+      }
+
+      let dashboardConfirmResolve = null;
+
+      function showDashboardConfirm(message, title = 'Confirm Action') {
+        return new Promise((resolve) => {
+          dashboardConfirmResolve = resolve;
+          const modal = document.getElementById('dashboard-confirm-modal');
+          const titleEl = document.getElementById('dashboard-confirm-title');
+          const messageEl = document.getElementById('dashboard-confirm-message');
+          const panel = modal ? modal.querySelector('[data-confirm-panel]') : null;
+          if (!modal || !titleEl || !messageEl || !panel) {
+            resolve(false);
+            return;
+          }
+
+          titleEl.textContent = title;
+          messageEl.textContent = message;
+          modal.classList.remove('hidden');
+          modal.classList.add('flex');
+        });
+      }
+
+      function closeDashboardConfirm(result = false) {
+        const modal = document.getElementById('dashboard-confirm-modal');
+        if (modal) {
+          modal.classList.add('hidden');
+          modal.classList.remove('flex');
+        }
+        if (dashboardConfirmResolve) {
+          const resolve = dashboardConfirmResolve;
+          dashboardConfirmResolve = null;
+          resolve(result);
+        }
+      }
+
+      let deleteKalvianEntries = [];
+      let selectedDeleteKalvianKey = '';
+
+      function getDeleteKalvianKey(entry) {
+        return (entry?.email || entry?.full_name || '').trim().toLowerCase();
+      }
+
+      function renderDeleteKalvianList() {
+        const listEl = document.getElementById('delete-kalvian-list');
+        const actionBtn = document.getElementById('delete-kalvian-action');
+        if (!listEl) return;
+
+        if (!deleteKalvianEntries.length) {
+          listEl.innerHTML = `
+            <div class="rounded-xl border border-white/10 bg-black/40 p-4 text-center text-gray-500 mono text-xs uppercase tracking-[0.2em]">
+              No_Kalvians_Found
+            </div>
+          `;
+          if (actionBtn) actionBtn.disabled = true;
+          return;
+        }
+
+        listEl.innerHTML = deleteKalvianEntries.map((entry) => {
+          const key = getDeleteKalvianKey(entry);
+          const label = entry.full_name || entry.email || 'Unnamed_Kalvian';
+          const metaBits = [entry.email, entry.squad ? `Squad ${entry.squad}` : ''].filter(Boolean);
+          return `
+            <button
+              type="button"
+              onclick="selectDeleteKalvian('${key.replace(/'/g, "\\'")}')"
+              class="w-full text-left rounded-xl border px-4 py-3 transition-all ${selectedDeleteKalvianKey === key ? 'border-rose-500 bg-rose-500/10' : 'border-white/10 bg-black/30 hover:border-rose-500/40 hover:bg-rose-500/5'}"
+            >
+              <div class="flex items-center justify-between gap-3">
+                <div>
+                  <p class="text-white font-bold uppercase tracking-widest text-sm">${label}</p>
+                  <p class="text-[9px] text-gray-500 mono uppercase tracking-[0.2em] mt-1">${metaBits.join(' // ')}</p>
+                </div>
+                <span class="text-[9px] mono uppercase tracking-[0.2em] ${selectedDeleteKalvianKey === key ? 'text-rose-400' : 'text-gray-500'}">
+                  ${selectedDeleteKalvianKey === key ? 'Selected' : 'Select'}
+                </span>
+              </div>
+            </button>
+          `;
+        }).join('');
+
+        if (actionBtn) actionBtn.disabled = !selectedDeleteKalvianKey;
+      }
+
+      function selectDeleteKalvian(key) {
+        selectedDeleteKalvianKey = key || '';
+        renderDeleteKalvianList();
+      }
+
+      async function loadDeleteKalvians() {
+        if (!supabaseClient) {
+          deleteKalvianEntries = [];
+          selectedDeleteKalvianKey = '';
+          renderDeleteKalvianList();
+          return;
+        }
+
+        const { data, error } = await supabaseClient
+          .from('kalvian')
+          .select('full_name, email, squad')
+          .order('full_name', { ascending: true });
+
+        if (error || !Array.isArray(data)) {
+          console.warn('Could not load kalvians for delete modal:', error);
+          deleteKalvianEntries = [];
+          selectedDeleteKalvianKey = '';
+        } else {
+          deleteKalvianEntries = data;
+          selectedDeleteKalvianKey = getDeleteKalvianKey(data[0]) || '';
+        }
+
+        renderDeleteKalvianList();
+      }
+
+      function openDeleteKalvianModal() {
+        const modal = document.getElementById('delete-kalvian-modal');
+        if (!modal) return;
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+        loadDeleteKalvians().catch((error) => {
+          console.warn('Kalvian delete list load failed:', error);
+        });
+      }
+
+      function closeDeleteKalvianModal() {
+        const modal = document.getElementById('delete-kalvian-modal');
+        if (!modal) return;
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+      }
+
+      async function deleteKalvian() {
+        const { data: { session } } = await supabaseClient.auth.getSession();
+        if (!session) return;
+
+        const selectedEntry = deleteKalvianEntries.find((entry) => getDeleteKalvianKey(entry) === selectedDeleteKalvianKey);
+        if (!selectedEntry) {
+          showDashboardAlert('Select a Kalvian to delete.', 'warning', 'No Selection');
+          return;
+        }
+
+        const confirmDelete = await showDashboardConfirm(
+          `Delete Kalvian ${selectedEntry.full_name || selectedEntry.email || 'this entry'}? This cannot be undone.`,
+          'Delete Kalvian'
+        );
+        if (!confirmDelete) return;
+
+        let query = supabaseClient.from('kalvian').delete();
+        if (selectedEntry.email) {
+          query = query.ilike('email', selectedEntry.email);
+        } else {
+          query = query.ilike('full_name', selectedEntry.full_name || '');
+        }
+
+        const { error } = await query;
+        if (error) {
+          console.error('Delete kalvian failed:', error);
+          showDashboardAlert('Could not delete Kalvian: ' + error.message, 'error', 'Delete Failed');
+          return;
+        }
+
+        closeDeleteKalvianModal();
+        deleteKalvianEntries = [];
+        selectedDeleteKalvianKey = '';
+
+        bumpPortfolioDataVersion();
+        showDashboardAlert('Kalvian deleted successfully.', 'success', 'Deleted');
+      }
+
+      async function createNewFolk() {
+        const { data: { session } } = await supabaseClient.auth.getSession();
+        if (!session) return;
+
+        const fullName = document.getElementById('new-folk-name').value.trim();
+        const email = document.getElementById('new-folk-email').value.trim().toLowerCase();
+        const linkedinUrl = document.getElementById('new-folk-linkedin').value.trim();
+        const squad = document.getElementById('new-folk-squad').value.trim();
+        const bio = document.getElementById('new-folk-bio').value.trim();
+
+        if (!fullName) {
+          showDashboardAlert('Enter a full name before creating the profile.', 'warning', 'Missing Name');
+          return;
+        }
+
+        const payload = {
+          full_name: fullName,
+          role: 'Kalvian',
+          email: email || null,
+          linkedin_url: linkedinUrl || null,
+          squad: squad || null,
+          bio: bio || null,
+        };
+
+        const insertQuery = email
+          ? supabaseClient.from('kalvian').upsert(payload, { onConflict: 'email' })
+          : supabaseClient.from('kalvian').insert(payload);
+
+        const { error } = await insertQuery;
+        if (error) {
+          console.error('Create folk failed:', error);
+          showDashboardAlert('Could not create profile: ' + error.message, 'error', 'Create Failed');
+          return;
+        }
+
+        closeNewFolkModal();
+        ['new-folk-name', 'new-folk-email', 'new-folk-linkedin', 'new-folk-squad', 'new-folk-bio'].forEach((id) => {
+          const el = document.getElementById(id);
+          if (el) el.value = '';
+        });
+
+        bumpPortfolioDataVersion();
+
+        showDashboardAlert('New kalvian added. Refresh the home page to see them.', 'success', 'Created');
+      }
+
       checkSession();
     </script>
+    <div id="new-folk-modal" class="fixed inset-0 z-[2000] hidden items-center justify-center bg-black/80 backdrop-blur-sm p-4">
+      <div class="w-full max-w-2xl dossier-card border border-emerald-600/30 bg-zinc-950/95 relative">
+        <div class="bracket tl"></div>
+        <div class="bracket tr"></div>
+        <div class="bracket bl"></div>
+        <div class="bracket br"></div>
+        <div class="flex items-center justify-between mb-6 pb-4 border-b border-white/10">
+          <div>
+            <p class="mono text-[10px] uppercase tracking-[0.35em] text-emerald-400">Kalvian_Registry</p>
+            <h3 class="text-xl font-black uppercase tracking-widest text-white">Add_New_Kalvian</h3>
+          </div>
+          <button onclick="closeNewFolkModal()" class="text-gray-500 hover:text-white text-xl"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div class="input-group md:col-span-2">
+            <label class="block text-[9px] text-gray-500 mono uppercase mb-1">Role</label>
+            <input value="Kalvian" disabled class="w-full bg-black/60 border border-emerald-500/30 p-3 text-emerald-400 mono text-xs uppercase tracking-[0.2em] cursor-not-allowed" />
+            <p class="text-[8px] text-gray-600 mono uppercase tracking-[0.2em] mt-1">Fixed role. The Kalvian completes their own profile later.</p>
+          </div>
+          <div class="input-group">
+            <label class="block text-[9px] text-gray-500 mono uppercase mb-1">Full_Name</label>
+            <input id="new-folk-name" class="w-full bg-black/40 border border-white/10 p-3 text-white mono text-xs focus:border-emerald-500 outline-none transition-all" placeholder="Name" />
+          </div>
+          <div class="input-group">
+            <label class="block text-[9px] text-gray-500 mono uppercase mb-1">Email</label>
+            <input id="new-folk-email" class="w-full bg-black/40 border border-white/10 p-3 text-white mono text-xs focus:border-emerald-500 outline-none transition-all" placeholder="name@domain.com" />
+          </div>
+          <div class="input-group">
+            <label class="block text-[9px] text-gray-500 mono uppercase mb-1">LinkedIn_URL</label>
+            <input id="new-folk-linkedin" class="w-full bg-black/40 border border-white/10 p-3 text-white mono text-xs focus:border-emerald-500 outline-none transition-all" placeholder="https://linkedin.com/in/..." />
+          </div>
+          <div class="input-group">
+            <label class="block text-[9px] text-gray-500 mono uppercase mb-1">Squad</label>
+            <select id="new-folk-squad" class="w-full bg-black/40 border border-white/10 p-3 text-white mono text-xs focus:border-emerald-500 outline-none transition-all">
+              <option value="138">138</option>
+              <option value="139">139</option>
+            </select>
+          </div>
+          <div class="input-group md:col-span-2">
+            <label class="block text-[9px] text-gray-500 mono uppercase mb-1">Bio</label>
+            <textarea id="new-folk-bio" class="w-full bg-black/40 border border-white/10 p-3 text-white mono text-xs focus:border-emerald-500 outline-none transition-all h-28" placeholder="Short bio (optional)..."></textarea>
+            <p class="text-[8px] text-gray-600 mono uppercase tracking-[0.2em] mt-1">Optional. The Kalvian can complete or edit this from their own dashboard.</p>
+          </div>
+        </div>
+
+        <div class="flex gap-3 mt-6 pt-4 border-t border-white/10">
+          <button onclick="createNewFolk()" class="flex-1 py-3 bg-emerald-500 text-black font-black uppercase tracking-widest text-xs hover:bg-white transition-all">Create_Profile</button>
+          <button onclick="closeNewFolkModal()" class="flex-1 py-3 border border-white/10 text-gray-400 hover:text-white font-black uppercase tracking-widest text-xs">Cancel</button>
+        </div>
+      </div>
+    </div>
+
+      <div id="delete-kalvian-modal" class="fixed inset-0 z-[2000] hidden items-center justify-center bg-black/80 backdrop-blur-sm p-4">
+        <div class="w-full max-w-xl dossier-card border border-rose-600/30 bg-zinc-950/95 relative">
+          <div class="bracket tl"></div>
+          <div class="bracket tr"></div>
+          <div class="bracket bl"></div>
+          <div class="bracket br"></div>
+          <div class="flex items-center justify-between mb-6 pb-4 border-b border-white/10">
+            <div>
+              <p class="mono text-[10px] uppercase tracking-[0.35em] text-rose-400">Kalvian_Removal</p>
+              <h3 class="text-xl font-black uppercase tracking-widest text-white">Delete_Kalvian</h3>
+            </div>
+            <button onclick="closeDeleteKalvianModal()" class="text-gray-500 hover:text-white text-xl"><i class="fa-solid fa-xmark"></i></button>
+          </div>
+
+          <div class="mb-4">
+            <p class="mono text-[10px] uppercase tracking-[0.3em] text-gray-500 mb-3">Select_A_Kalvian</p>
+            <div id="delete-kalvian-list" class="grid grid-cols-1 gap-3 max-h-[320px] overflow-y-auto pr-2 custom-scrollbar"></div>
+          </div>
+
+          <div class="flex gap-3 mt-6 pt-4 border-t border-white/10">
+              <button id="delete-kalvian-action" onclick="deleteKalvian()" class="flex-1 py-3 bg-rose-500 text-white font-black uppercase tracking-widest text-xs hover:bg-white hover:text-black transition-all disabled:opacity-40 disabled:cursor-not-allowed" disabled>Delete_Profile</button>
+              <button onclick="closeDeleteKalvianModal()" class="flex-1 py-3 border border-white/10 text-gray-400 hover:text-white font-black uppercase tracking-widest text-xs">Cancel</button>
+            </div>
+        </div>
+      </div>
+
+        <div id="dashboard-confirm-modal" class="fixed inset-0 z-[3100] hidden items-center justify-center bg-black/80 backdrop-blur-sm p-4">
+          <div data-confirm-panel class="w-full max-w-md dossier-card relative border border-rose-500/40 bg-zinc-950/95">
+            <div class="bracket tl"></div>
+            <div class="bracket tr"></div>
+            <div class="bracket bl"></div>
+            <div class="bracket br"></div>
+            <div class="flex items-center justify-between mb-5 pb-4 border-b border-white/10">
+              <div>
+                <p class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-[9px] mono uppercase tracking-[0.25em] bg-rose-500/10 text-rose-400">Confirm</p>
+                <h3 id="dashboard-confirm-title" class="text-xl font-black uppercase tracking-widest text-white mt-3">Confirm Action</h3>
+              </div>
+              <button onclick="closeDashboardConfirm(false)" class="text-gray-500 hover:text-white text-xl"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <p id="dashboard-confirm-message" class="text-gray-300 mono text-xs leading-relaxed uppercase tracking-[0.18em]">Are you sure?</p>
+            <div class="flex gap-3 mt-6 pt-4 border-t border-white/10">
+              <button onclick="closeDashboardConfirm(true)" class="flex-1 py-3 bg-rose-500 text-white font-black uppercase tracking-widest text-xs hover:bg-white hover:text-black transition-all">Delete</button>
+              <button onclick="closeDashboardConfirm(false)" class="flex-1 py-3 border border-white/10 text-gray-400 hover:text-white font-black uppercase tracking-widest text-xs">Cancel</button>
+            </div>
+          </div>
+        </div>
+
+      <div id="dashboard-alert-modal" class="fixed inset-0 z-[3000] hidden items-center justify-center bg-black/80 backdrop-blur-sm p-4">
+        <div data-alert-panel class="w-full max-w-md dossier-card relative border border-blue-500/40 bg-zinc-950/95">
+          <div class="bracket tl"></div>
+          <div class="bracket tr"></div>
+          <div class="bracket bl"></div>
+          <div class="bracket br"></div>
+          <div class="flex items-center justify-between mb-5 pb-4 border-b border-white/10">
+            <div>
+              <p id="dashboard-alert-accent" class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-[9px] mono uppercase tracking-[0.25em] bg-blue-500/10 text-blue-400">Notice</p>
+              <h3 id="dashboard-alert-title" class="text-xl font-black uppercase tracking-widest text-white mt-3">Notice</h3>
+            </div>
+            <button onclick="closeDashboardAlert()" class="text-gray-500 hover:text-white text-xl"><i class="fa-solid fa-xmark"></i></button>
+          </div>
+          <p id="dashboard-alert-message" class="text-gray-300 mono text-xs leading-relaxed uppercase tracking-[0.18em]">Message</p>
+          <div class="flex justify-end mt-6 pt-4 border-t border-white/10">
+            <button onclick="closeDashboardAlert()" class="px-5 py-3 bg-white text-black font-black uppercase tracking-widest text-xs hover:bg-red-600 hover:text-white transition-all">OK</button>
+          </div>
+        </div>
+      </div>
   </body>
 </html>

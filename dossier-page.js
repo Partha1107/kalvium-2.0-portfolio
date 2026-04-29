@@ -4,320 +4,8 @@
 // =========================================================================
 
 // --- SHARED DATA (same as script.js) ---
-const mentorsData = [
-  {
-    name: "Aravind R",
-    role: "MENTOR",
-    img: "./Src/Aravind - Mentor.png",
-    linkedin: "https://www.linkedin.com/in/aravind-r-812634245/",
-    email: "aravind.r@kalvium.com",
-  },
-  {
-    name: "H. Karunakaran",
-    role: "CAMPUS MANAGER",
-    img: "./Src/Karunakaran - Mentor.png",
-    linkedin: "https://www.linkedin.com/in/h-karunakaran-3b1285376",
-    email: "karunakaran.h@kalvium.com",
-  },
-  {
-    name: "Hanuram T",
-    role: "MENTOR",
-    img: "./Src/Hanuram - Mentor.png",
-    linkedin: "http://www.linkedin.com/in/hanuram-t",
-    email: "hanuram.t@kalvium.com",
-  },
-];
-
-const studentsData = [
-  {
-    name: "Dhinesh Babu G",
-    role: "Kalvian/Creator_1",
-    img: "./Src/Dhinesh Babu.png",
-    github: "https://github.com/dhineshbabus138-commit",
-    linkedin: "https://www.linkedin.com/in/dhinesh-babu-software-engg",
-    email: "dhinesh.babu.s.138@kalvium.community",
-  },
-  {
-    name: "Sanjay Chelliah C",
-    role: "Kalvian/Creator_2",
-    img: "./Src/Sanjay Chelliah.png",
-    github: "https://github.com/SanCheS138",
-    linkedin: "https://www.linkedin.com/in/sanjay-c-606981384",
-    email: "sanjay.chelliah.s.138@kalvium.community",
-  },
-  {
-    name: "Ashwin raj J J",
-    role: "Kalvian/Creator_3",
-    img: "./Src/Ashwin Raj.png",
-    github: "https://github.com/Partha1107",
-    linkedin: "https://www.linkedin.com/in/ashwin-raj-j-j-a8034a383",
-    email: "ashwin.raj.s.138@kalvium.community",
-  },
-  {
-    name: "Purushoth K",
-    role: "Kalvian",
-    img: "./Src/PURUSHOTHAMAN K.png",
-    github: "https://github.com/purushothaman-k",
-    linkedin: "https://www.linkedin.com/in/purushothaman-k-82129a325",
-    email: "purushothaman.k.s.138@kalvium.community",
-  },
-  {
-    name: "Vignesh M ",
-    role: "Kalvian",
-    img: "./Src/Vignesh M.png",
-    github: "https://github.com/vigneshms138-creator",
-    linkedin: "https://www.linkedin.com/in/vignesh-m-2b1690383",
-    email: "vignesh.m.s.138@kalvium.community",
-  },
-  {
-    name: "Manoj Kumar P",
-    role: "Kalvian",
-    img: "./Src/Manoj Kumar Ponnusamy.png",
-    github: "https://github.com/manojponnusamy2032-star",
-    linkedin: "https://www.linkedin.com/in/manoj-kumar-p-621049386",
-    email: "manoj.ponnusamy.s.138@kalvium.community",
-  },
-  {
-    name: "Pradheesh S",
-    role: "Kalvian",
-    img: "./Src/Pradheesh S.png",
-    github: "https://github.com/pradheesh08-s",
-    linkedin: "https://www.linkedin.com/in/pradheesh-s-a7a7a0381",
-    email: "pradheesh.s.s.138@kalvium.community",
-  },
-  {
-    name: "Shree Vidhya T ",
-    role: "Kalvian",
-    img: "./Src/Srividhya (1).png",
-    github: "https://github.com/shreevidhyats138-cmyk",
-    linkedin: "https://www.linkedin.com/in/shree-v-5a60a0382",
-    email: "shree.vidhya.t.s.138@kalvium.community",
-  },
-  {
-    name: "Arun Ragav G K G",
-    role: "Kalvian",
-    img: "./Src/Arun ragav G.K.G.png",
-    github: "https://github.com/arun-ragav",
-    linkedin: "https://www.linkedin.com/in/arun-ragav-589061384",
-    email: "arun.ragav.s.138@kalvium.community",
-  },
-  {
-    name: "Prasanna kumar A",
-    role: "Kalvian",
-    img: "./Src/Prasanna Kumar A.png",
-    github: "https://github.com/prasannaas138-alt",
-    linkedin: "https://www.linkedin.com/in/prasanna-kumar-a0a055384",
-    email: "prasanna.a.s.138@kalvium.community",
-  },
-  {
-    name: "Deboraah Issac I",
-    role: "Kalvian",
-    img: "./Src/DeboraahIssac I.png",
-    github: "https://github.com/deboraahissacats138-cmyx",
-    linkedin: "https://www.linkedin.com/in/deboraah-issac-ab0813388",
-    email: "deboraahissac.i.s.138@kalvium.community",
-  },
-  {
-    name: "Sasi Mahesh Y",
-    role: "Kalvian",
-    img: "./Src/Sasi Mahesh.png",
-    github: "https://github.com/sasimaheshs138-loop",
-    linkedin: "https://www.linkedin.com/in/sasi-mahesh-2aa3b4384",
-    email: "sasi.mahesh.s.138@kalvium.community",
-  },
-  {
-    name: "chandru A",
-    role: "Kalvian",
-    img: "./Src/Chandru A.png",
-    github: "https://github.com/chandrua138",
-    linkedin: "https://www.linkedin.com/in/chandru-a-331451384",
-    email: "chandru.a.s.138@kalvium.community",
-  },
-  {
-    name: "Sandeep V",
-    role: "Kalvian",
-    img: "./Src/Sandeep V.jpeg",
-    github: "https://github.com/sandeepvs138-dev",
-    linkedin: "https://www.linkedin.com/in/sandeep-v-947063384",
-    email: "sandeep.v.s.138@kalvium.community",
-  },
-  {
-    name: "ARVIND SELVA JAS J S",
-    role: "Kalvian",
-    img: "./Src/Arvind selva Jas J. S.jpg",
-    github: "https://github.com/arvindselvajas0222-coder",
-    linkedin: "https://www.linkedin.com/in/arvind-selva-jas-j-s-68a79b381",
-    email: "arvind.j.s.138@kalvium.community",
-  },
-  {
-    name: "Nithyanandharaj M",
-    role: "Kalvian",
-    img: "./Src/Nithyanadharaj.png",
-    github: "https://github.com/nithyanandharajms138-debug",
-    linkedin: "https://www.linkedin.com/in/nithyanandharaj-m-728189383",
-    email: "nithyanandharaj.m.s.138@kalvium.community",
-  },
-  {
-    name: "Tavanidhiragavi B B ",
-    role: "Kalvian",
-    img: "./Src/Tavanidhiragavi B.B.jpg",
-    github: "https://github.com/tavanidhiragavibbs138-rgb",
-    linkedin: "https://www.linkedin.com/in/tavanidhiragavi-b-b-0068b03a2",
-    email: "tavanidhiragavi.bb.s.138@kalvium.community",
-  },
-  {
-    name: "SHERLY N",
-    role: "Kalvian",
-    img: "./Src/Sherly N.jpg",
-    github: "https://github.com/sherlyns138-crypto",
-    linkedin: "https://www.linkedin.com/in/sherly-n-407881382",
-    email: "sherly.n.s.138@kalvium.community",
-  },
-  {
-    name: "chandru S ",
-    role: "Kalvian",
-    img: "./Src/Chandru S.jpg",
-    github: "https://github.com/chandru24126",
-    linkedin: "https://www.linkedin.com/in/chandru-sk-999077384",
-    email: "chandru.s.s.138@kalvium.community",
-  },
-  {
-    name: "Ashwath Palanisamy",
-    role: "Kalvian",
-    img: "./Src/Ashwath Palanisamy.jpg",
-    github: "https://github.com/Ashwath-Palanisamy",
-    linkedin: "https://www.linkedin.com/in/ashwathpalanisamy",
-    email: "ashwath.p.s.138@kalvium.community",
-  },
-  {
-    name: "kishore R",
-    role: "Kalvian",
-    img: "./Src/Kishore. R.png",
-    github: "https://github.com/kishorers138-cyber",
-    linkedin: "https://www.linkedin.com/in/kishore-r-6bb4a6383",
-    email: "kishore.r.s.138@kalvium.community",
-  },
-  {
-    name: "Deepika V",
-    role: "Kalvian",
-    img: "./Src/Deepika (1).jpg",
-    github: "https://github.com/deepikavs138-design",
-    linkedin: "https://www.linkedin.com/in/deepika-v-957099382",
-    email: "deepika.v.s.138@kalvium.community",
-  },
-  {
-    name: "HARICHARAN P",
-    role: "Kalvian",
-    img: "./Src/Hari charan (1).png",
-    github: "https://github.com/harips138-droid",
-    linkedin: "https://www.linkedin.com/in/hari-charan-p-5006393b1",
-    email: "hari.p.s.138@kalvium.community",
-  },
-  {
-    name: "karthikeyan",
-    role: "Kalvian",
-    img: "./Src/Karthikeyan A.E.png",
-    github: "https://github.com/karthikeyan24-kk",
-    linkedin: "https://www.linkedin.com/in/karthikeyan-a-e-8b3847381",
-    email: "karthikeyan.ae.s.138@kalvium.community",
-  },
-  {
-    name: "MOHAMMED THARIK S",
-    role: "Kalvian",
-    img: "./Src/Mohammed Tharik S.jpg",
-    github: "https://github.com/MohammedTharikS",
-    linkedin: "https://www.linkedin.com/in/mohammed-tharik-s-26b108384",
-    email: "mohammed.tharik.s.138@kalvium.community",
-  },
-  {
-    name: "Saigoutham G",
-    role: "Kalvian",
-    img: "./Src/Gundla Sai Gowtham.png",
-    github: "https://github.com/gundlagowthams138-cell",
-    linkedin: "https://www.linkedin.com/in/gundla-sai-gowtham-985460390",
-    email: "gundla.gowtham.s.138@kalvium.community",
-  },
-  {
-    name: "Ram CHARAN M",
-    role: "Kalvian",
-    img: "./Src/Ram Charan.png",
-    github: "https://github.com/medaboinacharan-pixel",
-    linkedin: "https://www.linkedin.com/in/ram-charan-b551133ab",
-    email: "medaboina.charan.s.138@kalvium.community",
-  },
-  {
-    name: "Dinesh p",
-    role: "Kalvian",
-    img: "./Src/Dinesh P.webp",
-    github: "https://github.com/dineshps138-ds",
-    linkedin: "https://www.linkedin.com/in/dinesh-prakasam-a8279a381",
-    email: "dinesh.p.s.138@kalvium.community",
-  },
-  {
-    name: "Surjith sri k",
-    role: "Kalvian",
-    img: "./Src/Surjith Sri K.jpeg",
-    github: "https://github.com/surjithks138",
-    linkedin: "https://kalvium.community",
-    email: "surjith.k.s.138@kalvium.community",
-  },
-  {
-    name: "Navya D ",
-    role: "Kalvian",
-    img: "./Src/Navya D.jpg",
-    github: "https://github.com/navyads138-star",
-    linkedin: "https://www.linkedin.com/in/navya-d-a1b187383",
-    email: "navya.d.s.138@kalvium.community",
-  },
-  {
-    name: "DAVID G",
-    role: "Kalvian",
-    img: "./Src/DAVID G.png",
-    github: "https://github.com/davidgs138-cyber",
-    linkedin: "https://www.linkedin.com/in/david-g-6bb3323b1",
-    email: "david.g.s.138@kalvium.community",
-  },
-  {
-    name: "Harshini J",
-    role: "Kalvian",
-    img: "./Src/Harshini J.png",
-    github: "https://github.com/harshinijs138-svg",
-    linkedin: "https://www.linkedin.com/in/harshini-j-244611383",
-    email: "harshini.j.s.138@kalvium.community",
-  },
-  {
-    name: "Udhaya E",
-    role: "Kalvian",
-    img: "./Src/Udhaya E.png",
-    github: "https://github.com/udhayaes138-spec",
-    linkedin: "https://www.linkedin.com/in/udhaya-e-a1b443383",
-    email: "udhaya.e.s.138@kalvium.community",
-  },
-  {
-    name: "Jeevanand J",
-    role: "Kalvian",
-    img: "./Src/Jeevanand j.png",
-    github: "https://github.com/jeevanand-jaisankar",
-    linkedin: "https://www.linkedin.com/in/jeevanand-j-575676281",
-    email: "jeevanand.j.s.138@kalvium.community",
-  },
-  {
-    name: "Edupalli sai praneeth",
-    role: "Kalvian",
-    img: "./Src/Edupalli Sai Praneeth Lokesh.png",
-    github: "https://github.com/edupallilokeshs138-bot",
-    linkedin: "https://www.linkedin.com/in/edupalli-sai-praneeth-3ab348383",
-    email: "edupalli.lokesh.s.138@kalvium.community",
-  },
-  {
-    name: "Chandana",
-    role: "Kalvian",
-    img: "./Src/Chadhana (1).png",
-    github: "https://github.com/chandanaes139-lang",
-    linkedin: "https://www.linkedin.com/in/chandana-elavarasan-a10964384",
-    email: "chandana.e.s.139@kalvium.community",
-  },
-];
+const mentorsData = [];
+const studentsData = [];
 
 // Make globally accessible (needed by coding-stats.js)
 window.mentorsData = mentorsData;
@@ -358,10 +46,7 @@ function getProfilePictureLookupClient() {
 function findProfilePictureUrlByEmail(email) {
   const normalized = (email || "").trim().toLowerCase();
   if (!normalized) return Promise.resolve("");
-  if (profilePictureLookupCache.has(normalized)) {
-    return profilePictureLookupCache.get(normalized);
-  }
-
+  // Always fetch latest profile images from storage (no cached promise)
   const promise = (async () => {
     const client = getProfilePictureLookupClient();
     if (!client) return "";
@@ -385,7 +70,6 @@ function findProfilePictureUrlByEmail(email) {
       .getPublicUrl(`Profile/profile_picture/${match.name}`).data.publicUrl;
   })().catch(() => "");
 
-  profilePictureLookupCache.set(normalized, promise);
   return promise;
 }
 
@@ -393,7 +77,13 @@ async function tryResolveProfileImage(imgEl, email, localSrc) {
   if (!imgEl) return;
   const resolvedUrl = await findProfilePictureUrlByEmail(email);
   if (resolvedUrl) {
-    imgEl.src = resolvedUrl;
+    const bust = `t=${Date.now()}`;
+    imgEl.src = resolvedUrl + (resolvedUrl.includes('?') ? '&' : '?') + bust;
+    return;
+  }
+
+  if (localSrc && (localSrc.startsWith("http://") || localSrc.startsWith("https://") || localSrc.startsWith("data:"))) {
+    imgEl.src = localSrc;
     return;
   }
 
@@ -425,6 +115,60 @@ function getProfilePictureSrc(email) {
   if (!email) return "";
   const normalizedEmail = email.trim().toLowerCase();
   return `${SUPABASE_BUCKET_IMAGE_BASE}${normalizedEmail}`;
+}
+
+function normalizeTablePerson(row, fallbackRole = "") {
+  return {
+    name: row?.full_name || row?.name || "",
+    full_name: row?.full_name || row?.name || "",
+    role: row?.role || fallbackRole || "",
+    email: row?.email || "",
+    img: row?.avatar_url || row?.img_url || row?.img || "",
+    github: row?.github_url || row?.github_username || row?.github || "",
+    linkedin: row?.linkedin_url || row?.linkedin || "",
+    bio: row?.bio || "",
+    leetcode: row?.leetcode_username || row?.leetcode || "",
+    hackerrank: row?.hackerrank_username || row?.hackerrank || "",
+    codechef: row?.codechef_username || row?.codechef || "",
+  };
+}
+
+function replaceArrayContents(target, entries) {
+  target.splice(0, target.length, ...entries);
+}
+
+async function loadPeopleFromTables() {
+  if (!supabaseClient) return;
+
+  const [managementResult, kalvianResult] = await Promise.all([
+    supabaseClient
+      .from("management")
+      .select("full_name, role, img_url, linkedin_url, email, bio, created_at")
+      .order("full_name", { ascending: true }),
+    supabaseClient
+      .from("kalvian")
+      .select("full_name, role, img_url, github_url, linkedin_url, email, bio, created_at, squad")
+      .order("full_name", { ascending: true }),
+  ]);
+
+  const loadedMentors = [];
+  if (!managementResult.error && Array.isArray(managementResult.data)) {
+    managementResult.data.forEach((row) => {
+      loadedMentors.push(normalizeTablePerson(row, row?.role || "LEADERSHIP"));
+    });
+  }
+
+  const loadedStudents = [];
+  if (!kalvianResult.error && Array.isArray(kalvianResult.data)) {
+    kalvianResult.data.forEach((row) => {
+      loadedStudents.push(normalizeTablePerson(row, row?.role || "KALVIAN"));
+    });
+  }
+
+  replaceArrayContents(mentorsData, loadedMentors);
+  replaceArrayContents(studentsData, loadedStudents);
+  window.mentorsData = mentorsData;
+  window.studentsData = studentsData;
 }
 
 window.getDossierState = function (n) {
@@ -478,6 +222,8 @@ document.addEventListener("DOMContentLoaded", async () => {
   const params = new URLSearchParams(window.location.search);
   const name = params.get("name");
 
+  await loadPeopleFromTables();
+
   if (!name) {
     document.getElementById("dossierContent").innerHTML =
       '<div class="lg:col-span-3 text-center py-20"><p class="text-gray-500 mono uppercase tracking-widest">No subject specified</p><a href="index.html" class="text-red-600 mono text-sm mt-4 inline-block hover:underline">← Return to Main</a></div>';
@@ -500,6 +246,12 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   // --- FETCH REMOTE DATA ---
   let remoteDossier = null;
+  const isMentor = mentorsData.some((m) => m.name === name);
+  let roleGitHubUsername = "";
+
+  async function fetchManagementGithub(email, fullName) {
+    return "";
+  }
 
   async function fetchAndRender() {
     if (!supabaseClient) return;
@@ -536,6 +288,15 @@ document.addEventListener("DOMContentLoaded", async () => {
         if (!window.dossierStates[name]) {
           window.dossierStates[name] = {};
         }
+
+        if (isMentor && !remoteDossier.github_username) {
+          const managementGithub = await fetchManagementGithub(person.email, name);
+          if (managementGithub) {
+            roleGitHubUsername = extractGitHubUsername(managementGithub);
+            remoteDossier.github_username = roleGitHubUsername;
+          }
+        }
+
         window.dossierStates[name] = {
           ...window.dossierStates[name],
           projects: remoteDossier.projects,
@@ -584,11 +345,14 @@ document.addEventListener("DOMContentLoaded", async () => {
   document.getElementById("dossier-name").innerText = `ID_${name.replace(/\s+/g, "_")}`;
 
   // Render profile header (prefer remote bio/links if available)
-  const isMentor = mentorsData.some((m) => m.name === name);
   const displayBio = remoteDossier ? remoteDossier.bio : person.bio;
   const displayEmail = person.email;
   const displayLinkedIn = remoteDossier?.linkedin_url || person.linkedin;
-  const displayGitHub = remoteDossier?.github_username ? `https://github.com/${remoteDossier.github_username}` : person.github;
+  const displayGitHub = remoteDossier?.github_username
+    ? `https://github.com/${remoteDossier.github_username}`
+    : roleGitHubUsername
+      ? `https://github.com/${roleGitHubUsername}`
+      : person.github;
   const displayAvatar = PROFILE_PLACEHOLDER;
 
   document.getElementById("profileHeader").innerHTML = `
