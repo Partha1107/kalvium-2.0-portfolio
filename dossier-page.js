@@ -470,12 +470,6 @@ function renderDossier() {
   const statsHTML = renderCodingStatsSection();
   const content = `
         ${statsHTML}
-    <div class="flex flex-wrap gap-3 mb-4">
-      <button onclick="promptConfigPlatforms()" class="text-[10px] mono text-gray-400 hover:text-white border border-white/10 hover:border-white px-3 py-2 transition-all rounded bg-white/5">Link_Platforms</button>
-      <button onclick="promptAddProject()" class="text-[10px] mono text-gray-400 hover:text-white border border-white/10 hover:border-white px-3 py-2 transition-all rounded bg-white/5">+ Project</button>
-      <button onclick="promptAddCert()" class="text-[10px] mono text-gray-400 hover:text-white border border-white/10 hover:border-white px-3 py-2 transition-all rounded bg-white/5">+ Certificate</button>
-      <button onclick="promptAddSkill()" class="text-[10px] mono text-gray-400 hover:text-white border border-white/10 hover:border-white px-3 py-2 transition-all rounded bg-white/5">+ Skill</button>
-    </div>
         <div class="flex flex-col gap-4">
             <div class="flex justify-between items-center border-b border-red-900/50 pb-2 mb-2">
                 <h3 class="mono text-red-500 font-bold uppercase tracking-widest flex items-center gap-2"><i class="fa-solid fa-folder-tree"></i> Deployed_Systems</h3>
