@@ -10,7 +10,7 @@
 
 ## 🎯 Overview
 
-**Kalvium 2.0 Portfolio** is a redesigned, feature-rich portfolio website for **Kalvium Squad 138 — Class of 2026**. Built with a military/cyberpunk aesthetic, it showcases students and mentors through interactive profile cards, editable dossiers, and a live **Coding Intelligence** system that fetches real stats from multiple competitive programming platforms.
+**Kalvium 2.0 Portfolio** is a redesigned, feature-rich portfolio website for **Kalvium Squad — Class of 2026**. Built with a military/cyberpunk aesthetic, it showcases students and mentors through interactive profile cards, editable dossiers, and a live **Coding Intelligence** system that fetches real stats from multiple competitive programming platforms.
 
 🔗 **Live Demo:** [View Portfolio](https://kalvium-portfolio-squad138.netlify.app/)
 

@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Subject Dashboard | Kalvium Squad 138</title>
+    <title>Subject Dashboard | Kalvium Squad</title>
     <link
       rel="icon"
       href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><rect width=%22100%22 height=%22100%22 fill=%22black%22/><path d=%22M20 20 L80 20 L80 80 L20 80 Z%22 fill=%22none%22 stroke=%22red%22 stroke-width=%228%22/><path d=%22M20 50 L80 20 M20 50 L80 80%22 fill=%22none%22 stroke=%22red%22 stroke-width=%228%22/></svg>"
@@ -198,8 +198,10 @@
                 <div id="dashboard-social-links-group" class="input-group pt-2">
                   <label class="block text-[9px] text-gray-500 mono uppercase mb-1">LinkedIn_Profile_Protocol</label>
                   <input id="in-linkedin" class="w-full bg-black/40 border border-white/10 p-3 text-white mono text-xs focus:border-red-600 outline-none transition-all" placeholder="https://linkedin.com/in/..." />
-                  <label class="block text-[9px] text-gray-500 mono uppercase mb-1 mt-4">GitHub_Profile (managers/mentors)</label>
-                  <input id="in-github-social" class="w-full bg-black/40 border border-white/10 p-3 text-white mono text-xs focus:border-red-600 outline-none transition-all" placeholder="username or https://github.com/username" />
+                  <div id="dashboard-github-social-group">
+                    <label class="block text-[9px] text-gray-500 mono uppercase mb-1 mt-4">GitHub_Profile (managers/mentors)</label>
+                    <input id="in-github-social" class="w-full bg-black/40 border border-white/10 p-3 text-white mono text-xs focus:border-red-600 outline-none transition-all" placeholder="username or https://github.com/username" />
+                  </div>
                 </div>
               </div>
 
@@ -315,7 +317,7 @@
       let currentDashboardView = 'default';
 
       function applyDashboardView(view) {
-        const normalized = ['manager', 'mentor'].includes((view || '').toLowerCase()) ? view.toLowerCase() : 'default';
+        const normalized = ['manager', 'mentor', 'kalvian'].includes((view || '').toLowerCase()) ? view.toLowerCase() : 'default';
         currentDashboardView = normalized;
         const welcomeEl = document.querySelector('#dashboard-welcome');
         const titleEl = document.querySelector('#dashboard-title');
@@ -324,20 +326,30 @@
         const bioGroup = document.querySelector('#dashboard-bio-group');
         const codingIdsGroup = document.querySelector('#dashboard-coding-ids-group');
         const socialLinksGroup = document.querySelector('#dashboard-social-links-group');
+        const githubSocialGroup = document.querySelector('#dashboard-github-social-group');
         const skillsGroup = document.querySelector('#dashboard-skills-group');
         const certsSection = document.querySelector('#dashboard-certs-section');
         const projectsSection = document.querySelector('#dashboard-projects-section');
         if (titleEl) {
-          titleEl.textContent = normalized === 'manager' ? 'Manager Dashboard' : normalized === 'mentor' ? 'Mentor Dashboard' : 'User Dashboard';
+          titleEl.textContent = normalized === 'manager' ? 'Manager Dashboard' : normalized === 'mentor' ? 'Mentor Dashboard' : normalized === 'kalvian' ? 'Kalvian Dashboard' : 'User Dashboard';
         }
         if (welcomeEl) {
-          welcomeEl.classList.toggle('hidden', normalized !== 'manager');
+          welcomeEl.classList.toggle('hidden', normalized === 'default');
+          welcomeEl.textContent = normalized === 'manager'
+            ? 'WELCOME_MANAGER'
+            : normalized === 'mentor'
+              ? 'WELCOME_MENTOR'
+              : normalized === 'kalvian'
+                ? 'WELCOME_KALVIAN'
+                : 'WELCOME_AGENT';
         }
         if (subtitleEl) {
           subtitleEl.textContent = normalized === 'manager'
             ? 'Management control center'
             : normalized === 'mentor'
               ? 'Mentor workspace'
+              : normalized === 'kalvian'
+                ? 'Kalvian workspace'
               : 'Login data only';
         }
         const uploadPanel = document.querySelector('#dashboard-upload-panel');
@@ -353,21 +365,56 @@
         }
         const mentorAddFolkBtn = document.querySelector('#mentor-add-folk-btn');
         if (mentorAddFolkBtn) {
-          mentorAddFolkBtn.classList.toggle('hidden', normalized !== 'mentor');
+          mentorAddFolkBtn.classList.toggle('hidden', !(normalized === 'mentor' || normalized === 'manager'));
         }
         const mentorDeleteFolkBtn = document.querySelector('#mentor-delete-folk-btn');
         if (mentorDeleteFolkBtn) {
-          mentorDeleteFolkBtn.classList.toggle('hidden', normalized !== 'mentor');
+          mentorDeleteFolkBtn.classList.toggle('hidden', !(normalized === 'mentor' || normalized === 'manager'));
         }
+        const publicDossierBtn = document.querySelector('[onclick="viewPublicDossier()"]');
+        if (publicDossierBtn) {
+          publicDossierBtn.innerHTML = normalized === 'kalvian'
+            ? '<i class="fa-solid fa-eye"></i> View_My_Dossier'
+            : '<i class="fa-solid fa-eye"></i> View_Public_Dossier';
+        }
+        // Enable role select for managers and update helper text
+        const newFolkRole = document.getElementById('new-folk-role');
+        const newFolkRoleHelp = document.getElementById('new-folk-role-help');
+        if (newFolkRole) {
+          newFolkRole.disabled = normalized !== 'manager';
+          if (newFolkRole.disabled) {
+            newFolkRole.classList.add('cursor-not-allowed');
+            if (newFolkRoleHelp) newFolkRoleHelp.textContent = 'Fixed role by default. Managers can change this to create Mentors.';
+          } else {
+            newFolkRole.classList.remove('cursor-not-allowed');
+            if (newFolkRoleHelp) newFolkRoleHelp.textContent = 'Select role to create (Kalvian or Mentor).';
+          }
+          // Ensure squad visibility follows role selection (if manager selects Mentor, hide squad)
+          const newFolkSquad = document.getElementById('new-folk-squad');
+          const syncSquad = () => {
+            const isMentorRole = (newFolkRole.value || '').toUpperCase() === 'MENTOR';
+            if (newFolkSquad && newFolkSquad.parentElement) {
+              newFolkSquad.parentElement.classList.toggle('hidden', normalized === 'mentor' || isMentorRole);
+            }
+          };
+          // Add listener only once
+          if (!newFolkRole._listenerAttached) {
+            newFolkRole.addEventListener('change', syncSquad);
+            newFolkRole._listenerAttached = true;
+          }
+          // Run once to set initial state
+          syncSquad();
+        }
+        
         const socialOnlyMode = normalized === 'manager' || normalized === 'mentor';
         if (bioGroup) bioGroup.classList.toggle('hidden', false);
         if (codingIdsGroup) codingIdsGroup.classList.toggle('hidden', socialOnlyMode);
         if (socialLinksGroup) socialLinksGroup.classList.toggle('hidden', false);
+        if (githubSocialGroup) githubSocialGroup.classList.toggle('hidden', normalized === 'kalvian');
         if (skillsGroup) skillsGroup.classList.toggle('hidden', socialOnlyMode);
         if (certsSection) certsSection.classList.toggle('hidden', socialOnlyMode);
         if (projectsSection) projectsSection.classList.toggle('hidden', socialOnlyMode);
       }
-
       function getDashboardBioTable(view) {
         return ['manager', 'mentor'].includes((view || '').toLowerCase()) ? 'management' : 'kalvian';
       }
@@ -468,17 +515,23 @@
         const normalized = (email || '').trim().toLowerCase();
         if (!normalized || !supabaseClient) return 'default';
 
-        const { data, error } = await supabaseClient
+        const { data: kalvianData } = await supabaseClient
+          .from('kalvian')
+          .select('email')
+          .ilike('email', normalized)
+          .maybeSingle();
+
+        if (kalvianData?.email) return 'kalvian';
+
+        const { data: managementData } = await supabaseClient
           .from('management')
           .select('email, role')
           .ilike('email', normalized)
           .maybeSingle();
 
-        if (error || !data) return 'default';
-
-        const role = (data.role || '').toString().trim().toUpperCase();
-        if (role.includes('MANAGER')) return 'manager';
-        if (role.includes('MENTOR')) return 'mentor';
+        const managementRole = (managementData?.role || '').toString().trim().toUpperCase();
+        if (managementRole.includes('MANAGER')) return 'manager';
+        if (managementRole.includes('MENTOR')) return 'mentor';
         return 'default';
       }
 
@@ -693,6 +746,8 @@
         const user = session.user;
         document.getElementById("dashboard-email").innerText = user.email || "AGENT_UNKNOWN";
         document.getElementById("dashboard-name").innerText = user.user_metadata?.full_name || "CLASSIFIED";
+        window.currentDashboardEmail = user.email || '';
+        window.currentDashboardName = user.user_metadata?.full_name || '';
 
         const dashboardView = await getDashboardViewFromSession(user.email);
         applyDashboardView(dashboardView);
@@ -1019,7 +1074,7 @@
               linkedin_url: linkedin,
               avatar_url: (avatarEl && avatarEl.src) ? avatarEl.src : '',
               img_url: (avatarEl && avatarEl.src) ? avatarEl.src : '',
-              updated_at: new Date(),
+              // updated_at: new Date(),
             };
 
             const managementUpsert = await supabaseClient
@@ -1044,8 +1099,11 @@
       }
 
       function viewPublicDossier() {
-        const name = document.getElementById("dashboard-name").innerText;
-        if (name) {
+        const email = window.currentDashboardEmail || document.getElementById("dashboard-email").innerText;
+        const name = window.currentDashboardName || document.getElementById("dashboard-name").innerText;
+        if (email) {
+          window.location.href = `dossier.html?email=${encodeURIComponent(email)}&name=${encodeURIComponent(name || '')}`;
+        } else if (name) {
           window.location.href = `dossier.html?name=${encodeURIComponent(name)}`;
         }
       }
@@ -1288,24 +1346,46 @@
           return;
         }
 
-        const payload = {
-          full_name: fullName,
-          role: 'Kalvian',
-          email: email || null,
-          linkedin_url: linkedinUrl || null,
-          squad: squad || null,
-          bio: bio || null,
-        };
+        // If the current dashboard view is 'manager' allow creating a Mentor (in management table)
+        const createAs = (document.getElementById('new-folk-role') && document.getElementById('new-folk-role').value) || 'Kalvian';
+        if (currentDashboardView === 'manager' && createAs === 'MENTOR') {
+          const mentorPayload = {
+            full_name: fullName,
+            role: 'MENTOR',
+            email: email || null,
+            linkedin_url: linkedinUrl || null,
+            // updated_at removed to avoid schema mismatch if column doesn't exist
+          };
 
-        const insertQuery = email
-          ? supabaseClient.from('kalvian').upsert(payload, { onConflict: 'email' })
-          : supabaseClient.from('kalvian').insert(payload);
+          const upsertResult = email
+            ? await supabaseClient.from('management').upsert(mentorPayload, { onConflict: 'email' })
+            : await supabaseClient.from('management').insert(mentorPayload);
 
-        const { error } = await insertQuery;
-        if (error) {
-          console.error('Create folk failed:', error);
-          showDashboardAlert('Could not create profile: ' + error.message, 'error', 'Create Failed');
-          return;
+          if (upsertResult.error) {
+            console.error('Create mentor failed:', upsertResult.error);
+            showDashboardAlert('Could not create mentor: ' + upsertResult.error.message, 'error', 'Create Failed');
+            return;
+          }
+        } else {
+          const payload = {
+            full_name: fullName,
+            role: 'Kalvian',
+            email: email || null,
+            linkedin_url: linkedinUrl || null,
+            squad: squad || null,
+            bio: bio || null,
+          };
+
+          const insertQuery = email
+            ? supabaseClient.from('kalvian').upsert(payload, { onConflict: 'email' })
+            : supabaseClient.from('kalvian').insert(payload);
+
+          const { error } = await insertQuery;
+          if (error) {
+            console.error('Create folk failed:', error);
+            showDashboardAlert('Could not create profile: ' + error.message, 'error', 'Create Failed');
+            return;
+          }
         }
 
         closeNewFolkModal();
@@ -1338,8 +1418,11 @@
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div class="input-group md:col-span-2">
             <label class="block text-[9px] text-gray-500 mono uppercase mb-1">Role</label>
-            <input value="Kalvian" disabled class="w-full bg-black/60 border border-emerald-500/30 p-3 text-emerald-400 mono text-xs uppercase tracking-[0.2em] cursor-not-allowed" />
-            <p class="text-[8px] text-gray-600 mono uppercase tracking-[0.2em] mt-1">Fixed role. The Kalvian completes their own profile later.</p>
+            <select id="new-folk-role" disabled class="w-full bg-black/60 border border-emerald-500/30 p-3 text-emerald-400 mono text-xs uppercase tracking-[0.2em] cursor-not-allowed">
+              <option value="Kalvian">Kalvian</option>
+              <option value="MENTOR">Mentor</option>
+            </select>
+            <p id="new-folk-role-help" class="text-[8px] text-gray-600 mono uppercase tracking-[0.2em] mt-1">Fixed role by default. Managers can change this to create Mentors.</p>
           </div>
           <div class="input-group">
             <label class="block text-[9px] text-gray-500 mono uppercase mb-1">Full_Name</label>

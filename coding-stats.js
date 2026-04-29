@@ -428,15 +428,21 @@ function renderCCStats(data) {
 // --- LOAD CODING STATS (main async function) ---
 async function loadCodingStats(name) {
     const allPeople = [...(window.mentorsData || []), ...(window.studentsData || [])];
-    const person = allPeople.find(p => p.name.trim().toLowerCase() === name.trim().toLowerCase());
-    if (!person) return;
-    const person = allPeople.find(p => p.name === name) || {};
+    const person = allPeople.find(p => p.name && p.name.trim().toLowerCase() === name.trim().toLowerCase()) || {};
 
     const state = window.getDossierState(name);
-    const ghUsername = normalizeHandle(state.github_username || state.platforms?.github || extractGitHubUsername(person.github));
-    const lcUsername = normalizeHandle(state.leetcode_username || state.platforms?.leetcode || person.leetcode);
-    const hrUsername = extractHackerRankUsername(state.hackerrank_username || state.platforms?.hackerrank || person.hackerrank);
-    const ccUsername = extractCodeChefUsername(state.codechef_username || state.platforms?.codechef || person.codechef);
+    const ghUsername = normalizeHandle(
+        state.github_username || state.platforms?.github || extractGitHubUsername(person.github || person.github_url)
+    );
+    const lcUsername = normalizeHandle(
+        state.leetcode_username || state.platforms?.leetcode || person.leetcode || person.leetcode_username || ''
+    );
+    const hrUsername = extractHackerRankUsername(
+        state.hackerrank_username || state.platforms?.hackerrank || person.hackerrank || person.hackerrank_username || ''
+    );
+    const ccUsername = extractCodeChefUsername(
+        state.codechef_username || state.platforms?.codechef || person.codechef || person.codechef_username || ''
+    );
 
     // Fetch all in parallel
     const [lcData, ghData, hrData, ccData] = await Promise.all([
