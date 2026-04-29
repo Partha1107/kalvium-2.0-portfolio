@@ -161,6 +161,46 @@ function getProfilePictureSrc(email) {
   return `${SUPABASE_BUCKET_IMAGE_BASE}${normalizedEmail}`;
 }
 
+async function getDashboardRoleByEmail(email) {
+  const normalized = (email || "").trim().toLowerCase();
+  if (!normalized || !supabaseClient) return "default";
+
+  const { data, error } = await supabaseClient
+    .from("management")
+    .select("email, role")
+    .ilike("email", normalized)
+    .maybeSingle();
+
+  if (error || !data) return "default";
+
+  const role = (data.role || "").toString().trim().toUpperCase();
+  if (role.includes("MANAGER")) return "manager";
+  if (role.includes("MENTOR")) return "mentor";
+  return "default";
+}
+
+async function handleDashboardAccess() {
+  if (!supabaseClient) {
+    window.location.href = "dashboard.html?view=default";
+    return;
+  }
+
+  const {
+    data: { session },
+  } = await supabaseClient.auth.getSession();
+
+  if (!session?.user?.email) {
+    handleLogin();
+    return;
+  }
+
+  const dashboardRole = await getDashboardRoleByEmail(session.user.email);
+  window.location.href = `dashboard.html?view=${encodeURIComponent(dashboardRole)}`;
+}
+
+window.getDashboardRoleByEmail = getDashboardRoleByEmail;
+window.handleDashboardAccess = handleDashboardAccess;
+
 function applyTheme(mode) {
   let isDark = true;
   if (mode === "device")
@@ -960,9 +1000,14 @@ function openModal(name, isMentor) {
                     </button>`
                         : ""
                     }                             
+                    ${
+                      !isMentor
+                        ? `
                     <a href="${p.linkedin}" target="_blank" class="btn-cyber-main flex-1 min-w-[130px] py-3 rounded-lg font-black text-xs uppercase text-center tracking-[0.1em] flex justify-center items-center gap-2">                                 
                         <i class="fa-brands fa-linkedin-in text-lg"></i> Connect                             
-                    </a>                             
+                    </a>`
+                        : ""
+                    }                             
                     ${
                       p.github
                         ? `                             
@@ -1310,35 +1355,35 @@ const chatKnowledge = {
       "Connection established. I'm ready to process your queries.",
       "Hey there! Neural pathways active. Fire away with your question."
     ],
-    suggestions: ["Who are the mentors?", "Show me features", "How many students?"]
+    suggestions: ["Who are the mentors?", "Show me features", "How many kalvians?"]
   },
   about: {
     triggers: ["about", "what is this", "what is kalvium", "tell me about", "explain", "purpose", "what does this"],
     responses: [
-      "📡 <b>Kalvium 2.0 Portfolio</b> — Squad 138's tactical showcase. Built by Ashwin Raj, Dhinesh Babu & Sanjay Chelliah. Features include:<br>• Interactive student/mentor profiles<br>• Real-time coding stats (LeetCode, GitHub, Codeforces)<br>• Customizable themes & fonts<br>• Editable dossier system<br>• This Neural Assist chatbot"
+      "📡 <b>Kalvium 2.0 Portfolio</b> — Squad 138's tactical showcase. Built by Ashwin Raj, Dhinesh Babu & Sanjay Chelliah. Features include:<br>• Interactive kalvian/mentor profiles<br>• Real-time coding stats (LeetCode, GitHub, Codeforces)<br>• Customizable themes & fonts<br>• Editable dossier system<br>• This Neural Assist chatbot"
     ],
     suggestions: ["Who built this?", "Show features", "Open settings"]
   },
   features: {
     triggers: ["features", "what can you do", "capabilities", "function", "tools", "options"],
     responses: [
-      "⚡ <b>Available Systems:</b><br><br>🎨 <b>Theme Engine</b> — 3 modes, 10 accents, 7 fonts<br>📊 <b>Coding Intelligence</b> — Live stats from LeetCode/GitHub/Codeforces<br>📁 <b>Subject Dossiers</b> — Editable projects, certs & skills<br>🔍 <b>Database Scanner</b> — Real-time student search<br>🤖 <b>Neural Assist</b> — That's me!<br>🗺️ <b>Guided Tour</b> — Interactive walkthrough<br><br>Try asking me to navigate somewhere!"
+      "⚡ <b>Available Systems:</b><br><br>🎨 <b>Theme Engine</b> — 3 modes, 10 accents, 7 fonts<br>📊 <b>Coding Intelligence</b> — Live stats from LeetCode/GitHub/Codeforces<br>📁 <b>Subject Dossiers</b> — Editable projects, certs & skills<br>🔍 <b>Database Scanner</b> — Real-time kalvian search<br>🤖 <b>Neural Assist</b> — That's me!<br>🗺️ <b>Guided Tour</b> — Interactive walkthrough<br><br>Try asking me to navigate somewhere!"
     ],
-    suggestions: ["Start tour", "Open settings", "Go to students"]
+    suggestions: ["Start tour", "Open settings", "Go to kalvians"]
   },
   students: {
     triggers: ["students", "kalvians", "how many students", "squad", "members", "classmates", "batch"],
     responses: [
-      `📋 <b>Squad 138 Registry:</b> 36 active operatives enrolled in B.Tech CSE at St. Joseph's University, Chennai — powered by <b>Kalvium</b>.<br><br>Notable operatives include the 3 creators: <b>Dhinesh Babu G</b>, <b>Sanjay Chelliah C</b>, and <b>Ashwin Raj J J</b>.<br><br>Want me to look up a specific student?`
+      `📋 <b>Squad 138 Registry:</b> 36 active operatives enrolled in B.Tech CSE at St. Joseph's University, Chennai — powered by <b>Kalvium</b>.<br><br>Notable operatives include the 3 creators: <b>Dhinesh Babu G</b>, <b>Sanjay Chelliah C</b>, and <b>Ashwin Raj J J</b>.<br><br>Want me to look up a specific kalvian?`
     ],
-    suggestions: ["Who are creators?", "Go to students", "Open a profile"]
+    suggestions: ["Who are creators?", "Go to kalvians", "Open a profile"]
   },
   mentors: {
     triggers: ["mentor", "mentors", "teachers", "faculty", "guide", "instructor", "aravind", "karunakaran", "hanuram"],
     responses: [
-      "👨‍🏫 <b>Leadership Nodes (Mentors):</b><br><br>• <b>Aravind R</b> — Academic Mentor, specializes in debugging & problem-solving<br>• <b>H. Karunakaran</b> — Campus Manager, focused on student development<br>• <b>Hanuram T</b> — Mentor & Business Analyst, balancing logic, data & good vibes"
+      "👨‍🏫 <b>Leadership Nodes (Mentors):</b><br><br>• <b>Aravind R</b> — Academic Mentor, specializes in debugging & problem-solving<br>• <b>H. Karunakaran</b> — Campus Manager, focused on kalvian development<br>• <b>Hanuram T</b> — Mentor & Business Analyst, balancing logic, data & good vibes"
     ],
-    suggestions: ["Go to mentors", "Tell me about Kalvium", "Show students"]
+    suggestions: ["Go to mentors", "Tell me about Kalvium", "Show kalvians"]
   },
   creators: {
     triggers: ["who built", "who made", "creator", "developer", "who created", "built by"],
@@ -1350,9 +1395,9 @@ const chatKnowledge = {
   coding: {
     triggers: ["coding", "leetcode", "github", "codeforces", "score", "coding stats", "rank", "dossier stats", "programming"],
     responses: [
-      "📊 <b>Coding Intelligence System:</b><br><br>The portfolio tracks real-time coding skills across 3 platforms:<br><br>• <b>LeetCode</b> (40% weight) — Problem difficulty breakdown<br>• <b>GitHub</b> (30% weight) — Repos, stars, languages<br>• <b>Codeforces</b> (30% weight) — Rating & rank<br><br>Composite scores range from 0–100 with ranks: RECRUIT → OPERATIVE → SPECIALIST → ELITE → LEGENDARY<br><br>Open any student's <b>Dossier</b> to see their score!"
+      "📊 <b>Coding Intelligence System:</b><br><br>The portfolio tracks real-time coding skills across 3 platforms:<br><br>• <b>LeetCode</b> (40% weight) — Problem difficulty breakdown<br>• <b>GitHub</b> (30% weight) — Repos, stars, languages<br>• <b>Codeforces</b> (30% weight) — Rating & rank<br><br>Composite scores range from 0–100 with ranks: RECRUIT → OPERATIVE → SPECIALIST → ELITE → LEGENDARY<br><br>Open any kalvian's <b>Dossier</b> to see their score!"
     ],
-    suggestions: ["What ranks exist?", "Go to students", "About features"]
+    suggestions: ["What ranks exist?", "Go to kalvians", "About features"]
   },
   ranks: {
     triggers: ["rank", "ranks", "legendary", "elite", "specialist", "operative", "recruit"],
@@ -1371,9 +1416,9 @@ const chatKnowledge = {
   help: {
     triggers: ["help", "commands", "what can i ask", "how to use"],
     responses: [
-      "📖 <b>Neural_Assist Commands:</b><br><br>💬 <b>Ask anything</b> — Students, mentors, features, coding stats<br>🧭 <b>Navigate</b> — \"Go to students\", \"Go to mentors\", \"Go to contact\"<br>👤 <b>Open profiles</b> — \"Open Ashwin's profile\"<br>⚙️ <b>Settings</b> — \"Open settings\", \"Set dark mode\", \"Set accent cyan\"<br>🗺️ <b>Tour</b> — \"Start tour\"<br>🔄 <b>Actions</b> — \"Switch to gallery\", \"Switch to scroll\"<br><br>Or just chat — I don't bite! 🤖"
+      "📖 <b>Neural_Assist Commands:</b><br><br>💬 <b>Ask anything</b> — Kalvians, mentors, features, coding stats<br>🧭 <b>Navigate</b> — \"Go to kalvians\", \"Go to mentors\", \"Go to contact\"<br>👤 <b>Open profiles</b> — \"Open Ashwin's profile\"<br>⚙️ <b>Settings</b> — \"Open settings\", \"Set dark mode\", \"Set accent cyan\"<br>🗺️ <b>Tour</b> — \"Start tour\"<br>🔄 <b>Actions</b> — \"Switch to gallery\", \"Switch to scroll\"<br><br>Or just chat — I don't bite! 🤖"
     ],
-    suggestions: ["About this site", "Show students", "Start tour"]
+    suggestions: ["About this site", "Show kalvians", "Start tour"]
   },
   fun: {
     triggers: ["joke", "funny", "lol", "haha", "bored", "entertain", "fun"],
@@ -1453,7 +1498,7 @@ function generateReply(msg) {
     if (person) {
       const isMentor = (window.mentorsData || []).some(m => m.name === person.name);
       setTimeout(() => openModal(person.name, isMentor), 600);
-      return { text: `👤 Opening profile for <b>${person.name}</b>...`, suggestions: ["Show students", "Go to mentors"] };
+      return { text: `👤 Opening profile for <b>${person.name}</b>...`, suggestions: ["Show kalvians", "Go to mentors"] };
     }
   }
 
@@ -1464,7 +1509,7 @@ function generateReply(msg) {
     const role = isMentor ? nameMatch.role : 'Kalvian';
     return {
       text: `👤 <b>${nameMatch.name}</b><br>Role: ${role}<br><br>"${nameMatch.bio.substring(0, 150)}${nameMatch.bio.length > 150 ? '...' : ''}"<br><br>${nameMatch.github ? `<a href="${nameMatch.github}" target="_blank" class="text-red-500 hover:underline">GitHub ↗</a> · ` : ''}<a href="${nameMatch.linkedin}" target="_blank" class="text-red-500 hover:underline">LinkedIn ↗</a>`,
-      suggestions: [`Open ${nameMatch.name.split(' ')[0]}'s profile`, "Show all students", "Back to help"]
+      suggestions: [`Open ${nameMatch.name.split(' ')[0]}'s profile`, "Show all kalvians", "Back to help"]
     };
   }
 
@@ -1478,9 +1523,9 @@ function generateReply(msg) {
 
   // 5. Fallback
   const fallbacks = [
-    "🤔 I couldn't parse that query. Try asking about <b>students</b>, <b>mentors</b>, <b>features</b>, or type <b>help</b> for all commands.",
+    "🤔 I couldn't parse that query. Try asking about <b>kalvians</b>, <b>mentors</b>, <b>features</b>, or type <b>help</b> for all commands.",
     "⚠️ Signal unclear. I can help with navigation, student info, coding stats, and more. Type <b>help</b> to see what I can do.",
-    "📡 Query not recognized in the database. Try: \"Who are the mentors?\" or \"Show features\" or \"Go to students\"."
+    "📡 Query not recognized in the database. Try: \"Who are the mentors?\" or \"Show features\" or \"Go to kalvians\"."
   ];
   return { text: fallbacks[Math.floor(Math.random() * fallbacks.length)], suggestions: ["Help", "Show features", "About"] };
 }

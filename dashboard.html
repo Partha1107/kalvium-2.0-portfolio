@@ -39,10 +39,17 @@
       </a>
 
       <div class="mb-16 border-b border-white/10 pb-8">
+        <p
+          id="dashboard-welcome"
+          class="hidden mono text-[10px] tracking-[0.5em] mb-4 uppercase text-green-400"
+        >
+          WELCOME_MANAGER
+        </p>
         <p class="mono text-red-600 text-xs tracking-[0.5em] mb-4 uppercase">
           OPERATIVE STATUS
         </p>
         <h1
+          id="dashboard-title"
           class="text-4xl md:text-6xl font-black uppercase tracking-tighter text-white"
         >
           User
@@ -51,6 +58,12 @@
             >Dashboard</span
           >
         </h1>
+        <p
+          id="dashboard-subtitle"
+          class="mono text-[10px] uppercase tracking-[0.35em] text-gray-500 mt-3"
+        >
+          Editable portfolio dashboard
+        </p>
       </div>
 
       <div
@@ -91,7 +104,7 @@
             </div>
           </div>
 
-          <div class="mb-6 rounded-xl border border-green-500/20 bg-green-500/5 p-4">
+          <div id="dashboard-upload-panel" class="mb-6 rounded-xl border border-green-500/20 bg-green-500/5 p-4">
             <div class="flex items-center justify-between gap-4 mb-3">
               <div>
                 <p class="text-green-400 mono text-[10px] uppercase tracking-[0.35em] font-bold">Profile_Verified</p>
@@ -109,7 +122,7 @@
             </p>
           </div>
 
-          <div class="flex flex-col gap-2 mt-4">
+          <div id="dashboard-actions" class="flex flex-col gap-2 mt-4">
             <button
               onclick="viewPublicDossier()"
               class="w-full py-3 border border-blue-600/50 text-blue-500 hover:bg-blue-600 hover:text-white font-bold uppercase tracking-widest transition-all text-xs flex justify-center items-center gap-3"
@@ -127,7 +140,7 @@
         </div>
 
         <!-- DOSSIER CONFIGURATION -->
-        <div class="dossier-card border-red-900/50 bg-red-900/5 col-span-1 md:col-span-2">
+        <div id="dashboard-config-panel" class="dossier-card border-red-900/50 bg-red-900/5 col-span-1 md:col-span-2">
           <div class="bracket tl"></div>
           <div class="bracket tr"></div>
           <div class="bracket bl"></div>
@@ -282,34 +295,84 @@
       const DASHBOARD_AVATAR_PLACEHOLDER = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==';
       const dashboardAvatarLookupCache = new Map();
 
-      function findDashboardAvatarUrl(email) {
-        const normalized = (email || "").trim().toLowerCase();
-        if (!normalized) return Promise.resolve("");
+      function applyDashboardView(view) {
+        const normalized = ['manager', 'mentor'].includes((view || '').toLowerCase()) ? view.toLowerCase() : 'default';
+        const welcomeEl = document.querySelector('#dashboard-welcome');
+        const titleEl = document.querySelector('#dashboard-title');
+        const subtitleEl = document.querySelector('#dashboard-subtitle');
+        const configPanel = document.querySelector('#dashboard-config-panel');
+        if (titleEl) {
+          titleEl.textContent = normalized === 'manager' ? 'Manager Dashboard' : normalized === 'mentor' ? 'Mentor Dashboard' : 'User Dashboard';
+        }
+        if (welcomeEl) {
+          welcomeEl.classList.toggle('hidden', normalized !== 'manager');
+        }
+        if (subtitleEl) {
+          subtitleEl.textContent = normalized === 'manager'
+            ? 'Management control center'
+            : normalized === 'mentor'
+              ? 'Mentor workspace'
+              : 'Login data only';
+        }
+        const uploadPanel = document.querySelector('#dashboard-upload-panel');
+        const actionsPanel = document.querySelector('#dashboard-actions');
+        if (configPanel) {
+          configPanel.classList.toggle('hidden', normalized === 'default');
+        }
+        if (uploadPanel) {
+          uploadPanel.classList.toggle('hidden', normalized === 'default');
+        }
+        if (actionsPanel) {
+          actionsPanel.classList.toggle('hidden', normalized === 'default');
+        }
+      }
+
+      async function getDashboardViewFromSession(email) {
+        const normalized = (email || '').trim().toLowerCase();
+        if (!normalized || !supabaseClient) return 'default';
+
+        const { data, error } = await supabaseClient
+          .from('management')
+          .select('email, role')
+          .ilike('email', normalized)
+          .maybeSingle();
+
+        if (error || !data) return 'default';
+
+        const role = (data.role || '').toString().trim().toUpperCase();
+        if (role.includes('MANAGER')) return 'manager';
+        if (role.includes('MENTOR')) return 'mentor';
+        return 'default';
+      }
+
+      async function findDashboardAvatarUrl(email) {
+        const normalized = (email || '').trim().toLowerCase();
+        if (!normalized) return '';
         if (dashboardAvatarLookupCache.has(normalized)) {
           return dashboardAvatarLookupCache.get(normalized);
         }
 
         const promise = (async () => {
-          if (!supabaseClient) return "";
+          if (!supabaseClient) return '';
 
           const { data, error } = await supabaseClient
             .storage
             .from('dossier_assets')
             .list('Profile/profile_picture', { limit: 1000 });
 
-          if (error || !Array.isArray(data)) return "";
+          if (error || !Array.isArray(data)) return '';
 
           const match = data.find((file) => {
-            const fileName = (file?.name || "").toLowerCase();
+            const fileName = (file?.name || '').toLowerCase();
             return fileName.includes(normalized);
           });
 
-          if (!match) return "";
+          if (!match) return '';
 
           return supabaseClient.storage
             .from('dossier_assets')
             .getPublicUrl(`Profile/profile_picture/${match.name}`).data.publicUrl;
-        })().catch(() => "");
+        })().catch(() => '');
 
         dashboardAvatarLookupCache.set(normalized, promise);
         return promise;
@@ -491,6 +554,9 @@
         const user = session.user;
         document.getElementById("dashboard-email").innerText = user.email || "AGENT_UNKNOWN";
         document.getElementById("dashboard-name").innerText = user.user_metadata?.full_name || "CLASSIFIED";
+
+        const dashboardView = await getDashboardViewFromSession(user.email);
+        applyDashboardView(dashboardView);
         
         // Use the same email-based lookup as the popup and dossier.
         // This avoids relying on Google profile pictures entirely.
@@ -791,7 +857,7 @@
         }
       }
 
-      document.addEventListener("DOMContentLoaded", checkSession);
+      checkSession();
     </script>
   </body>
 </html>
