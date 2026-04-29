@@ -1,6 +1,6 @@
 # ⚡ Kalvium 2.0 Portfolio — Squad 138
 
-> A tactical cyberpunk-themed student portfolio with real-time coding intelligence from LeetCode, GitHub & Codeforces.
+> A tactical cyberpunk-themed student portfolio with real-time coding intelligence from LeetCode, GitHub, HackerRank & CodeChef.
 
 ![Status](https://img.shields.io/badge/Status-Live-brightgreen?style=flat-square)
 ![Squad](https://img.shields.io/badge/Squad-138-red?style=flat-square)
@@ -12,7 +12,7 @@
 
 **Kalvium 2.0 Portfolio** is a redesigned, feature-rich portfolio website for **Kalvium Squad 138 — Class of 2026**. Built with a military/cyberpunk aesthetic, it showcases students and mentors through interactive profile cards, editable dossiers, and a live **Coding Intelligence** system that fetches real stats from multiple competitive programming platforms.
 
-🔗 **Live Demo:** [View Portfolio](https://kalvium-2.netlify.app)
+🔗 **Live Demo:** [View Portfolio](https://kalvium-portfolio-squad138.netlify.app/)
 
 ---
 
@@ -25,12 +25,12 @@
 - **3 Font Sizes** — Small, Normal, Large
 
 ### 📊 Coding Intelligence System *(NEW)*
-- **Real-time stats** from LeetCode, GitHub & Codeforces APIs
-- **Composite Score** (0–100) with animated SVG gauge ring
+- **Real-time stats** from LeetCode, GitHub, HackerRank & CodeChef APIs
 - **Rank System** — RECRUIT → OPERATIVE → SPECIALIST → ELITE → LEGENDARY
 - **LeetCode** — Easy/Medium/Hard breakdown with difficulty bars
 - **GitHub** — Repos, Stars, Followers, Languages, Top Repositories
-- **Codeforces** — Rating, Rank, Max Rating with color-coded display
+- **HackerRank** — Profile level, role, current learning/practice signals
+- **CodeChef** — Rating, Stars, Global/Country rank
 - **Platform Linking** — Configure usernames via UI, persisted in localStorage
 - **Smart Caching** — 4-hour cache to respect API rate limits
 
@@ -65,7 +65,7 @@
 | **Logic** | Vanilla JavaScript (ES6+) |
 | **Icons** | Font Awesome 6.4 |
 | **Fonts** | Google Fonts (7 families) |
-| **APIs** | GitHub REST API, Codeforces API, alfa-leetcode-api |
+| **APIs** | GitHub REST API, HackerRank REST endpoints, CodeChef API, alfa-leetcode-api |
 | **Hosting** | Netlify |
 | **Version Control** | Git + GitHub |
 
@@ -75,8 +75,8 @@
 
 ```
 kalvium-2.0-portfolio/
-├── index.html          # Main HTML (600 lines)
-├── style.css           # All styling + theme system (420 lines)
+├── index.html          # Main HTML
+├── style.css           # All styling + theme system
 ├── script.js           # Core app logic, data, UI (800 lines)
 ├── coding-stats.js     # Multi-platform coding stats engine (370 lines)
 ├── Src/                # Student & mentor profile images (43 files)
@@ -87,26 +87,14 @@ kalvium-2.0-portfolio/
 
 ---
 
-## 📊 Coding Score Formula
+## 📊 Coding Signals
 
-```
-Composite Score = Weighted average of linked platforms:
+The dossier pulls per-platform signals directly:
 
-LeetCode  (40%):  (Easy×1 + Medium×3 + Hard×7) / 2    → capped at 100
-GitHub    (30%):  Repos×4 + Stars×8 + Followers×3 + Langs×5  → capped at 100
-Codeforces(30%):  Rating / 22                          → capped at 100
-
-Weights auto-redistribute based on which platforms are linked.
-```
-
-| Score Range | Rank | Color |
-|---|---|---|
-| 90–100 | LEGENDARY | Pink |
-| 75–89 | ELITE | Green |
-| 60–74 | SPECIALIST | Lime |
-| 40–59 | OPERATIVE | Orange |
-| 20–39 | RECRUIT | Red-Orange |
-| 0–19 | INITIALIZING | Gray |
+- **LeetCode** — solved counts, difficulty split, languages, recent solves
+- **GitHub** — repos, stars, followers, languages, recent repos
+- **HackerRank** — level, role, current learning/practice, recent challenges
+- **CodeChef** — rating, stars, global/country rank
 
 ---
 

@@ -488,13 +488,60 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // --- INIT ---
   async function init() {
+    // 1. Fetch Remote Data from Dedicated Tables
+    if (supabaseClient) {
+      try {
+        const [mRes, sRes] = await Promise.all([
+          supabaseClient.from('mentors').select('*'),
+          supabaseClient.from('students').select('*')
+        ]);
+
+        if (mRes.data && mRes.data.length > 0) {
+          mentorsData.length = 0; // Clear hardcoded
+          mRes.data.forEach(m => mentorsData.push({
+            name: m.full_name,
+            role: m.role,
+            img: m.img_url,
+            linkedin: m.linkedin_url,
+            email: m.email
+          }));
+        }
+
+        if (sRes.data && sRes.data.length > 0) {
+          studentsData.length = 0; // Clear hardcoded
+          sRes.data.forEach(s => studentsData.push({
+            name: s.full_name,
+            role: s.role,
+            img: s.img_url,
+            github: s.github_url,
+            linkedin: s.linkedin_url,
+            email: s.email
+          }));
+        }
+
+        // 2. Fetch avatar overrides from dossiers (for dashboard users)
+        const { data: remoteDossiers } = await supabaseClient.from('dossiers').select('full_name, avatar_url');
+        if (remoteDossiers) {
+          remoteDossiers.forEach(remote => {
+            if (remote.avatar_url) {
+              const s = studentsData.find(st => st.name.trim().toLowerCase() === remote.full_name.trim().toLowerCase());
+              if (s) s.img = remote.avatar_url;
+              const m = mentorsData.find(mn => mn.name === remote.full_name);
+              if (m) m.img = remote.avatar_url;
+            }
+          });
+        }
+      } catch (e) {
+        console.warn("Matrix Sync Error: Falling back to local cache.", e);
+      }
+    }
     // Keep dossier images local for now.
     // Supabase avatars can be enabled later, but they must not override `Src/` images.
 
     setTimeout(() => {
-      window.scrollTo(0, 0); // Force to top one last time before revealing
+      window.scrollTo(0, 0); 
       document.getElementById("loader").style.display = "none";
-      document.body.style.overflow = ""; // Re-enable window-level scrolling natively
+      document.body.style.overflow = ""; 
       if (!localStorage.getItem("cyber_v22"))
         document.getElementById("instruction-overlay").style.display = "flex";
     }, 3000);
@@ -539,15 +586,15 @@ document.addEventListener("DOMContentLoaded", () => {
       proverbsList[currentProverbIdx];
     setInterval(cycleProverbs, 20000);
 
-    // Sync UI Toggles with localStorage state
-    document
-      .getElementById(`btn-theme-${currentTheme}`)
-      .classList.add("active");
-    document.getElementById(`swatch-${currentAccent}`).classList.add("active");
-    document.getElementById(`btn-font-${currentFont}`).classList.add("active");
-    document
-      .getElementById(`btn-size-${currentFontSize}`)
-      .classList.add("active");
+    // Sync UI Toggles
+    const themeBtn = document.getElementById(`btn-theme-${currentTheme}`);
+    if (themeBtn) themeBtn.classList.add("active");
+    const accentBtn = document.getElementById(`swatch-${currentAccent}`);
+    if (accentBtn) accentBtn.classList.add("active");
+    const fontBtn = document.getElementById(`btn-font-${currentFont}`);
+    if (fontBtn) fontBtn.classList.add("active");
+    const sizeBtn = document.getElementById(`btn-size-${currentFontSize}`);
+    if (sizeBtn) sizeBtn.classList.add("active");
   }
 
   // --- PROVERBS ---
@@ -1218,14 +1265,14 @@ const chatKnowledge = {
   about: {
     triggers: ["about", "what is this", "what is kalvium", "tell me about", "explain", "purpose", "what does this"],
     responses: [
-      "📡 <b>Kalvium 2.0 Portfolio</b> — Squad 138's tactical showcase. Built by Ashwin Raj, Dhinesh Babu & Sanjay Chelliah. Features include:<br>• Interactive kalvian/mentor profiles<br>• Real-time coding stats (LeetCode, GitHub, Codeforces)<br>• Customizable themes & fonts<br>• Editable dossier system<br>• This Neural Assist chatbot"
+      "📡 <b>Kalvium 2.0 Portfolio</b> — Squad 138's tactical showcase. Built by Ashwin Raj, Dhinesh Babu & Sanjay Chelliah. Features include:<br>• Interactive student/mentor profiles<br>• Real-time coding stats (LeetCode, GitHub, HackerRank, CodeChef)<br>• Customizable themes & fonts<br>• Editable dossier system<br>• This Neural Assist chatbot"
     ],
     suggestions: ["Who built this?", "Show features", "Open settings"]
   },
   features: {
     triggers: ["features", "what can you do", "capabilities", "function", "tools", "options"],
     responses: [
-      "⚡ <b>Available Systems:</b><br><br>🎨 <b>Theme Engine</b> — 3 modes, 10 accents, 7 fonts<br>📊 <b>Coding Intelligence</b> — Live stats from LeetCode/GitHub/Codeforces<br>📁 <b>Subject Dossiers</b> — Editable projects, certs & skills<br>🔍 <b>Database Scanner</b> — Real-time kalvian search<br>🤖 <b>Neural Assist</b> — That's me!<br>🗺️ <b>Guided Tour</b> — Interactive walkthrough<br><br>Try asking me to navigate somewhere!"
+      "⚡ <b>Available Systems:</b><br><br>🎨 <b>Theme Engine</b> — 3 modes, 10 accents, 7 fonts<br>📊 <b>Coding Intelligence</b> — Live stats from LeetCode/GitHub/HackerRank/CodeChef<br>📁 <b>Subject Dossiers</b> — Editable projects, certs & skills<br>🔍 <b>Database Scanner</b> — Real-time student search<br>🤖 <b>Neural Assist</b> — That's me!<br>🗺️ <b>Guided Tour</b> — Interactive walkthrough<br><br>Try asking me to navigate somewhere!"
     ],
     suggestions: ["Start tour", "Open settings", "Go to kalvians"]
   },
@@ -1251,9 +1298,9 @@ const chatKnowledge = {
     suggestions: ["Open Ashwin's profile", "Show features", "About Kalvium"]
   },
   coding: {
-    triggers: ["coding", "leetcode", "github", "codeforces", "score", "coding stats", "rank", "dossier stats", "programming"],
+    triggers: ["coding", "leetcode", "github", "hackerrank", "codechef", "score", "coding stats", "rank", "dossier stats", "programming"],
     responses: [
-      "📊 <b>Coding Intelligence System:</b><br><br>The portfolio tracks real-time coding skills across 3 platforms:<br><br>• <b>LeetCode</b> (40% weight) — Problem difficulty breakdown<br>• <b>GitHub</b> (30% weight) — Repos, stars, languages<br>• <b>Codeforces</b> (30% weight) — Rating & rank<br><br>Composite scores range from 0–100 with ranks: RECRUIT → OPERATIVE → SPECIALIST → ELITE → LEGENDARY<br><br>Open any kalvian's <b>Dossier</b> to see their score!"
+      "📊 <b>Coding Intelligence System:</b><br><br>The portfolio tracks real-time coding skills across 4 platforms:<br><br>• <b>LeetCode</b> (35% weight) — Problem difficulty breakdown<br>• <b>GitHub</b> (25% weight) — Repos, stars, languages<br>• <b>HackerRank</b> (20% weight) — Profile level, practice signals<br>• <b>CodeChef</b> (20% weight) — Rating & ranks<br><br>Composite scores range from 0–100 with ranks: RECRUIT → OPERATIVE → SPECIALIST → ELITE → LEGENDARY<br><br>Open any student's <b>Dossier</b> to see their score!"
     ],
     suggestions: ["What ranks exist?", "Go to kalvians", "About features"]
   },
