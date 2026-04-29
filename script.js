@@ -756,39 +756,13 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     }
 
-    // Grid: render first chunk and add load-more control
-    const initialGrid = studentsData.slice(0, 12);
+    // Grid: render all students at once
     if (gridEl) {
-      gridEl.innerHTML = initialGrid.map((s) => renderCard(s, false, 'grid')).join('');
-      if (studentsData.length > 12) {
-        gridEl.insertAdjacentHTML('beforeend', `
-          <div class="flex justify-center mt-6 w-full">
-            <button id="load-more-students" class="btn-cyber-main px-6 py-3">LOAD_MORE</button>
-          </div>
-        `);
-        const btn = document.getElementById('load-more-students');
-        if (btn) btn.addEventListener('click', loadMoreStudents);
-      }
+      gridEl.innerHTML = studentsData.map((s) => renderCard(s, false, 'grid')).join('');
     }
-    // track loaded count
-    window._studentsLoadedCount = 12;
   }
 
-  function loadMoreStudents() {
-    const gridEl = document.getElementById('studentGrid');
-    const next = window._studentsLoadedCount || 12;
-    const chunk = studentsData.slice(next, next + 12);
-    if (!gridEl) return;
-    gridEl.insertAdjacentHTML('beforeend', chunk.map(s => renderCard(s, false, 'grid')).join(''));
-    requestAnimationFrame(() => {
-      resolveAllProfileImages();
-    });
-    window._studentsLoadedCount = next + chunk.length;
-    if (window._studentsLoadedCount >= studentsData.length) {
-      const btn = document.getElementById('load-more-students');
-      if (btn) btn.remove();
-    }
-  }
+
 
   // --- RENDER CARDS ---
   window.renderCard = function (p, isMentor, type = "grid") {
