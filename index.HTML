@@ -683,7 +683,7 @@
         <!-- User Profile (Hidden by default) -->
         <button
           id="auth-user-btn"
-          onclick="window.location.href = 'dashboard.html'"
+          onclick="handleDashboardAccess()"
           class="hidden px-4 py-2 border border-green-600/50 text-green-500 hover:bg-green-600 hover:text-white font-bold uppercase tracking-widest transition-all text-[10px] items-center gap-2 ml-2 bg-black/50 hover:shadow-[0_0_15px_rgba(0,255,0,0.5)] rounded-sm"
           title="Open Dashboard"
         >
@@ -736,7 +736,7 @@
       ></div>
     </section>
 
-    <!-- Students -->
+    <!-- Kalvians -->
     <section
       id="students-section"
       class="py-32 bg-black/40 border-y border-white/5 relative z-10 scroll-mt-32"
