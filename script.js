@@ -336,7 +336,7 @@ document.addEventListener("DOMContentLoaded", () => {
       email: "sanjay.chelliah.s.138@kalvium.community",
     },
     {
-      name: "Ashwin raj J J",
+      name: "Ashwin Raj J J",
       role: "Kalvian/Creator_3",
       img: "./Src/Ashwin Raj.png",
       github: "https://github.com/Partha1107",
@@ -352,7 +352,7 @@ document.addEventListener("DOMContentLoaded", () => {
       email: "purushothaman.k.s.138@kalvium.community",
     },
     {
-      name: "Vignesh M ",
+      name: "Vignesh M",
       role: "Kalvian",
       img: "./Src/Vignesh M.png",
       github: "https://github.com/vigneshms138-creator",
@@ -376,7 +376,7 @@ document.addEventListener("DOMContentLoaded", () => {
       email: "pradheesh.s.s.138@kalvium.community",
     },
     {
-      name: "Shree Vidhya T ",
+      name: "Shree Vidhya T",
       role: "Kalvian",
       img: "./Src/Srividhya (1).png",
       github: "https://github.com/shreevidhyats138-cmyk",
@@ -392,7 +392,7 @@ document.addEventListener("DOMContentLoaded", () => {
       email: "arun.ragav.s.138@kalvium.community",
     },
     {
-      name: "Prasanna kumar A",
+      name: "Prasanna Kumar A",
       role: "Kalvian",
       img: "./Src/Prasanna Kumar A.png",
       github: "https://github.com/prasannaas138-alt",
@@ -416,7 +416,7 @@ document.addEventListener("DOMContentLoaded", () => {
       email: "sasi.mahesh.s.138@kalvium.community",
     },
     {
-      name: "chandru A",
+      name: "Chandru A",
       role: "Kalvian",
       img: "./Src/Chandru A.png",
       github: "https://github.com/chandrua138",
@@ -432,7 +432,7 @@ document.addEventListener("DOMContentLoaded", () => {
       email: "sandeep.v.s.138@kalvium.community",
     },
     {
-      name: "ARVIND SELVA JAS J S",
+      name: "Arvind Selva Jas J S",
       role: "Kalvian",
       img: "./Src/Arvind selva Jas J. S.jpg",
       github: "https://github.com/arvindselvajas0222-coder",
@@ -448,7 +448,7 @@ document.addEventListener("DOMContentLoaded", () => {
       email: "nithyanandharaj.m.s.138@kalvium.community",
     },
     {
-      name: "Tavanidhiragavi B B ",
+      name: "Tavanidhiragavi B B",
       role: "Kalvian",
       img: "./Src/Tavanidhiragavi B.B.jpg",
       github: "https://github.com/tavanidhiragavibbs138-rgb",
@@ -456,7 +456,7 @@ document.addEventListener("DOMContentLoaded", () => {
       email: "tavanidhiragavi.bb.s.138@kalvium.community",
     },
     {
-      name: "SHERLY N",
+      name: "Sherly N",
       role: "Kalvian",
       img: "./Src/Sherly N.jpg",
       github: "https://github.com/sherlyns138-crypto",
@@ -464,7 +464,7 @@ document.addEventListener("DOMContentLoaded", () => {
       email: "sherly.n.s.138@kalvium.community",
     },
     {
-      name: "chandru S ",
+      name: "Chandru S",
       role: "Kalvian",
       img: "./Src/Chandru S.jpg",
       github: "https://github.com/chandru24126",
@@ -480,7 +480,7 @@ document.addEventListener("DOMContentLoaded", () => {
       email: "ashwath.p.s.138@kalvium.community",
     },
     {
-      name: "kishore R",
+      name: "Kishore R",
       role: "Kalvian",
       img: "./Src/Kishore. R.png",
       github: "https://github.com/kishorers138-cyber",
@@ -496,7 +496,7 @@ document.addEventListener("DOMContentLoaded", () => {
       email: "deepika.v.s.138@kalvium.community",
     },
     {
-      name: "HARICHARAN P",
+      name: "Haricharan P",
       role: "Kalvian",
       img: "./Src/Hari charan (1).png",
       github: "https://github.com/harips138-droid",
@@ -504,7 +504,7 @@ document.addEventListener("DOMContentLoaded", () => {
       email: "hari.p.s.138@kalvium.community",
     },
     {
-      name: "karthikeyan",
+      name: "Karthikeyan A E",
       role: "Kalvian",
       img: "./Src/Karthikeyan A.E.png",
       github: "https://github.com/karthikeyan24-kk",
@@ -512,7 +512,7 @@ document.addEventListener("DOMContentLoaded", () => {
       email: "karthikeyan.ae.s.138@kalvium.community",
     },
     {
-      name: "MOHAMMED THARIK S",
+      name: "Mohammed Tharik S",
       role: "Kalvian",
       img: "./Src/Mohammed Tharik S.jpg",
       github: "https://github.com/MohammedTharikS",
@@ -520,7 +520,7 @@ document.addEventListener("DOMContentLoaded", () => {
       email: "mohammed.tharik.s.138@kalvium.community",
     },
     {
-      name: "Saigoutham G",
+      name: "Sai Goutham G",
       role: "Kalvian",
       img: "./Src/Gundla Sai Gowtham.png",
       github: "https://github.com/gundlagowthams138-cell",
@@ -528,7 +528,7 @@ document.addEventListener("DOMContentLoaded", () => {
       email: "gundla.gowtham.s.138@kalvium.community",
     },
     {
-      name: "Ram CHARAN M",
+      name: "Ram Charan M",
       role: "Kalvian",
       img: "./Src/Ram Charan.png",
       github: "https://github.com/medaboinacharan-pixel",
@@ -536,7 +536,7 @@ document.addEventListener("DOMContentLoaded", () => {
       email: "medaboina.charan.s.138@kalvium.community",
     },
     {
-      name: "Dinesh p",
+      name: "Dinesh P",
       role: "Kalvian",
       img: "./Src/Dinesh P.webp",
       github: "https://github.com/dineshps138-ds",
@@ -544,7 +544,7 @@ document.addEventListener("DOMContentLoaded", () => {
       email: "dinesh.p.s.138@kalvium.community",
     },
     {
-      name: "Surjith sri k",
+      name: "Surjith Sri K",
       role: "Kalvian",
       img: "./Src/Surjith Sri K.jpeg",
       github: "https://github.com/surjithks138",
@@ -552,7 +552,7 @@ document.addEventListener("DOMContentLoaded", () => {
       email: "surjith.k.s.138@kalvium.community",
     },
     {
-      name: "Navya D ",
+      name: "Navya D",
       role: "Kalvian",
       img: "./Src/Navya D.jpg",
       github: "https://github.com/navyads138-star",
@@ -560,7 +560,7 @@ document.addEventListener("DOMContentLoaded", () => {
       email: "navya.d.s.138@kalvium.community",
     },
     {
-      name: "DAVID G",
+      name: "David G",
       role: "Kalvian",
       img: "./Src/DAVID G.png",
       github: "https://github.com/davidgs138-cyber",
@@ -592,7 +592,7 @@ document.addEventListener("DOMContentLoaded", () => {
       email: "jeevanand.j.s.138@kalvium.community",
     },
     {
-      name: "Edupalli sai praneeth",
+      name: "Edupalli Sai Praneeth",
       role: "Kalvian",
       img: "./Src/Edupalli Sai Praneeth Lokesh.png",
       github: "https://github.com/edupallilokeshs138-bot",
@@ -600,7 +600,7 @@ document.addEventListener("DOMContentLoaded", () => {
       email: "edupalli.lokesh.s.138@kalvium.community",
     },
     {
-      name: "Chandana",
+      name: "Chandana E",
       role: "Kalvian",
       img: "./Src/Chadhana (1).png",
       github: "https://github.com/chandanaes139-lang",
@@ -666,13 +666,60 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // --- INIT ---
   async function init() {
+    // 1. Fetch Remote Data from Dedicated Tables
+    if (supabaseClient) {
+      try {
+        const [mRes, sRes] = await Promise.all([
+          supabaseClient.from('mentors').select('*'),
+          supabaseClient.from('students').select('*')
+        ]);
+
+        if (mRes.data && mRes.data.length > 0) {
+          mentorsData.length = 0; // Clear hardcoded
+          mRes.data.forEach(m => mentorsData.push({
+            name: m.full_name,
+            role: m.role,
+            img: m.img_url,
+            linkedin: m.linkedin_url,
+            email: m.email
+          }));
+        }
+
+        if (sRes.data && sRes.data.length > 0) {
+          studentsData.length = 0; // Clear hardcoded
+          sRes.data.forEach(s => studentsData.push({
+            name: s.full_name,
+            role: s.role,
+            img: s.img_url,
+            github: s.github_url,
+            linkedin: s.linkedin_url,
+            email: s.email
+          }));
+        }
+
+        // 2. Fetch avatar overrides from dossiers (for dashboard users)
+        const { data: remoteDossiers } = await supabaseClient.from('dossiers').select('full_name, avatar_url');
+        if (remoteDossiers) {
+          remoteDossiers.forEach(remote => {
+            if (remote.avatar_url) {
+              const s = studentsData.find(st => st.name.trim().toLowerCase() === remote.full_name.trim().toLowerCase());
+              if (s) s.img = remote.avatar_url;
+              const m = mentorsData.find(mn => mn.name === remote.full_name);
+              if (m) m.img = remote.avatar_url;
+            }
+          });
+        }
+      } catch (e) {
+        console.warn("Matrix Sync Error: Falling back to local cache.", e);
+      }
+    }
     // Keep dossier images local for now.
     // Supabase avatars can be enabled later, but they must not override `Src/` images.
 
     setTimeout(() => {
-      window.scrollTo(0, 0); // Force to top one last time before revealing
+      window.scrollTo(0, 0); 
       document.getElementById("loader").style.display = "none";
-      document.body.style.overflow = ""; // Re-enable window-level scrolling natively
+      document.body.style.overflow = ""; 
       if (!localStorage.getItem("cyber_v22"))
         document.getElementById("instruction-overlay").style.display = "flex";
     }, 3000);
@@ -709,15 +756,15 @@ document.addEventListener("DOMContentLoaded", () => {
       proverbsList[currentProverbIdx];
     setInterval(cycleProverbs, 20000);
 
-    // Sync UI Toggles with localStorage state
-    document
-      .getElementById(`btn-theme-${currentTheme}`)
-      .classList.add("active");
-    document.getElementById(`swatch-${currentAccent}`).classList.add("active");
-    document.getElementById(`btn-font-${currentFont}`).classList.add("active");
-    document
-      .getElementById(`btn-size-${currentFontSize}`)
-      .classList.add("active");
+    // Sync UI Toggles
+    const themeBtn = document.getElementById(`btn-theme-${currentTheme}`);
+    if (themeBtn) themeBtn.classList.add("active");
+    const accentBtn = document.getElementById(`swatch-${currentAccent}`);
+    if (accentBtn) accentBtn.classList.add("active");
+    const fontBtn = document.getElementById(`btn-font-${currentFont}`);
+    if (fontBtn) fontBtn.classList.add("active");
+    const sizeBtn = document.getElementById(`btn-size-${currentFontSize}`);
+    if (sizeBtn) sizeBtn.classList.add("active");
   }
 
   // --- PROVERBS ---
@@ -1360,14 +1407,14 @@ const chatKnowledge = {
   about: {
     triggers: ["about", "what is this", "what is kalvium", "tell me about", "explain", "purpose", "what does this"],
     responses: [
-      "📡 <b>Kalvium 2.0 Portfolio</b> — Squad 138's tactical showcase. Built by Ashwin Raj, Dhinesh Babu & Sanjay Chelliah. Features include:<br>• Interactive kalvian/mentor profiles<br>• Real-time coding stats (LeetCode, GitHub, Codeforces)<br>• Customizable themes & fonts<br>• Editable dossier system<br>• This Neural Assist chatbot"
+      "📡 <b>Kalvium 2.0 Portfolio</b> — Squad 138's tactical showcase. Built by Ashwin Raj, Dhinesh Babu & Sanjay Chelliah. Features include:<br>• Interactive student/mentor profiles<br>• Real-time coding stats (LeetCode, GitHub, HackerRank, CodeChef)<br>• Customizable themes & fonts<br>• Editable dossier system<br>• This Neural Assist chatbot"
     ],
     suggestions: ["Who built this?", "Show features", "Open settings"]
   },
   features: {
     triggers: ["features", "what can you do", "capabilities", "function", "tools", "options"],
     responses: [
-      "⚡ <b>Available Systems:</b><br><br>🎨 <b>Theme Engine</b> — 3 modes, 10 accents, 7 fonts<br>📊 <b>Coding Intelligence</b> — Live stats from LeetCode/GitHub/Codeforces<br>📁 <b>Subject Dossiers</b> — Editable projects, certs & skills<br>🔍 <b>Database Scanner</b> — Real-time kalvian search<br>🤖 <b>Neural Assist</b> — That's me!<br>🗺️ <b>Guided Tour</b> — Interactive walkthrough<br><br>Try asking me to navigate somewhere!"
+      "⚡ <b>Available Systems:</b><br><br>🎨 <b>Theme Engine</b> — 3 modes, 10 accents, 7 fonts<br>📊 <b>Coding Intelligence</b> — Live stats from LeetCode/GitHub/HackerRank/CodeChef<br>📁 <b>Subject Dossiers</b> — Editable projects, certs & skills<br>🔍 <b>Database Scanner</b> — Real-time student search<br>🤖 <b>Neural Assist</b> — That's me!<br>🗺️ <b>Guided Tour</b> — Interactive walkthrough<br><br>Try asking me to navigate somewhere!"
     ],
     suggestions: ["Start tour", "Open settings", "Go to kalvians"]
   },
@@ -1393,9 +1440,9 @@ const chatKnowledge = {
     suggestions: ["Open Ashwin's profile", "Show features", "About Kalvium"]
   },
   coding: {
-    triggers: ["coding", "leetcode", "github", "codeforces", "score", "coding stats", "rank", "dossier stats", "programming"],
+    triggers: ["coding", "leetcode", "github", "hackerrank", "codechef", "score", "coding stats", "rank", "dossier stats", "programming"],
     responses: [
-      "📊 <b>Coding Intelligence System:</b><br><br>The portfolio tracks real-time coding skills across 3 platforms:<br><br>• <b>LeetCode</b> (40% weight) — Problem difficulty breakdown<br>• <b>GitHub</b> (30% weight) — Repos, stars, languages<br>• <b>Codeforces</b> (30% weight) — Rating & rank<br><br>Composite scores range from 0–100 with ranks: RECRUIT → OPERATIVE → SPECIALIST → ELITE → LEGENDARY<br><br>Open any kalvian's <b>Dossier</b> to see their score!"
+      "📊 <b>Coding Intelligence System:</b><br><br>The portfolio tracks real-time coding skills across 4 platforms:<br><br>• <b>LeetCode</b> (35% weight) — Problem difficulty breakdown<br>• <b>GitHub</b> (25% weight) — Repos, stars, languages<br>• <b>HackerRank</b> (20% weight) — Profile level, practice signals<br>• <b>CodeChef</b> (20% weight) — Rating & ranks<br><br>Composite scores range from 0–100 with ranks: RECRUIT → OPERATIVE → SPECIALIST → ELITE → LEGENDARY<br><br>Open any student's <b>Dossier</b> to see their score!"
     ],
     suggestions: ["What ranks exist?", "Go to kalvians", "About features"]
   },

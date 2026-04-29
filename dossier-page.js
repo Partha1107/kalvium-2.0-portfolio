@@ -484,9 +484,33 @@ document.addEventListener("DOMContentLoaded", async () => {
     return;
   }
 
-  // Find the person locally first for basic UI (img, email)
+  // 1. Fetch Remote operative data to ensure sync
+  if (supabaseClient) {
+    try {
+      const [mRes, sRes] = await Promise.all([
+        supabaseClient.from('mentors').select('*'),
+        supabaseClient.from('students').select('*')
+      ]);
+      if (mRes.data?.length > 0) {
+        mentorsData.length = 0;
+        mRes.data.forEach(m => mentorsData.push({
+          name: m.full_name, role: m.role, img: m.img_url, linkedin: m.linkedin_url, email: m.email
+        }));
+      }
+      if (sRes.data?.length > 0) {
+        studentsData.length = 0;
+        sRes.data.forEach(s => studentsData.push({
+          name: s.full_name, role: s.role, img: s.img_url, github: s.github_url, linkedin: s.linkedin_url, email: s.email
+        }));
+      }
+    } catch (e) {
+      console.warn("Dossier Match Protocol: Offline Mode.");
+    }
+  }
+
+  // Find the person locally (now synced with database)
   const allPeople = [...mentorsData, ...studentsData];
-  const person = allPeople.find((p) => p.name === name);
+  const person = allPeople.find((p) => p.name.trim().toLowerCase() === name.trim().toLowerCase());
 
   if (!person) {
     document.getElementById("dossierContent").innerHTML =
@@ -814,58 +838,4 @@ function removeSkill(idx) {
   window.getDossierState(window.currentActiveSubject).skills.splice(idx, 1);
   renderDossier();
   loadCodingStats(window.currentActiveSubject);
-}
-
-// --- HACKERRANK SIMULATION ---
-function simulateHackerRankTest(skillIndex, skillName) {
-  const terminal = document.getElementById("terminal-modal");
-  const termText = document.getElementById("terminal-text");
-  const status = document.getElementById("term-status");
-  terminal.style.display = "flex";
-  termText.innerHTML = "";
-  status.innerText = "CONNECTING...";
-  status.className = "text-yellow-500 animate-pulse";
-
-  const lines = [
-    `> ESTABLISHING SECURE LINK TO HACKERRANK_API...`,
-    `> AUTHENTICATING USER PROFILE... [OK]`,
-    `> FETCHING ALGORITHMIC CHALLENGE: ${skillName.toUpperCase()} [LEVEL: MODERATE]...`,
-    `> COMPILING SUBMITTED SOURCE CODE...`,
-    `> RUNNING TEST CASES (0/15)...`,
-    `> TEST CASES PASSED: 12/15. TIME COMPLEXITY: O(N log N).`,
-  ];
-  let delay = 0;
-  lines.forEach((line) => {
-    setTimeout(() => {
-      const p = document.createElement("p");
-      p.innerText = line;
-      termText.appendChild(p);
-    }, delay);
-    delay += Math.random() * 500 + 400;
-  });
-
-  setTimeout(() => {
-    const newScore = Math.floor(Math.random() * 20) + 80;
-    const p = document.createElement("p");
-    p.innerHTML = `<span class="text-white bg-green-600 px-2 mt-2 inline-block">ASSESSMENT COMPLETE. NEW SCORE: ${newScore}%</span>`;
-    termText.appendChild(p);
-    status.innerText = "SYNC_COMPLETE";
-    status.className = "text-green-500";
-    window.getDossierState(window.currentActiveSubject).skills[skillIndex].pct =
-      newScore;
-    setTimeout(() => {
-      terminal.style.display = "none";
-      document.getElementById(`skill-val-${skillIndex}`).innerText =
-        `${newScore}%`;
-      document.getElementById(`skill-bar-${skillIndex}`).style.width =
-        `${newScore}%`;
-      const bar = document.getElementById(`skill-bar-${skillIndex}`);
-      bar.style.backgroundColor = "#0f0";
-      bar.style.boxShadow = "0 0 20px #0f0";
-      setTimeout(() => {
-        bar.style.backgroundColor = "var(--k-red)";
-        bar.style.boxShadow = "0 0 10px var(--k-red)";
-      }, 1000);
-    }, 1500);
-  }, delay + 500);
 }
