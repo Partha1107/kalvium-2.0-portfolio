@@ -78,7 +78,6 @@ const SUPABASE_BUCKET_IMAGE_BASE =
   "https://gjkbbbklxqgxvjoqhvue.supabase.co/storage/v1/object/public/dossier_assets/Profile/profile_picture/";
 
 const PROFILE_PLACEHOLDER = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==';
-let profilePictureLookupClient = null;
 
 let kalvianRosterCache = null;
 let leadershipProfilesCache = null;
@@ -98,23 +97,11 @@ function getProfilePictureSrc(email) {
   return `${SUPABASE_BUCKET_IMAGE_BASE}${email.trim().toLowerCase()}`;
 }
 
-function getProfilePictureLookupClient() {
-  if (profilePictureLookupClient) return profilePictureLookupClient;
-  if (!window.supabase) return null;
-
-  profilePictureLookupClient = window.supabase.createClient(
-    "https://gjkbbbklxqgxvjoqhvue.supabase.co",
-    "sb_publishable_Z-ZLJ1kdtSnjYqXFwwDAQw_JKMikQQr",
-  );
-
-  return profilePictureLookupClient;
-}
-
 async function findProfilePictureUrlByEmail(email) {
   const normalized = (email || "").trim().toLowerCase();
   if (!normalized) return "";
 
-  const client = getProfilePictureLookupClient();
+  const client = supabaseClient;
   if (!client) return "";
 
   const { data, error } = await client.storage
