@@ -140,6 +140,22 @@
             </button>
 
             <button
+              id="mentor-edit-kalvian-btn"
+              onclick="openUpdateKalvianModal()"
+              class="w-full py-3 border border-sky-600/50 text-sky-400 hover:bg-sky-600 hover:text-white font-bold uppercase tracking-widest transition-all text-xs flex justify-center items-center gap-3 hidden"
+            >
+              <i class="fa-solid fa-pen-to-square"></i> Update_Kalvian
+            </button>
+
+            <button
+              id="manager-delete-mentor-btn"
+              onclick="openDeleteMentorModal()"
+              class="w-full py-3 border border-orange-600/50 text-orange-400 hover:bg-orange-600 hover:text-white font-bold uppercase tracking-widest transition-all text-xs flex justify-center items-center gap-3 hidden"
+            >
+              <i class="fa-solid fa-user-xmark"></i> Delete_Mentor
+            </button>
+
+            <button
               onclick="viewPublicDossier()"
               class="w-full py-3 border border-blue-600/50 text-blue-500 hover:bg-blue-600 hover:text-white font-bold uppercase tracking-widest transition-all text-xs flex justify-center items-center gap-3"
             >
@@ -314,7 +330,47 @@
       const AVATAR_BUCKET_BASE = "Profile/profile_picture/";
       const DASHBOARD_AVATAR_PLACEHOLDER = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==';
       const dashboardAvatarLookupCache = new Map();
+      const FALLBACK_SQUAD_OPTIONS = ['138', '139'];
       let currentDashboardView = 'default';
+
+      async function loadSquadOptions() {
+        if (!supabaseClient) return FALLBACK_SQUAD_OPTIONS;
+
+        const { data, error } = await supabaseClient
+          .from('kalvian')
+          .select('squad')
+          .not('squad', 'is', null);
+
+        if (error || !Array.isArray(data)) {
+          console.warn('Could not load squad options:', error);
+          return FALLBACK_SQUAD_OPTIONS;
+        }
+
+        const squads = new Set();
+        data.forEach((entry) => {
+          const squad = String(entry?.squad || '').trim();
+          if (squad) squads.add(squad);
+        });
+
+        const sortedSquads = Array.from(squads).sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
+        return sortedSquads.length ? sortedSquads : FALLBACK_SQUAD_OPTIONS;
+      }
+
+      async function refreshNewFolkSquadOptions() {
+        const squadSelect = document.getElementById('new-folk-squad');
+        if (!squadSelect) return;
+
+        const currentValue = squadSelect.value;
+        const squads = await loadSquadOptions();
+        const optionsHtml = ['<option value="">Select squad</option>']
+          .concat(squads.map((squad) => `<option value="${squad}">${squad}</option>`));
+
+        squadSelect.innerHTML = optionsHtml.join('');
+
+        if (currentValue && squads.includes(currentValue)) {
+          squadSelect.value = currentValue;
+        }
+      }
 
       function applyDashboardView(view) {
         const normalized = ['manager', 'mentor', 'kalvian'].includes((view || '').toLowerCase()) ? view.toLowerCase() : 'default';
@@ -371,6 +427,14 @@
         if (mentorDeleteFolkBtn) {
           mentorDeleteFolkBtn.classList.toggle('hidden', !(normalized === 'mentor' || normalized === 'manager'));
         }
+        const mentorEditKalvianBtn = document.querySelector('#mentor-edit-kalvian-btn');
+        if (mentorEditKalvianBtn) {
+          mentorEditKalvianBtn.classList.toggle('hidden', !(normalized === 'mentor' || normalized === 'manager'));
+        }
+        const managerDeleteMentorBtn = document.querySelector('#manager-delete-mentor-btn');
+        if (managerDeleteMentorBtn) {
+          managerDeleteMentorBtn.classList.toggle('hidden', normalized !== 'manager');
+        }
         const publicDossierBtn = document.querySelector('[onclick="viewPublicDossier()"]');
         if (publicDossierBtn) {
           publicDossierBtn.innerHTML = normalized === 'kalvian'
@@ -394,7 +458,7 @@
           const syncSquad = () => {
             const isMentorRole = (newFolkRole.value || '').toUpperCase() === 'MENTOR';
             if (newFolkSquad && newFolkSquad.parentElement) {
-              newFolkSquad.parentElement.classList.toggle('hidden', normalized === 'mentor' || isMentorRole);
+              newFolkSquad.parentElement.classList.toggle('hidden', isMentorRole);
             }
           };
           // Add listener only once
@@ -1114,9 +1178,10 @@
         }
       }
 
-      function openNewFolkModal() {
+      async function openNewFolkModal() {
         const modal = document.getElementById('new-folk-modal');
         if (!modal) return;
+        await refreshNewFolkSquadOptions();
         modal.classList.remove('hidden');
         modal.classList.add('flex');
       }
@@ -1206,9 +1271,33 @@
 
       let deleteKalvianEntries = [];
       let selectedDeleteKalvianKey = '';
+      let deleteKalvianSearchQuery = '';
+      let updateKalvianEntries = [];
+      let selectedUpdateKalvianKey = '';
+      let updateKalvianSearchQuery = '';
+      let deleteMentorEntries = [];
+      let selectedDeleteMentorKey = '';
 
       function getDeleteKalvianKey(entry) {
         return (entry?.email || entry?.full_name || '').trim().toLowerCase();
+      }
+
+      function getDeleteKalvianSortValue(entry) {
+        const rawSquad = String(entry?.squad || '').trim();
+        const squadNumber = Number(rawSquad);
+        return Number.isFinite(squadNumber) ? squadNumber : rawSquad.toLowerCase();
+      }
+
+      function getDeleteKalvianMatchesSearch(entry) {
+        const query = (deleteKalvianSearchQuery || '').trim().toLowerCase();
+        if (!query) return true;
+
+        const haystack = [entry?.full_name, entry?.squad]
+          .filter(Boolean)
+          .join(' ')
+          .toLowerCase();
+
+        return haystack.includes(query);
       }
 
       function renderDeleteKalvianList() {
@@ -1216,17 +1305,32 @@
         const actionBtn = document.getElementById('delete-kalvian-action');
         if (!listEl) return;
 
-        if (!deleteKalvianEntries.length) {
+        const visibleEntries = deleteKalvianEntries
+          .filter(getDeleteKalvianMatchesSearch)
+          .sort((left, right) => {
+            const leftSquad = getDeleteKalvianSortValue(left);
+            const rightSquad = getDeleteKalvianSortValue(right);
+
+            if (leftSquad < rightSquad) return -1;
+            if (leftSquad > rightSquad) return 1;
+
+            return (left.full_name || left.email || '').localeCompare(right.full_name || right.email || '', undefined, { sensitivity: 'base' });
+          });
+
+        if (!visibleEntries.length) {
           listEl.innerHTML = `
             <div class="rounded-xl border border-white/10 bg-black/40 p-4 text-center text-gray-500 mono text-xs uppercase tracking-[0.2em]">
-              No_Kalvians_Found
+              ${deleteKalvianSearchQuery ? 'No_Matching_Kalvians_Found' : 'No_Kalvians_Found'}
             </div>
           `;
           if (actionBtn) actionBtn.disabled = true;
           return;
         }
 
-        listEl.innerHTML = deleteKalvianEntries.map((entry) => {
+        const selectedVisibleEntry = visibleEntries.find((entry) => getDeleteKalvianKey(entry) === selectedDeleteKalvianKey);
+        if (actionBtn) actionBtn.disabled = !selectedVisibleEntry;
+
+        listEl.innerHTML = visibleEntries.map((entry) => {
           const key = getDeleteKalvianKey(entry);
           const label = entry.full_name || entry.email || 'Unnamed_Kalvian';
           const metaBits = [entry.email, entry.squad ? `Squad ${entry.squad}` : ''].filter(Boolean);
@@ -1248,8 +1352,11 @@
             </button>
           `;
         }).join('');
+      }
 
-        if (actionBtn) actionBtn.disabled = !selectedDeleteKalvianKey;
+      function filterDeleteKalvians(query) {
+        deleteKalvianSearchQuery = (query || '').trim();
+        renderDeleteKalvianList();
       }
 
       function selectDeleteKalvian(key) {
@@ -1275,16 +1382,391 @@
           deleteKalvianEntries = [];
           selectedDeleteKalvianKey = '';
         } else {
-          deleteKalvianEntries = data;
-          selectedDeleteKalvianKey = getDeleteKalvianKey(data[0]) || '';
+          deleteKalvianEntries = data.slice().sort((left, right) => {
+            const leftSquad = getDeleteKalvianSortValue(left);
+            const rightSquad = getDeleteKalvianSortValue(right);
+
+            if (leftSquad < rightSquad) return -1;
+            if (leftSquad > rightSquad) return 1;
+
+            return (left.full_name || left.email || '').localeCompare(right.full_name || right.email || '', undefined, { sensitivity: 'base' });
+          });
+          selectedDeleteKalvianKey = getDeleteKalvianKey(deleteKalvianEntries[0]) || '';
         }
 
         renderDeleteKalvianList();
       }
 
+      function getUpdateKalvianKey(entry) {
+        return (entry?.email || entry?.full_name || '').trim().toLowerCase();
+      }
+
+      function getUpdateKalvianSortValue(entry) {
+        const rawSquad = String(entry?.squad || '').trim();
+        const squadNumber = Number(rawSquad);
+        return Number.isFinite(squadNumber) ? squadNumber : rawSquad.toLowerCase();
+      }
+
+      function getUpdateKalvianMatchesSearch(entry) {
+        const query = (updateKalvianSearchQuery || '').trim().toLowerCase();
+        if (!query) return true;
+
+        const haystack = [entry?.full_name, entry?.squad]
+          .filter(Boolean)
+          .join(' ')
+          .toLowerCase();
+
+        return haystack.includes(query);
+      }
+
+      function populateUpdateKalvianForm(entry) {
+        const fullNameInput = document.getElementById('update-kalvian-name');
+        const emailInput = document.getElementById('update-kalvian-email');
+        const linkedinInput = document.getElementById('update-kalvian-linkedin');
+        const squadInput = document.getElementById('update-kalvian-squad');
+        const bioInput = document.getElementById('update-kalvian-bio');
+        const saveBtn = document.getElementById('update-kalvian-action');
+
+        if (fullNameInput) fullNameInput.value = entry?.full_name || '';
+        if (emailInput) emailInput.value = entry?.email || '';
+        if (linkedinInput) linkedinInput.value = entry?.linkedin_url || '';
+        if (squadInput) squadInput.value = entry?.squad || '';
+        if (bioInput) bioInput.value = entry?.bio || '';
+        if (saveBtn) saveBtn.disabled = !entry;
+      }
+
+      function renderUpdateKalvianList() {
+        const listEl = document.getElementById('update-kalvian-list');
+        const actionBtn = document.getElementById('update-kalvian-action');
+        if (!listEl) return;
+
+        const visibleEntries = updateKalvianEntries
+          .filter(getUpdateKalvianMatchesSearch)
+          .sort((left, right) => {
+            const leftSquad = getUpdateKalvianSortValue(left);
+            const rightSquad = getUpdateKalvianSortValue(right);
+
+            if (leftSquad < rightSquad) return -1;
+            if (leftSquad > rightSquad) return 1;
+
+            return (left.full_name || left.email || '').localeCompare(right.full_name || right.email || '', undefined, { sensitivity: 'base' });
+          });
+
+        if (!visibleEntries.length) {
+          listEl.innerHTML = `
+            <div class="rounded-xl border border-white/10 bg-black/40 p-4 text-center text-gray-500 mono text-xs uppercase tracking-[0.2em]">
+              ${updateKalvianSearchQuery ? 'No_Matching_Kalvians_Found' : 'No_Kalvians_Found'}
+            </div>
+          `;
+          if (actionBtn) actionBtn.disabled = true;
+          populateUpdateKalvianForm(null);
+          return;
+        }
+
+        const selectedEntry = visibleEntries.find((entry) => getUpdateKalvianKey(entry) === selectedUpdateKalvianKey) || visibleEntries[0];
+        if (selectedEntry && getUpdateKalvianKey(selectedEntry) !== selectedUpdateKalvianKey) {
+          selectedUpdateKalvianKey = getUpdateKalvianKey(selectedEntry);
+        }
+
+        if (actionBtn) actionBtn.disabled = !selectedEntry;
+        populateUpdateKalvianForm(selectedEntry);
+
+        listEl.innerHTML = visibleEntries.map((entry) => {
+          const key = getUpdateKalvianKey(entry);
+          const label = entry.full_name || entry.email || 'Unnamed_Kalvian';
+          const metaBits = [entry.squad ? `Squad ${entry.squad}` : '', entry.email || ''].filter(Boolean);
+          return `
+            <button
+              type="button"
+              onclick="selectUpdateKalvian('${key.replace(/'/g, "\\'")}')"
+              class="w-full text-left rounded-xl border px-4 py-3 transition-all ${selectedUpdateKalvianKey === key ? 'border-sky-500 bg-sky-500/10' : 'border-white/10 bg-black/30 hover:border-sky-500/40 hover:bg-sky-500/5'}"
+            >
+              <div class="flex items-center justify-between gap-3">
+                <div>
+                  <p class="text-white font-bold uppercase tracking-widest text-sm">${label}</p>
+                  <p class="text-[9px] text-gray-500 mono uppercase tracking-[0.2em] mt-1">${metaBits.join(' // ')}</p>
+                </div>
+                <span class="text-[9px] mono uppercase tracking-[0.2em] ${selectedUpdateKalvianKey === key ? 'text-sky-400' : 'text-gray-500'}">
+                  ${selectedUpdateKalvianKey === key ? 'Selected' : 'Select'}
+                </span>
+              </div>
+            </button>
+          `;
+        }).join('');
+      }
+
+      function filterUpdateKalvians(query) {
+        updateKalvianSearchQuery = (query || '').trim();
+        renderUpdateKalvianList();
+      }
+
+      function selectUpdateKalvian(key) {
+        selectedUpdateKalvianKey = key || '';
+        renderUpdateKalvianList();
+      }
+
+      async function loadUpdateKalvians() {
+        if (!supabaseClient) {
+          updateKalvianEntries = [];
+          selectedUpdateKalvianKey = '';
+          renderUpdateKalvianList();
+          return;
+        }
+
+        const { data, error } = await supabaseClient
+          .from('kalvian')
+          .select('full_name, email, squad, linkedin_url, bio')
+          .order('full_name', { ascending: true });
+
+        if (error || !Array.isArray(data)) {
+          console.warn('Could not load kalvians for update modal:', error);
+          updateKalvianEntries = [];
+          selectedUpdateKalvianKey = '';
+        } else {
+          updateKalvianEntries = data.slice().sort((left, right) => {
+            const leftSquad = getUpdateKalvianSortValue(left);
+            const rightSquad = getUpdateKalvianSortValue(right);
+
+            if (leftSquad < rightSquad) return -1;
+            if (leftSquad > rightSquad) return 1;
+
+            return (left.full_name || left.email || '').localeCompare(right.full_name || right.email || '', undefined, { sensitivity: 'base' });
+          });
+          selectedUpdateKalvianKey = getUpdateKalvianKey(updateKalvianEntries[0]) || '';
+        }
+
+        renderUpdateKalvianList();
+      }
+
+      function openUpdateKalvianModal() {
+        const modal = document.getElementById('update-kalvian-modal');
+        if (!modal) return;
+        const searchInput = document.getElementById('update-kalvian-search');
+        updateKalvianSearchQuery = '';
+        if (searchInput) searchInput.value = '';
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+        loadUpdateKalvians().catch((error) => {
+          console.warn('Kalvian update list load failed:', error);
+        });
+      }
+
+      function closeUpdateKalvianModal() {
+        const modal = document.getElementById('update-kalvian-modal');
+        if (!modal) return;
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+      }
+
+      async function updateKalvian() {
+        const { data: { session } } = await supabaseClient.auth.getSession();
+        if (!session) return;
+
+        const selectedEntry = updateKalvianEntries.find((entry) => getUpdateKalvianKey(entry) === selectedUpdateKalvianKey);
+        if (!selectedEntry) {
+          showDashboardAlert('Select a kalvian to update.', 'warning', 'No Selection');
+          return;
+        }
+
+        const fullName = document.getElementById('update-kalvian-name').value.trim();
+        const emailInput = document.getElementById('update-kalvian-email');
+        const email = emailInput.value.trim().toLowerCase();
+        const linkedinUrl = document.getElementById('update-kalvian-linkedin').value.trim();
+        const squad = document.getElementById('update-kalvian-squad').value.trim();
+        const bio = document.getElementById('update-kalvian-bio').value.trim();
+
+        if (!fullName) {
+          showDashboardAlert('Enter a full name before updating the profile.', 'warning', 'Missing Name');
+          return;
+        }
+
+        if (!email) {
+          showDashboardAlert('Enter an email address before updating the profile.', 'warning', 'Missing Email');
+          if (emailInput) emailInput.focus();
+          return;
+        }
+
+        if (emailInput && !emailInput.checkValidity()) {
+          showDashboardAlert('Enter a valid email address before updating the profile.', 'warning', 'Invalid Email');
+          emailInput.focus();
+          return;
+        }
+
+        if (!squad) {
+          const squadInput = document.getElementById('update-kalvian-squad');
+          showDashboardAlert('Select a squad before updating the profile.', 'warning', 'Missing Squad');
+          if (squadInput) squadInput.focus();
+          return;
+        }
+
+        const payload = {
+          full_name: fullName,
+          email,
+          linkedin_url: linkedinUrl || null,
+          squad: squad || null,
+          bio: bio || null,
+          role: 'Kalvian',
+        };
+
+        let query = supabaseClient.from('kalvian').update(payload);
+        if (selectedEntry.email) {
+          query = query.eq('email', selectedEntry.email);
+        } else {
+          query = query.eq('full_name', selectedEntry.full_name || '');
+        }
+
+        const { error } = await query;
+        if (error) {
+          console.error('Update kalvian failed:', error);
+          showDashboardAlert('Could not update kalvian: ' + error.message, 'error', 'Update Failed');
+          return;
+        }
+
+        closeUpdateKalvianModal();
+        updateKalvianEntries = [];
+        selectedUpdateKalvianKey = '';
+
+        bumpPortfolioDataVersion();
+        showDashboardAlert('Kalvian updated successfully.', 'success', 'Updated');
+      }
+
+      function getDeleteMentorKey(entry) {
+        return (entry?.email || entry?.full_name || '').trim().toLowerCase();
+      }
+
+      function renderDeleteMentorList() {
+        const listEl = document.getElementById('delete-mentor-list');
+        const actionBtn = document.getElementById('delete-mentor-action');
+        if (!listEl) return;
+
+        if (!deleteMentorEntries.length) {
+          listEl.innerHTML = `
+            <div class="rounded-xl border border-white/10 bg-black/40 p-4 text-center text-gray-500 mono text-xs uppercase tracking-[0.2em]">
+              No_Mentors_Found
+            </div>
+          `;
+          if (actionBtn) actionBtn.disabled = true;
+          return;
+        }
+
+        listEl.innerHTML = deleteMentorEntries.map((entry) => {
+          const key = getDeleteMentorKey(entry);
+          const label = entry.full_name || entry.email || 'Unnamed_Mentor';
+          const metaBits = [entry.email, 'MENTOR'].filter(Boolean);
+          return `
+            <button
+              type="button"
+              onclick="selectDeleteMentor('${key.replace(/'/g, "\\'")}')"
+              class="w-full text-left rounded-xl border px-4 py-3 transition-all ${selectedDeleteMentorKey === key ? 'border-orange-500 bg-orange-500/10' : 'border-white/10 bg-black/30 hover:border-orange-500/40 hover:bg-orange-500/5'}"
+            >
+              <div class="flex items-center justify-between gap-3">
+                <div>
+                  <p class="text-white font-bold uppercase tracking-widest text-sm">${label}</p>
+                  <p class="text-[9px] text-gray-500 mono uppercase tracking-[0.2em] mt-1">${metaBits.join(' // ')}</p>
+                </div>
+                <span class="text-[9px] mono uppercase tracking-[0.2em] ${selectedDeleteMentorKey === key ? 'text-orange-400' : 'text-gray-500'}">
+                  ${selectedDeleteMentorKey === key ? 'Selected' : 'Select'}
+                </span>
+              </div>
+            </button>
+          `;
+        }).join('');
+
+        if (actionBtn) actionBtn.disabled = !selectedDeleteMentorKey;
+      }
+
+      function selectDeleteMentor(key) {
+        selectedDeleteMentorKey = key || '';
+        renderDeleteMentorList();
+      }
+
+      async function loadDeleteMentors() {
+        if (!supabaseClient) {
+          deleteMentorEntries = [];
+          selectedDeleteMentorKey = '';
+          renderDeleteMentorList();
+          return;
+        }
+
+        const { data, error } = await supabaseClient
+          .from('management')
+          .select('full_name, email, role')
+          .ilike('role', 'MENTOR')
+          .order('full_name', { ascending: true });
+
+        if (error || !Array.isArray(data)) {
+          console.warn('Could not load mentors for delete modal:', error);
+          deleteMentorEntries = [];
+          selectedDeleteMentorKey = '';
+        } else {
+          deleteMentorEntries = data;
+          selectedDeleteMentorKey = getDeleteMentorKey(data[0]) || '';
+        }
+
+        renderDeleteMentorList();
+      }
+
+      function openDeleteMentorModal() {
+        const modal = document.getElementById('delete-mentor-modal');
+        if (!modal) return;
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+        loadDeleteMentors().catch((error) => {
+          console.warn('Mentor delete list load failed:', error);
+        });
+      }
+
+      function closeDeleteMentorModal() {
+        const modal = document.getElementById('delete-mentor-modal');
+        if (!modal) return;
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+      }
+
+      async function deleteMentor() {
+        const { data: { session } } = await supabaseClient.auth.getSession();
+        if (!session) return;
+
+        const selectedEntry = deleteMentorEntries.find((entry) => getDeleteMentorKey(entry) === selectedDeleteMentorKey);
+        if (!selectedEntry) {
+          showDashboardAlert('Select a mentor to delete.', 'warning', 'No Selection');
+          return;
+        }
+
+        const confirmDelete = await showDashboardConfirm(
+          `Delete Mentor ${selectedEntry.full_name || selectedEntry.email || 'this entry'}? This cannot be undone.`,
+          'Delete Mentor'
+        );
+        if (!confirmDelete) return;
+
+        let query = supabaseClient.from('management').delete();
+        if (selectedEntry.email) {
+          query = query.ilike('email', selectedEntry.email);
+        } else {
+          query = query.ilike('full_name', selectedEntry.full_name || '');
+        }
+
+        const { error } = await query;
+        if (error) {
+          console.error('Delete mentor failed:', error);
+          showDashboardAlert('Could not delete mentor: ' + error.message, 'error', 'Delete Failed');
+          return;
+        }
+
+        closeDeleteMentorModal();
+        deleteMentorEntries = [];
+        selectedDeleteMentorKey = '';
+
+        bumpPortfolioDataVersion();
+        showDashboardAlert('Mentor deleted successfully.', 'success', 'Deleted');
+      }
+
       function openDeleteKalvianModal() {
         const modal = document.getElementById('delete-kalvian-modal');
         if (!modal) return;
+        const searchInput = document.getElementById('delete-kalvian-search');
+        deleteKalvianSearchQuery = '';
+        if (searchInput) searchInput.value = '';
         modal.classList.remove('hidden');
         modal.classList.add('flex');
         loadDeleteKalvians().catch((error) => {
@@ -1342,7 +1824,8 @@
         if (!session) return;
 
         const fullName = document.getElementById('new-folk-name').value.trim();
-        const email = document.getElementById('new-folk-email').value.trim().toLowerCase();
+        const emailInput = document.getElementById('new-folk-email');
+        const email = emailInput.value.trim().toLowerCase();
         const linkedinUrl = document.getElementById('new-folk-linkedin').value.trim();
         const squad = document.getElementById('new-folk-squad').value.trim();
         const bio = document.getElementById('new-folk-bio').value.trim();
@@ -1352,20 +1835,37 @@
           return;
         }
 
+        if (!email) {
+          showDashboardAlert('Enter an email address before creating the profile.', 'warning', 'Missing Email');
+          if (emailInput) emailInput.focus();
+          return;
+        }
+
+        if (emailInput && !emailInput.checkValidity()) {
+          showDashboardAlert('Enter a valid email address before creating the profile.', 'warning', 'Invalid Email');
+          emailInput.focus();
+          return;
+        }
+
         // If the current dashboard view is 'manager' allow creating a Mentor (in management table)
         const createAs = (document.getElementById('new-folk-role') && document.getElementById('new-folk-role').value) || 'Kalvian';
+        if (createAs !== 'MENTOR' && !squad) {
+          const squadInput = document.getElementById('new-folk-squad');
+          showDashboardAlert('Select a squad before creating the profile.', 'warning', 'Missing Squad');
+          if (squadInput) squadInput.focus();
+          return;
+        }
+
         if (currentDashboardView === 'manager' && createAs === 'MENTOR') {
           const mentorPayload = {
             full_name: fullName,
             role: 'MENTOR',
-            email: email || null,
+            email,
             linkedin_url: linkedinUrl || null,
             // updated_at removed to avoid schema mismatch if column doesn't exist
           };
 
-          const upsertResult = email
-            ? await supabaseClient.from('management').upsert(mentorPayload, { onConflict: 'email' })
-            : await supabaseClient.from('management').insert(mentorPayload);
+          const upsertResult = await supabaseClient.from('management').upsert(mentorPayload, { onConflict: 'email' });
 
           if (upsertResult.error) {
             console.error('Create mentor failed:', upsertResult.error);
@@ -1376,17 +1876,13 @@
           const payload = {
             full_name: fullName,
             role: 'Kalvian',
-            email: email || null,
+            email,
             linkedin_url: linkedinUrl || null,
             squad: squad || null,
             bio: bio || null,
           };
 
-          const insertQuery = email
-            ? supabaseClient.from('kalvian').upsert(payload, { onConflict: 'email' })
-            : supabaseClient.from('kalvian').insert(payload);
-
-          const { error } = await insertQuery;
+          const { error } = await supabaseClient.from('kalvian').upsert(payload, { onConflict: 'email' });
           if (error) {
             console.error('Create folk failed:', error);
             showDashboardAlert('Could not create profile: ' + error.message, 'error', 'Create Failed');
@@ -1436,7 +1932,7 @@
           </div>
           <div class="input-group">
             <label class="block text-[9px] text-gray-500 mono uppercase mb-1">Email</label>
-            <input id="new-folk-email" class="w-full bg-black/40 border border-white/10 p-3 text-white mono text-xs focus:border-emerald-500 outline-none transition-all" placeholder="name@domain.com" />
+            <input id="new-folk-email" type="email" required class="w-full bg-black/40 border border-white/10 p-3 text-white mono text-xs focus:border-emerald-500 outline-none transition-all" placeholder="name@domain.com" />
           </div>
           <div class="input-group">
             <label class="block text-[9px] text-gray-500 mono uppercase mb-1">LinkedIn_URL</label>
@@ -1444,7 +1940,8 @@
           </div>
           <div class="input-group">
             <label class="block text-[9px] text-gray-500 mono uppercase mb-1">Squad</label>
-            <select id="new-folk-squad" class="w-full bg-black/40 border border-white/10 p-3 text-white mono text-xs focus:border-emerald-500 outline-none transition-all">
+            <select id="new-folk-squad" required class="w-full bg-black/40 border border-white/10 p-3 text-white mono text-xs focus:border-emerald-500 outline-none transition-all">
+              <option value="">Select squad</option>
               <option value="138">138</option>
               <option value="139">139</option>
             </select>
@@ -1478,6 +1975,10 @@
           </div>
 
           <div class="mb-4">
+            <div class="mb-4">
+              <label class="block text-[10px] text-gray-500 mono uppercase mb-2 tracking-[0.3em]">Search_Kalvian</label>
+              <input id="delete-kalvian-search" type="search" oninput="filterDeleteKalvians(this.value)" class="w-full bg-black/40 border border-white/10 p-3 text-white mono text-xs focus:border-rose-500 outline-none transition-all" placeholder="Search by name or squad" />
+            </div>
             <p class="mono text-[10px] uppercase tracking-[0.3em] text-gray-500 mb-3">Select_A_Kalvian</p>
             <div id="delete-kalvian-list" class="grid grid-cols-1 gap-3 max-h-[320px] overflow-y-auto pr-2 custom-scrollbar"></div>
           </div>
@@ -1485,6 +1986,102 @@
           <div class="flex gap-3 mt-6 pt-4 border-t border-white/10">
               <button id="delete-kalvian-action" onclick="deleteKalvian()" class="flex-1 py-3 bg-rose-500 text-white font-black uppercase tracking-widest text-xs hover:bg-white hover:text-black transition-all disabled:opacity-40 disabled:cursor-not-allowed" disabled>Delete_Profile</button>
               <button onclick="closeDeleteKalvianModal()" class="flex-1 py-3 border border-white/10 text-gray-400 hover:text-white font-black uppercase tracking-widest text-xs">Cancel</button>
+            </div>
+        </div>
+      </div>
+
+        <div id="update-kalvian-modal" class="fixed inset-0 z-[2050] hidden items-center justify-center bg-black/80 backdrop-blur-sm p-4">
+          <div class="w-full max-w-5xl dossier-card border border-sky-600/30 bg-zinc-950/95 relative">
+            <div class="bracket tl"></div>
+            <div class="bracket tr"></div>
+            <div class="bracket bl"></div>
+            <div class="bracket br"></div>
+            <div class="flex items-center justify-between mb-6 pb-4 border-b border-white/10">
+              <div>
+                <p class="mono text-[10px] uppercase tracking-[0.35em] text-sky-400">Kalvian_Edit_Grid</p>
+                <h3 class="text-xl font-black uppercase tracking-widest text-white">Update_Kalvian</h3>
+              </div>
+              <button onclick="closeUpdateKalvianModal()" class="text-gray-500 hover:text-white text-xl"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-[0.95fr_1.05fr] gap-6">
+              <div class="space-y-4">
+                <div>
+                  <label class="block text-[10px] text-gray-500 mono uppercase mb-2 tracking-[0.3em]">Search_Kalvian</label>
+                  <input id="update-kalvian-search" type="search" oninput="filterUpdateKalvians(this.value)" class="w-full bg-black/40 border border-white/10 p-3 text-white mono text-xs focus:border-sky-500 outline-none transition-all" placeholder="Search by name or squad" />
+                </div>
+                <div>
+                  <p class="mono text-[10px] uppercase tracking-[0.3em] text-gray-500 mb-3">Select_A_Kalvian</p>
+                  <div id="update-kalvian-list" class="grid grid-cols-1 gap-3 max-h-[520px] overflow-y-auto pr-2 custom-scrollbar"></div>
+                </div>
+              </div>
+
+              <div class="space-y-4 rounded-2xl border border-white/10 bg-black/30 p-5">
+                <div class="flex items-center justify-between gap-3 pb-4 border-b border-white/10">
+                  <div>
+                    <p class="text-sky-400 mono text-[10px] uppercase tracking-[0.3em]">Edit_Profile</p>
+                    <p class="text-gray-500 mono text-[8px] uppercase tracking-[0.25em] mt-1">Full name, email, squad, LinkedIn, and bio are editable.</p>
+                  </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div class="input-group md:col-span-2">
+                    <label class="block text-[9px] text-gray-500 mono uppercase mb-1">Full_Name</label>
+                    <input id="update-kalvian-name" class="w-full bg-black/40 border border-white/10 p-3 text-white mono text-xs focus:border-sky-500 outline-none transition-all" placeholder="Name" />
+                  </div>
+                  <div class="input-group">
+                    <label class="block text-[9px] text-gray-500 mono uppercase mb-1">Email</label>
+                    <input id="update-kalvian-email" type="email" required class="w-full bg-black/40 border border-white/10 p-3 text-white mono text-xs focus:border-sky-500 outline-none transition-all" placeholder="name@domain.com" />
+                  </div>
+                  <div class="input-group">
+                    <label class="block text-[9px] text-gray-500 mono uppercase mb-1">Squad</label>
+                    <select id="update-kalvian-squad" required class="w-full bg-black/40 border border-white/10 p-3 text-white mono text-xs focus:border-sky-500 outline-none transition-all">
+                      <option value="">Select squad</option>
+                      <option value="138">138</option>
+                      <option value="139">139</option>
+                    </select>
+                  </div>
+                  <div class="input-group md:col-span-2">
+                    <label class="block text-[9px] text-gray-500 mono uppercase mb-1">LinkedIn_URL</label>
+                    <input id="update-kalvian-linkedin" class="w-full bg-black/40 border border-white/10 p-3 text-white mono text-xs focus:border-sky-500 outline-none transition-all" placeholder="https://linkedin.com/in/..." />
+                  </div>
+                  <div class="input-group md:col-span-2">
+                    <label class="block text-[9px] text-gray-500 mono uppercase mb-1">Bio</label>
+                    <textarea id="update-kalvian-bio" class="w-full bg-black/40 border border-white/10 p-3 text-white mono text-xs focus:border-sky-500 outline-none transition-all h-32" placeholder="Short bio..."></textarea>
+                  </div>
+                </div>
+
+                <div class="flex gap-3 pt-2">
+                  <button id="update-kalvian-action" onclick="updateKalvian()" class="flex-1 py-3 bg-sky-500 text-black font-black uppercase tracking-widest text-xs hover:bg-white transition-all disabled:opacity-40 disabled:cursor-not-allowed" disabled>Save_Changes</button>
+                  <button onclick="closeUpdateKalvianModal()" class="flex-1 py-3 border border-white/10 text-gray-400 hover:text-white font-black uppercase tracking-widest text-xs">Cancel</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      <div id="delete-mentor-modal" class="fixed inset-0 z-[2000] hidden items-center justify-center bg-black/80 backdrop-blur-sm p-4">
+        <div class="w-full max-w-xl dossier-card border border-orange-600/30 bg-zinc-950/95 relative">
+          <div class="bracket tl"></div>
+          <div class="bracket tr"></div>
+          <div class="bracket bl"></div>
+          <div class="bracket br"></div>
+          <div class="flex items-center justify-between mb-6 pb-4 border-b border-white/10">
+            <div>
+              <p class="mono text-[10px] uppercase tracking-[0.35em] text-orange-400">Management_Removal</p>
+              <h3 class="text-xl font-black uppercase tracking-widest text-white">Delete_Mentor</h3>
+            </div>
+            <button onclick="closeDeleteMentorModal()" class="text-gray-500 hover:text-white text-xl"><i class="fa-solid fa-xmark"></i></button>
+          </div>
+
+          <div class="mb-4">
+            <p class="mono text-[10px] uppercase tracking-[0.3em] text-gray-500 mb-3">Select_A_Mentor</p>
+            <div id="delete-mentor-list" class="grid grid-cols-1 gap-3 max-h-[320px] overflow-y-auto pr-2 custom-scrollbar"></div>
+          </div>
+
+          <div class="flex gap-3 mt-6 pt-4 border-t border-white/10">
+              <button id="delete-mentor-action" onclick="deleteMentor()" class="flex-1 py-3 bg-orange-500 text-white font-black uppercase tracking-widest text-xs hover:bg-white hover:text-black transition-all disabled:opacity-40 disabled:cursor-not-allowed" disabled>Delete_Mentor</button>
+              <button onclick="closeDeleteMentorModal()" class="flex-1 py-3 border border-white/10 text-gray-400 hover:text-white font-black uppercase tracking-widest text-xs">Cancel</button>
             </div>
         </div>
       </div>
