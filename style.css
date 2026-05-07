@@ -1143,3 +1143,29 @@ body.light-mode .lc-diff-bar { background: rgba(0, 0, 0, 0.06); }
 #score-rank-label {
     transition: color 0.5s, text-shadow 0.5s;
 }
+/* Squad buttons — match view-btn (Scroll/Gallery mode) exactly */
+.squad {
+    padding: 8px 24px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    transition: background 0.2s, color 0.2s, border-color 0.2s;
+    cursor: pointer;
+    display: inline-block;
+}
+
+.squad.squad-active {
+    background: var(--k-red);
+    color: #fff;
+    font-weight: 900;
+    border-color: var(--k-red);
+}
+
+.squad.squad-inactive {
+    background: transparent;
+    color: #6b7280;
+    border-color: rgba(255, 255, 255, 0.1);
+    font-weight: normal;
+}

@@ -1,6 +1,8 @@
 // =========================================================================
 // PREVENT SCROLL RESTORATION ON REFRESH
 // =========================================================================
+
+
 if ("scrollRestoration" in history) {
   history.scrollRestoration = "manual";
 }
@@ -68,14 +70,19 @@ let currentTheme = localStorage.getItem("cyber_theme") || "dark";
 let currentAccent = localStorage.getItem("cyber_accent") || "red";
 let currentFont = localStorage.getItem("cyber_font") || "sans";
 let currentFontSize = localStorage.getItem("cyber_fontsize") || "md";
-
+let squad = localStorage.getItem('squad')|| "138";
 const SUPABASE_BUCKET_IMAGE_BASE =
   "https://gjkbbbklxqgxvjoqhvue.supabase.co/storage/v1/object/public/dossier_assets/Profile/profile_picture/";
 
 const PROFILE_PLACEHOLDER = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==';
 
+// Cache keys
+const IMG_CACHE_KEY = 'profile_img_cache_v1';
+const IMG_CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+
 let profilePictureLookupClient = null;
-const profilePictureLookupCache = new Map();
+const profilePictureLookupCache = new Map(); // in-memory map: email → url
+let _batchListPromise = null;              // singleton promise so we only ever call list() once
 let kalvianRosterCache = null;
 let leadershipProfilesCache = null;
 const PORTFOLIO_DATA_VERSION_KEY = 'portfolio_data_version';
@@ -83,64 +90,95 @@ const PORTFOLIO_DATA_VERSION_KEY = 'portfolio_data_version';
 function getProfilePictureLookupClient() {
   if (profilePictureLookupClient) return profilePictureLookupClient;
   if (!window.supabase) return null;
-
   profilePictureLookupClient = window.supabase.createClient(
     "https://gjkbbbklxqgxvjoqhvue.supabase.co",
     "sb_publishable_Z-ZLJ1kdtSnjYqXFwwDAQw_JKMikQQr",
   );
-
   return profilePictureLookupClient;
 }
 
-function findProfilePictureUrlByEmail(email) {
+// --- Load the persisted cache from localStorage into the in-memory Map ---
+function loadImgCacheFromStorage() {
+  try {
+    const raw = localStorage.getItem(IMG_CACHE_KEY);
+    if (!raw) return false;
+    const { ts, entries } = JSON.parse(raw);
+    if (Date.now() - ts > IMG_CACHE_TTL) return false; // expired
+    Object.entries(entries).forEach(([email, url]) => profilePictureLookupCache.set(email, url));
+    return true;
+  } catch { return false; }
+}
+
+function saveImgCacheToStorage() {
+  try {
+    const entries = Object.fromEntries(profilePictureLookupCache);
+    localStorage.setItem(IMG_CACHE_KEY, JSON.stringify({ ts: Date.now(), entries }));
+  } catch { /* quota errors are non-fatal */ }
+}
+
+// --- Single batch list() — only ever runs once per page load ---
+function getBatchFileList() {
+  if (_batchListPromise) return _batchListPromise;
+  const client = getProfilePictureLookupClient();
+  if (!client) { _batchListPromise = Promise.resolve([]); return _batchListPromise; }
+
+  _batchListPromise = client.storage
+    .from("dossier_assets")
+    .list("Profile/profile_picture", { limit: 1000 })
+    .then(({ data, error }) => (!error && Array.isArray(data) ? data : []))
+    .catch(() => []);
+
+  return _batchListPromise;
+}
+
+// --- Build/update the in-memory cache from the storage file list ---
+async function warmImageCache() {
+  const files = await getBatchFileList();
+  files.forEach((file) => {
+    const name = (file?.name || "").toLowerCase();
+    // File names are expected to contain the email (or part of it)
+    const url = `${SUPABASE_BUCKET_IMAGE_BASE}${encodeURIComponent(file.name)}`;
+    profilePictureLookupCache.set(name, url);
+  });
+  saveImgCacheToStorage();
+}
+
+// --- Resolve a single email → URL (uses cache, falls back to batch fetch) ---
+async function findProfilePictureUrlByEmail(email) {
   const normalized = (email || "").trim().toLowerCase();
-  if (!normalized) return Promise.resolve("");
+  if (!normalized) return "";
 
-  // Always query storage to ensure latest image is returned (no caching)
-  return (async () => {
-    const client = getProfilePictureLookupClient();
-    if (!client) return "";
+  // 1. Check in-memory cache first (fastest)
+  for (const [key, url] of profilePictureLookupCache) {
+    if (key.includes(normalized) || normalized.includes(key.replace(/\.[^.]+$/, ""))) return url;
+  }
 
-    const { data, error } = await client
-      .storage
-      .from("dossier_assets")
-      .list("Profile/profile_picture", { limit: 1000 });
+  // 2. Not cached yet — warm the cache with a single list() call then retry
+  await warmImageCache();
+  for (const [key, url] of profilePictureLookupCache) {
+    if (key.includes(normalized) || normalized.includes(key.replace(/\.[^.]+$/, ""))) return url;
+  }
 
-    if (error || !Array.isArray(data)) return "";
-
-    const match = data.find((file) => {
-      const fileName = (file?.name || "").toLowerCase();
-      return fileName.includes(normalized);
-    });
-
-    if (!match) return "";
-
-    return client.storage
-      .from("dossier_assets")
-      .getPublicUrl(`Profile/profile_picture/${match.name}`).data.publicUrl;
-  })().catch(() => "");
+  return "";
 }
 
 async function tryResolveProfileImage(imgEl, email, localSrc) {
   if (!imgEl) return;
-  const resolvedUrl = await findProfilePictureUrlByEmail(email);
-  if (resolvedUrl) {
-    const bust = `t=${Date.now()}`;
-    imgEl.src = resolvedUrl + (resolvedUrl.includes('?') ? '&' : '?') + bust;
-    return;
-  }
 
+  // Show local/fallback src immediately (no blank flash)
   if (localSrc && (localSrc.startsWith("http://") || localSrc.startsWith("https://") || localSrc.startsWith("data:"))) {
     imgEl.src = localSrc;
-    return;
-  }
-
-  if (localSrc && localSrc.startsWith("./Src/")) {
+  } else if (localSrc && localSrc.startsWith("./Src/")) {
     imgEl.src = resolveDossierImageSrc(localSrc);
-    return;
   }
 
-  imgEl.src = PROFILE_PLACEHOLDER;
+  // Then resolve the authoritative URL from Supabase storage
+  const resolvedUrl = await findProfilePictureUrlByEmail(email);
+  if (resolvedUrl && resolvedUrl !== imgEl.src) {
+    imgEl.src = resolvedUrl; // no cache-bust: let browser cache handle it for speed
+  } else if (!resolvedUrl && !localSrc) {
+    imgEl.src = PROFILE_PLACEHOLDER;
+  }
 }
 
 function resolveAllProfileImages() {
@@ -149,21 +187,37 @@ function resolveAllProfileImages() {
   });
 }
 
+// --- Background silent refresh: after page load, re-fetch list and update any changed images ---
+function scheduleBackgroundImageRefresh(delayMs = 8000) {
+  setTimeout(async () => {
+    // Bust the singleton so we get a fresh list() call
+    _batchListPromise = null;
+    profilePictureLookupCache.clear();
+    await warmImageCache();
+    // Update any img elements whose src has changed
+    document.querySelectorAll("img[data-profile-email]").forEach(async (img) => {
+      const freshUrl = await findProfilePictureUrlByEmail(img.dataset.profileEmail);
+      if (freshUrl && freshUrl !== img.src) img.src = freshUrl;
+    });
+  }, delayMs);
+}
+
 function resolveDossierImageSrc(src) {
   if (!src) return src;
   if (src.startsWith("http://") || src.startsWith("https://")) return src;
-
   const fileName = src.replace(/^\.\/Src\//, "");
   if (!fileName || fileName === src) return src;
-
   return `${SUPABASE_BUCKET_IMAGE_BASE}${encodeURIComponent(fileName)}`;
 }
 
 function getProfilePictureSrc(email) {
   if (!email) return "";
-  const normalizedEmail = email.trim().toLowerCase();
-  return `${SUPABASE_BUCKET_IMAGE_BASE}${normalizedEmail}`;
+  return `${SUPABASE_BUCKET_IMAGE_BASE}${email.trim().toLowerCase()}`;
 }
+
+// Pre-warm the cache as early as possible (before DOMContentLoaded)
+loadImgCacheFromStorage(); // load from localStorage instantly (synchronous)
+warmImageCache();          // kick off the single batch list() in the background
 
 function normalizeTablePerson(row, fallbackRole = "") {
   return {
@@ -178,6 +232,7 @@ function normalizeTablePerson(row, fallbackRole = "") {
     leetcode: row?.leetcode_username || row?.leetcode || "",
     hackerrank: row?.hackerrank_username || row?.hackerrank || "",
     codechef: row?.codechef_username || row?.codechef || "",
+    squad: row?.squad ? String(row.squad) : "",
   };
 }
 
@@ -202,7 +257,17 @@ async function refreshPortfolioSections() {
 }
 
 window.addEventListener('storage', (event) => {
-  if (event.key !== PORTFOLIO_DATA_VERSION_KEY) return;
+  if (event.key !== PORTFOLIO_DATA_VERSION_KEY && event.key !== IMG_CACHE_KEY) return;
+
+  // If it's an image cache invalidation from the dashboard, bust and refresh immediately
+  if (event.key === IMG_CACHE_KEY && event.newValue === null) {
+    _batchListPromise = null;
+    profilePictureLookupCache.clear();
+    scheduleBackgroundImageRefresh(500); // refresh quickly
+    return;
+  }
+
+  // Normal portfolio data refresh
   refreshPortfolioSections().catch((error) => {
     console.warn('Portfolio refresh after storage update failed:', error);
   });
@@ -595,6 +660,10 @@ document.addEventListener("DOMContentLoaded", () => {
     if (fontBtn) fontBtn.classList.add("active");
     const sizeBtn = document.getElementById(`btn-size-${currentFontSize}`);
     if (sizeBtn) sizeBtn.classList.add("active");
+
+    // After page loads, silently refresh images in the background
+    // so dashboard image updates are reflected without slowing initial load
+    scheduleBackgroundImageRefresh(8000);
   }
 
   // --- PROVERBS ---
@@ -614,24 +683,50 @@ document.addEventListener("DOMContentLoaded", () => {
     const gridEl = document.getElementById("studentGrid");
     const visibleStudents = getVisibleKalvianStudents();
 
+    // Filter by active squad (if squad data exists on any person)
+    const hasSquadData = visibleStudents.some(s => s.squad);
+    const filtered = hasSquadData
+      ? visibleStudents.filter(s => !s.squad || String(s.squad) === squad)
+      : visibleStudents;
+
     // Scroller: show a smaller set to avoid heavy duplication
-    const scrollerItems = visibleStudents.slice(0, 12);
+    const scrollerItems = filtered.slice(0, 12);
     if (scrollerEl) {
       scrollerEl.innerHTML = scrollerItems
         .map((s) => renderCard(s, false, "scroll"))
         .join("");
-      // Pause animation briefly then resume to avoid jank
       const wrapper = scrollerEl.closest('.scroll-wrapper');
-      if (wrapper) {
-        wrapper.style.animationPlayState = 'running';
+      if (wrapper) wrapper.style.animationPlayState = 'running';
+    }
+
+    // Grid: render filtered students
+    if (gridEl) {
+      gridEl.innerHTML = filtered.map((s) => renderCard(s, false, 'grid')).join('');
+    }
+  }
+
+  // --- SQUAD SWITCHER ---
+  window.switchSquad = function(selectedSquad) {
+    squad = selectedSquad;
+    localStorage.setItem('squad', squad);
+
+    // Update button states
+    const btn138 = document.getElementById('btn-squad-138');
+    const btn139 = document.getElementById('btn-squad-139');
+    if (btn138 && btn139) {
+      if (squad === '138') {
+        btn138.classList.add('squad-active'); btn138.classList.remove('squad-inactive');
+        btn139.classList.add('squad-inactive'); btn139.classList.remove('squad-active');
+      } else {
+        btn139.classList.add('squad-active'); btn139.classList.remove('squad-inactive');
+        btn138.classList.add('squad-inactive'); btn138.classList.remove('squad-active');
       }
     }
 
-    // Grid: render all students at once
-    if (gridEl) {
-      gridEl.innerHTML = studentsData.map((s) => renderCard(s, false, 'grid')).join('');
-    }
-  }
+    // Re-render with new filter
+    renderStudents();
+    resolveAllProfileImages();
+  };
 
 
 
@@ -1729,3 +1824,26 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 });
+
+(function highlightActiveSquad() {
+  const btn138 = document.getElementById('btn-squad-138');
+  const btn139 = document.getElementById('btn-squad-139');
+  if (!btn138 || !btn139) return;
+
+  // Wire up click handlers
+  btn138.onclick = () => window.switchSquad && window.switchSquad('138');
+  btn139.onclick = () => window.switchSquad && window.switchSquad('139');
+
+  // Set initial active state
+  if (squad === '138') {
+    btn138.classList.add('squad-active');
+    btn138.classList.remove('squad-inactive');
+    btn139.classList.add('squad-inactive');
+    btn139.classList.remove('squad-active');
+  } else {
+    btn139.classList.add('squad-active');
+    btn139.classList.remove('squad-inactive');
+    btn138.classList.add('squad-inactive');
+    btn138.classList.remove('squad-active');
+  }
+})();

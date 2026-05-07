@@ -983,7 +983,13 @@
 
         await setDashboardAvatar(session.user.email);
         imgEl.style.opacity = '1';
+
+        // Bust the home page image cache so the updated photo
+        // is reflected on index.html immediately (triggers storage event)
+        localStorage.removeItem('profile_img_cache_v1');
+
         bumpPortfolioDataVersion();
+        showDashboardAlert('Profile picture updated! Changes will appear on the home page.', 'success', 'Avatar Synced');
       }
 
       async function saveDossier() {
