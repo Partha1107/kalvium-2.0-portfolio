@@ -125,24 +125,45 @@ async function findProfilePictureUrlByEmail(email) {
 async function tryResolveProfileImage(imgEl, email, localSrc) {
   if (!imgEl) return;
 
-  const resolvedUrl = await findProfilePictureUrlByEmail(email);
+  const attempts = [];
+
+  const resolvedUrl = await findProfilePictureUrlByEmail(email).catch(() => "");
   if (resolvedUrl) {
-    const bust = `t=${Date.now()}`;
-    imgEl.src = resolvedUrl + (resolvedUrl.includes("?") ? "&" : "?") + bust;
-    return;
+    attempts.push(resolvedUrl + (resolvedUrl.includes("?") ? "&" : "?") + `t=${Date.now()}`);
   }
 
   if (localSrc && (localSrc.startsWith("http://") || localSrc.startsWith("https://") || localSrc.startsWith("data:"))) {
-    imgEl.src = localSrc;
-    return;
+    attempts.push(localSrc);
+  }
+
+  // Try constructing Supabase public URL from email (with common extensions)
+  const normalizedEmail = (email || "").trim().toLowerCase();
+  if (normalizedEmail && !normalizedEmail.includes('/')) {
+    const exts = [".jpg", ".png", ".jpeg"];
+    exts.forEach((ext) => attempts.push(`${SUPABASE_BUCKET_IMAGE_BASE}${encodeURIComponent(normalizedEmail + ext)}`));
   }
 
   if (localSrc && localSrc.startsWith("./Src/")) {
-    imgEl.src = resolveDossierImageSrc(localSrc);
-    return;
+    attempts.push(resolveDossierImageSrc(localSrc));
   }
 
-  imgEl.src = PROFILE_PLACEHOLDER;
+  // Always end with placeholder
+  attempts.push(PROFILE_PLACEHOLDER);
+
+  let idx = 0;
+  const tryNext = () => {
+    const url = attempts[idx++];
+    if (!url) return imgEl.src = PROFILE_PLACEHOLDER;
+    const onErr = () => {
+      imgEl.removeEventListener('error', onErr);
+      if (idx >= attempts.length) return imgEl.src = PROFILE_PLACEHOLDER;
+      tryNext();
+    };
+    imgEl.addEventListener('error', onErr);
+    imgEl.src = url;
+  };
+
+  tryNext();
 }
 
 function resolveAllProfileImages() {

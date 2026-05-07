@@ -46,6 +46,66 @@ function getProfilePictureSrc(email) {
   return `${SUPABASE_BUCKET_IMAGE_BASE}${normalizedEmail}`;
 }
 
+async function findProfilePictureUrlByEmail(email) {
+  const normalized = (email || "").trim().toLowerCase();
+  if (!normalized || !supabaseClient) return "";
+
+  const { data, error } = await supabaseClient.storage
+    .from("dossier_assets")
+    .list("Profile/profile_picture", { limit: 1000 });
+
+  if (error || !Array.isArray(data)) return "";
+
+  const match = data.find((file) => {
+    const fileName = (file?.name || "").toLowerCase();
+    return fileName.includes(normalized);
+  });
+
+  if (!match) return "";
+
+  return supabaseClient.storage
+    .from("dossier_assets")
+    .getPublicUrl(`Profile/profile_picture/${match.name}`).data.publicUrl;
+}
+
+async function tryResolveProfileImage(imgEl, email, localSrc) {
+  if (!imgEl) return;
+
+  const attempts = [];
+  const resolvedUrl = await findProfilePictureUrlByEmail(email).catch(() => "");
+  if (resolvedUrl) attempts.push(resolvedUrl + (resolvedUrl.includes("?") ? "&" : "?") + `t=${Date.now()}`);
+  if (localSrc && (localSrc.startsWith("http://") || localSrc.startsWith("https://") || localSrc.startsWith("data:"))) attempts.push(localSrc);
+
+  const normalizedEmail = (email || "").trim().toLowerCase();
+  if (normalizedEmail && !normalizedEmail.includes('/')) {
+    [".jpg", ".png", ".jpeg"].forEach(ext => attempts.push(`${SUPABASE_BUCKET_IMAGE_BASE}${encodeURIComponent(normalizedEmail + ext)}`));
+  }
+
+  if (localSrc && localSrc.startsWith("./Src/")) attempts.push(resolveDossierImageSrc(localSrc));
+  attempts.push(PROFILE_PLACEHOLDER);
+
+  let idx = 0;
+  const tryNext = () => {
+    const url = attempts[idx++];
+    if (!url) return imgEl.src = PROFILE_PLACEHOLDER;
+    const onErr = () => {
+      imgEl.removeEventListener('error', onErr);
+      if (idx >= attempts.length) return imgEl.src = PROFILE_PLACEHOLDER;
+      tryNext();
+    };
+    imgEl.addEventListener('error', onErr);
+    imgEl.src = url;
+  };
+
+  tryNext();
+}
+
+function resolveAllProfileImages() {
+  document.querySelectorAll('img[data-profile-email]').forEach(img => {
+    tryResolveProfileImage(img, img.dataset.profileEmail, img.dataset.localSrc);
+  });
+}
+
 function normalizeTablePerson(row, fallbackRole = "") {
   return {
     name: row?.full_name || row?.name || "",
