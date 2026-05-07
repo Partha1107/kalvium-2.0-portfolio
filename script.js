@@ -70,7 +70,10 @@ let currentTheme = localStorage.getItem("cyber_theme") || "dark";
 let currentAccent = localStorage.getItem("cyber_accent") || "red";
 let currentFont = localStorage.getItem("cyber_font") || "sans";
 let currentFontSize = localStorage.getItem("cyber_fontsize") || "md";
-let squad = localStorage.getItem('squad')|| "138";
+let squad = localStorage.getItem('squad') || "138";
+// Global data arrays used across render/fetch helpers
+const mentorsData = [];
+const studentsData = [];
 const SUPABASE_BUCKET_IMAGE_BASE =
   "https://gjkbbbklxqgxvjoqhvue.supabase.co/storage/v1/object/public/dossier_assets/Profile/profile_picture/";
 
@@ -92,6 +95,60 @@ function resolveDossierImageSrc(src) {
 function getProfilePictureSrc(email) {
   if (!email) return "";
   return `${SUPABASE_BUCKET_IMAGE_BASE}${email.trim().toLowerCase()}`;
+}
+
+async function findProfilePictureUrlByEmail(email) {
+  const normalized = (email || "").trim().toLowerCase();
+  if (!normalized) return "";
+
+  const client = supabaseClient;
+  if (!client) return "";
+
+  const { data, error } = await client.storage
+    .from("dossier_assets")
+    .list("Profile/profile_picture", { limit: 1000 });
+
+  if (error || !Array.isArray(data)) return "";
+
+  const match = data.find((file) => {
+    const fileName = (file?.name || "").toLowerCase();
+    return fileName.includes(normalized);
+  });
+
+  if (!match) return "";
+
+  return client.storage
+    .from("dossier_assets")
+    .getPublicUrl(`Profile/profile_picture/${match.name}`).data.publicUrl;
+}
+
+async function tryResolveProfileImage(imgEl, email, localSrc) {
+  if (!imgEl) return;
+
+  const resolvedUrl = await findProfilePictureUrlByEmail(email);
+  if (resolvedUrl) {
+    const bust = `t=${Date.now()}`;
+    imgEl.src = resolvedUrl + (resolvedUrl.includes("?") ? "&" : "?") + bust;
+    return;
+  }
+
+  if (localSrc && (localSrc.startsWith("http://") || localSrc.startsWith("https://") || localSrc.startsWith("data:"))) {
+    imgEl.src = localSrc;
+    return;
+  }
+
+  if (localSrc && localSrc.startsWith("./Src/")) {
+    imgEl.src = resolveDossierImageSrc(localSrc);
+    return;
+  }
+
+  imgEl.src = PROFILE_PLACEHOLDER;
+}
+
+function resolveAllProfileImages() {
+  document.querySelectorAll("img[data-profile-email]").forEach((img) => {
+    tryResolveProfileImage(img, img.dataset.profileEmail, img.dataset.localSrc);
+  });
 }
 
 function normalizeTablePerson(row, fallbackRole = "") {
@@ -229,10 +286,15 @@ async function renderLeadershipSection() {
   window.mentorsData = mentorsData;
 
   const mentorGrid = document.getElementById("mentorGrid");
+  console.debug('renderLeadershipSection: profiles=', leadershipProfiles.length, 'mentorGrid?', !!mentorGrid);
   if (mentorGrid) {
     mentorGrid.innerHTML = leadershipProfiles
       .map((mentor) => renderCard(mentor, true))
       .join("");
+    // Resolve profile images for newly-rendered mentor cards
+    resolveAllProfileImages();
+  } else {
+    console.warn('renderLeadershipSection: mentorGrid element not found');
   }
 }
 
@@ -369,8 +431,6 @@ document.addEventListener("DOMContentLoaded", () => {
   document.body.style.overflow = "hidden";
 
   // --- DATA & STATE ---
-  const mentorsData = [];
-  const studentsData = [];
 
   window.dossierStates = {}; // Make globally available
   window.currentActiveSubject = "";
@@ -421,8 +481,8 @@ document.addEventListener("DOMContentLoaded", () => {
     if (supabaseClient) {
       try {
         const [mRes, sRes] = await Promise.all([
-          supabaseClient.from('mentors').select('*'),
-          supabaseClient.from('students').select('*')
+          supabaseClient.from('management').select('*'),
+          supabaseClient.from('kalvian').select('*')
         ]);
 
         if (mRes.data && mRes.data.length > 0) {
@@ -541,11 +601,24 @@ document.addEventListener("DOMContentLoaded", () => {
     const gridEl = document.getElementById("studentGrid");
     const visibleStudents = getVisibleKalvianStudents();
 
+    const normalizeSquad = (value) => {
+      const raw = String(value || "").toLowerCase().trim();
+      const digits = raw.replace(/[^0-9]/g, "");
+      return digits || raw;
+    };
+
     // Filter by active squad (if squad data exists on any person)
     const hasSquadData = visibleStudents.some(s => s.squad);
-    const filtered = hasSquadData
-      ? visibleStudents.filter(s => !s.squad || String(s.squad) === squad)
+    const activeSquad = normalizeSquad(squad);
+    const strictFiltered = hasSquadData
+      ? visibleStudents.filter((s) => {
+        if (!s.squad) return true;
+        return normalizeSquad(s.squad) === activeSquad;
+      })
       : visibleStudents;
+
+    // Do not render blank sections if squad metadata format is inconsistent.
+    const filtered = strictFiltered.length > 0 ? strictFiltered : visibleStudents;
 
     // Scroller: show a smaller set to avoid heavy duplication
     const scrollerItems = filtered.slice(0, 12);
@@ -558,13 +631,17 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     // Grid: render filtered students
+    console.debug('renderStudents: visible=', visibleStudents.length, 'filtered=', filtered.length, 'scroller?', !!scrollerEl, 'grid?', !!gridEl);
     if (gridEl) {
       gridEl.innerHTML = filtered.map((s) => renderCard(s, false, 'grid')).join('');
     }
+
+    // Resolve profile images for newly-rendered student cards
+    resolveAllProfileImages();
   }
 
   // --- SQUAD SWITCHER ---
-  window.switchSquad = function(selectedSquad) {
+  window.switchSquad = function (selectedSquad) {
     squad = selectedSquad;
     localStorage.setItem('squad', squad);
 
@@ -590,7 +667,9 @@ document.addEventListener("DOMContentLoaded", () => {
   // --- RENDER CARDS ---
   window.renderCard = function (p, isMentor, type = "grid") {
     const width = type === "scroll" ? "w-80 flex-shrink-0" : "w-full";
-    const words = p.name.trim().split(/\s+/);
+    const personName = (p && (p.name || p.full_name)) ? (p.name || p.full_name) : "Unknown";
+    const safeName = String(personName);
+    const words = safeName.trim().split(/\s+/);
     const watermark = words.reduce(
       (l, c) =>
         c.replace(/[^a-zA-Z]/g, "").length > l.replace(/[^a-zA-Z]/g, "").length
@@ -600,13 +679,13 @@ document.addEventListener("DOMContentLoaded", () => {
     );
     return `
             <div class="card-perspective ${width}">
-                <div class="tactical-card group" onmousemove="handleCardMove(event, this)" onclick="openModal(&quot;${p.name}&quot;, ${isMentor})" data-name="${p.name.toLowerCase()}">                         
+                <div class="tactical-card group" onmousemove="handleCardMove(event, this)" onclick="openModal(&quot;${safeName}&quot;, ${isMentor})" data-name="${safeName.toLowerCase()}">                         
                     <div class="card-glare"></div>                         
                     <div class="card-watermark">${watermark}</div>                         
-                    <img src="${resolveDossierImageSrc(p.img) || PROFILE_PLACEHOLDER}" class="w-32 h-32 mb-6 border border-red-600/30 p-1 transition-all duration-500 grayscale group-hover:grayscale-0 group-hover:border-red-600 rounded-full z-10" loading="lazy">                         
+                    <img src="${PROFILE_PLACEHOLDER}" data-profile-email="${p.email || ''}" data-local-src="${p.img || ''}" class="w-32 h-32 mb-6 border border-red-600/30 p-1 transition-all duration-500 grayscale group-hover:grayscale-0 group-hover:border-red-600 rounded-full z-10" loading="lazy">                         
                     <div class="text-center z-10 px-4">                             
                         <p class="text-red-600 mono text-[9px] uppercase font-bold tracking-widest mb-1 transition-colors duration-500 group-hover:text-white">${isMentor ? p.role : "KALVIAN"}</p>
-                        <h3 class="text-xl font-black uppercase tracking-tighter">${p.name}</h3>
+                        <h3 class="text-xl font-black uppercase tracking-tighter">${safeName}</h3>
                     </div>                     
                 </div>                 
             </div>`;
