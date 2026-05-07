@@ -1,6 +1,8 @@
 // =========================================================================
 // PREVENT SCROLL RESTORATION ON REFRESH
 // =========================================================================
+
+
 if ("scrollRestoration" in history) {
   history.scrollRestoration = "manual";
 }
@@ -68,91 +70,19 @@ let currentTheme = localStorage.getItem("cyber_theme") || "dark";
 let currentAccent = localStorage.getItem("cyber_accent") || "red";
 let currentFont = localStorage.getItem("cyber_font") || "sans";
 let currentFontSize = localStorage.getItem("cyber_fontsize") || "md";
-
+let squad = localStorage.getItem('squad')|| "138";
 const SUPABASE_BUCKET_IMAGE_BASE =
   "https://gjkbbbklxqgxvjoqhvue.supabase.co/storage/v1/object/public/dossier_assets/Profile/profile_picture/";
 
 const PROFILE_PLACEHOLDER = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==';
 
-let profilePictureLookupClient = null;
-const profilePictureLookupCache = new Map();
 let kalvianRosterCache = null;
 let leadershipProfilesCache = null;
 const PORTFOLIO_DATA_VERSION_KEY = 'portfolio_data_version';
 
-function getProfilePictureLookupClient() {
-  if (profilePictureLookupClient) return profilePictureLookupClient;
-  if (!window.supabase) return null;
-
-  profilePictureLookupClient = window.supabase.createClient(
-    "https://gjkbbbklxqgxvjoqhvue.supabase.co",
-    "sb_publishable_Z-ZLJ1kdtSnjYqXFwwDAQw_JKMikQQr",
-  );
-
-  return profilePictureLookupClient;
-}
-
-function findProfilePictureUrlByEmail(email) {
-  const normalized = (email || "").trim().toLowerCase();
-  if (!normalized) return Promise.resolve("");
-
-  // Always query storage to ensure latest image is returned (no caching)
-  return (async () => {
-    const client = getProfilePictureLookupClient();
-    if (!client) return "";
-
-    const { data, error } = await client
-      .storage
-      .from("dossier_assets")
-      .list("Profile/profile_picture", { limit: 1000 });
-
-    if (error || !Array.isArray(data)) return "";
-
-    const match = data.find((file) => {
-      const fileName = (file?.name || "").toLowerCase();
-      return fileName.includes(normalized);
-    });
-
-    if (!match) return "";
-
-    return client.storage
-      .from("dossier_assets")
-      .getPublicUrl(`Profile/profile_picture/${match.name}`).data.publicUrl;
-  })().catch(() => "");
-}
-
-async function tryResolveProfileImage(imgEl, email, localSrc) {
-  if (!imgEl) return;
-  const resolvedUrl = await findProfilePictureUrlByEmail(email);
-  if (resolvedUrl) {
-    const bust = `t=${Date.now()}`;
-    imgEl.src = resolvedUrl + (resolvedUrl.includes('?') ? '&' : '?') + bust;
-    return;
-  }
-
-  if (localSrc && (localSrc.startsWith("http://") || localSrc.startsWith("https://") || localSrc.startsWith("data:"))) {
-    imgEl.src = localSrc;
-    return;
-  }
-
-  if (localSrc && localSrc.startsWith("./Src/")) {
-    imgEl.src = resolveDossierImageSrc(localSrc);
-    return;
-  }
-
-  imgEl.src = PROFILE_PLACEHOLDER;
-}
-
-function resolveAllProfileImages() {
-  document.querySelectorAll("img[data-profile-email]").forEach((img) => {
-    tryResolveProfileImage(img, img.dataset.profileEmail, img.dataset.localSrc);
-  });
-}
-
 function resolveDossierImageSrc(src) {
   if (!src) return src;
   if (src.startsWith("http://") || src.startsWith("https://")) return src;
-
   const fileName = src.replace(/^\.\/Src\//, "");
   if (!fileName || fileName === src) return src;
 
@@ -161,8 +91,7 @@ function resolveDossierImageSrc(src) {
 
 function getProfilePictureSrc(email) {
   if (!email) return "";
-  const normalizedEmail = email.trim().toLowerCase();
-  return `${SUPABASE_BUCKET_IMAGE_BASE}${normalizedEmail}`;
+  return `${SUPABASE_BUCKET_IMAGE_BASE}${email.trim().toLowerCase()}`;
 }
 
 function normalizeTablePerson(row, fallbackRole = "") {
@@ -178,6 +107,7 @@ function normalizeTablePerson(row, fallbackRole = "") {
     leetcode: row?.leetcode_username || row?.leetcode || "",
     hackerrank: row?.hackerrank_username || row?.hackerrank || "",
     codechef: row?.codechef_username || row?.codechef || "",
+    squad: row?.squad ? String(row.squad) : "",
   };
 }
 
@@ -197,12 +127,13 @@ async function refreshPortfolioSections() {
   const studentsSection = document.getElementById('students-section');
   if (studentsSection) {
     renderStudents();
-    resolveAllProfileImages();
   }
 }
 
 window.addEventListener('storage', (event) => {
   if (event.key !== PORTFOLIO_DATA_VERSION_KEY) return;
+
+  // Normal portfolio data refresh
   refreshPortfolioSections().catch((error) => {
     console.warn('Portfolio refresh after storage update failed:', error);
   });
@@ -303,8 +234,6 @@ async function renderLeadershipSection() {
       .map((mentor) => renderCard(mentor, true))
       .join("");
   }
-
-  resolveAllProfileImages();
 }
 
 async function getDashboardRoleByEmail(email) {
@@ -554,7 +483,6 @@ document.addEventListener("DOMContentLoaded", () => {
     // (keeps lazy loading as a fallback when the list is very large)
     try {
       renderStudents();
-      resolveAllProfileImages();
     } catch (e) {
       console.warn('Pre-render students failed:', e);
     }
@@ -571,7 +499,6 @@ document.addEventListener("DOMContentLoaded", () => {
       const io = new IntersectionObserver((entries, obs) => {
         if (entries[0].isIntersecting) {
           renderStudents();
-          resolveAllProfileImages();
           obs.disconnect();
         }
       }, { rootMargin: '400px' });
@@ -579,7 +506,6 @@ document.addEventListener("DOMContentLoaded", () => {
     } else {
       // Fallback: render immediately
       renderStudents();
-      resolveAllProfileImages();
     }
 
     document.getElementById("proverbDisplay").innerText =
@@ -595,6 +521,7 @@ document.addEventListener("DOMContentLoaded", () => {
     if (fontBtn) fontBtn.classList.add("active");
     const sizeBtn = document.getElementById(`btn-size-${currentFontSize}`);
     if (sizeBtn) sizeBtn.classList.add("active");
+
   }
 
   // --- PROVERBS ---
@@ -614,24 +541,49 @@ document.addEventListener("DOMContentLoaded", () => {
     const gridEl = document.getElementById("studentGrid");
     const visibleStudents = getVisibleKalvianStudents();
 
+    // Filter by active squad (if squad data exists on any person)
+    const hasSquadData = visibleStudents.some(s => s.squad);
+    const filtered = hasSquadData
+      ? visibleStudents.filter(s => !s.squad || String(s.squad) === squad)
+      : visibleStudents;
+
     // Scroller: show a smaller set to avoid heavy duplication
-    const scrollerItems = visibleStudents.slice(0, 12);
+    const scrollerItems = filtered.slice(0, 12);
     if (scrollerEl) {
       scrollerEl.innerHTML = scrollerItems
         .map((s) => renderCard(s, false, "scroll"))
         .join("");
-      // Pause animation briefly then resume to avoid jank
       const wrapper = scrollerEl.closest('.scroll-wrapper');
-      if (wrapper) {
-        wrapper.style.animationPlayState = 'running';
+      if (wrapper) wrapper.style.animationPlayState = 'running';
+    }
+
+    // Grid: render filtered students
+    if (gridEl) {
+      gridEl.innerHTML = filtered.map((s) => renderCard(s, false, 'grid')).join('');
+    }
+  }
+
+  // --- SQUAD SWITCHER ---
+  window.switchSquad = function(selectedSquad) {
+    squad = selectedSquad;
+    localStorage.setItem('squad', squad);
+
+    // Update button states
+    const btn138 = document.getElementById('btn-squad-138');
+    const btn139 = document.getElementById('btn-squad-139');
+    if (btn138 && btn139) {
+      if (squad === '138') {
+        btn138.classList.add('squad-active'); btn138.classList.remove('squad-inactive');
+        btn139.classList.add('squad-inactive'); btn139.classList.remove('squad-active');
+      } else {
+        btn139.classList.add('squad-active'); btn139.classList.remove('squad-inactive');
+        btn138.classList.add('squad-inactive'); btn138.classList.remove('squad-active');
       }
     }
 
-    // Grid: render all students at once
-    if (gridEl) {
-      gridEl.innerHTML = studentsData.map((s) => renderCard(s, false, 'grid')).join('');
-    }
-  }
+    // Re-render with new filter
+    renderStudents();
+  };
 
 
 
@@ -651,7 +603,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 <div class="tactical-card group" onmousemove="handleCardMove(event, this)" onclick="openModal(&quot;${p.name}&quot;, ${isMentor})" data-name="${p.name.toLowerCase()}">                         
                     <div class="card-glare"></div>                         
                     <div class="card-watermark">${watermark}</div>                         
-                    <img src="${PROFILE_PLACEHOLDER}" data-profile-email="${p.email || ''}" data-local-src="${p.img || ''}" class="w-32 h-32 mb-6 border border-red-600/30 p-1 transition-all duration-500 grayscale group-hover:grayscale-0 group-hover:border-red-600 rounded-full z-10" loading="lazy">                         
+                    <img src="${resolveDossierImageSrc(p.img) || PROFILE_PLACEHOLDER}" class="w-32 h-32 mb-6 border border-red-600/30 p-1 transition-all duration-500 grayscale group-hover:grayscale-0 group-hover:border-red-600 rounded-full z-10" loading="lazy">                         
                     <div class="text-center z-10 px-4">                             
                         <p class="text-red-600 mono text-[9px] uppercase font-bold tracking-widest mb-1 transition-colors duration-500 group-hover:text-white">${isMentor ? p.role : "KALVIAN"}</p>
                         <h3 class="text-xl font-black uppercase tracking-tighter">${p.name}</h3>
@@ -1726,3 +1678,26 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 });
+
+(function highlightActiveSquad() {
+  const btn138 = document.getElementById('btn-squad-138');
+  const btn139 = document.getElementById('btn-squad-139');
+  if (!btn138 || !btn139) return;
+
+  // Wire up click handlers
+  btn138.onclick = () => window.switchSquad && window.switchSquad('138');
+  btn139.onclick = () => window.switchSquad && window.switchSquad('139');
+
+  // Set initial active state
+  if (squad === '138') {
+    btn138.classList.add('squad-active');
+    btn138.classList.remove('squad-inactive');
+    btn139.classList.add('squad-inactive');
+    btn139.classList.remove('squad-active');
+  } else {
+    btn139.classList.add('squad-active');
+    btn139.classList.remove('squad-inactive');
+    btn138.classList.add('squad-inactive');
+    btn138.classList.remove('squad-active');
+  }
+})();
