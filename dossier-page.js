@@ -46,6 +46,80 @@ function getProfilePictureSrc(email) {
   return `${SUPABASE_BUCKET_IMAGE_BASE}${normalizedEmail}`;
 }
 
+async function findProfilePictureUrlByEmail(email) {
+  const normalized = (email || "").trim().toLowerCase();
+  if (!normalized) return "";
+  const client = supabaseClient;
+  if (!client) return "";
+  try {
+    const { data, error } = await client.storage.from("dossier_assets").list("Profile/profile_picture", { limit: 1000 });
+    if (error || !Array.isArray(data)) return "";
+    const match = data.find((file) => ((file?.name || "").toLowerCase().includes(normalized)));
+    if (!match) return "";
+    return client.storage.from("dossier_assets").getPublicUrl(`Profile/profile_picture/${match.name}`).data.publicUrl;
+  } catch (e) {
+    return "";
+  }
+}
+
+async function tryResolveProfileImage(imgEl, email, localSrc) {
+  if (!imgEl) return;
+
+  const attempts = [];
+
+  if (localSrc && (localSrc.startsWith("http://") || localSrc.startsWith("https://") || localSrc.startsWith("data:"))) {
+    attempts.push(localSrc);
+  }
+
+  if (localSrc && localSrc.startsWith("./Src/")) {
+    attempts.push(resolveDossierImageSrc(localSrc));
+  }
+
+  try {
+    const resolved = await findProfilePictureUrlByEmail(email).catch(() => "");
+    if (resolved) attempts.push(resolved + (resolved.includes("?") ? "&" : "?") + `t=${Date.now()}`);
+  } catch (e) {
+    // ignore
+  }
+
+  const normalizedEmail = (email || "").trim().toLowerCase();
+  if (normalizedEmail && !normalizedEmail.includes('/')) {
+    const exts = [".png", ".jpg", ".jpeg"];
+    const encoded = encodeURIComponent(normalizedEmail);
+    exts.forEach((ext) => {
+      attempts.push(`${SUPABASE_BUCKET_IMAGE_BASE}${normalizedEmail}${ext}`);
+      attempts.push(`${SUPABASE_BUCKET_IMAGE_BASE}${encoded}${ext}`);
+      if (typeof supabaseClient !== 'undefined' && supabaseClient) {
+        try {
+          const p1 = supabaseClient.storage.from('dossier_assets').getPublicUrl(`Profile/profile_picture/${normalizedEmail}${ext}`)?.data?.publicUrl;
+          if (p1) attempts.push(p1);
+          const p2 = supabaseClient.storage.from('dossier_assets').getPublicUrl(`Profile/profile_picture/${encoded}${ext}`)?.data?.publicUrl;
+          if (p2) attempts.push(p2);
+        } catch (e) {
+          // ignore
+        }
+      }
+    });
+  }
+
+  attempts.push(PROFILE_PLACEHOLDER);
+
+  let idx = 0;
+  const tryNext = () => {
+    const url = attempts[idx++];
+    if (!url) return (imgEl.src = PROFILE_PLACEHOLDER);
+    const onErr = () => {
+      imgEl.removeEventListener('error', onErr);
+      if (idx >= attempts.length) return (imgEl.src = PROFILE_PLACEHOLDER);
+      tryNext();
+    };
+    imgEl.addEventListener('error', onErr);
+    imgEl.src = url;
+  };
+
+  tryNext();
+}
+
 function normalizeTablePerson(row, fallbackRole = "") {
   return {
     name: row?.full_name || row?.name || "",
@@ -474,6 +548,14 @@ function renderDossier() {
     document
       .querySelectorAll(".skill-fill")
       .forEach((el) => (el.style.transform = "scaleX(1)"));
+    // Resolve the profile header image using robust resolver
+    try {
+      const headerImg = document.querySelector('#profileHeader img');
+      const person = window.currentDossierPerson || {};
+      if (headerImg) tryResolveProfileImage(headerImg, person.email, person.img);
+    } catch (e) {
+      console.warn('Avatar resolve failed:', e);
+    }
   }, 50);
 }
 
