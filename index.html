@@ -587,7 +587,7 @@
         </div>
         <span
           class="font-bold tracking-tighter text-xl uppercase italic hidden md:block"
-          >Kalvium<span class="text-red-600">squad138</span></span
+          >Kalvium<span class="text-red-600">squad</span></span
         >
         <span
           class="settings-hint text-red-600 text-xs mono tracking-widest uppercase ml-2 hidden lg:block"
@@ -680,7 +680,7 @@
         <!-- User Profile (Hidden by default) -->
         <button
           id="auth-user-btn"
-          onclick="window.location.href = 'dashboard.html'"
+          onclick="handleDashboardAccess()"
           class="hidden px-4 py-2 border border-green-600/50 text-green-500 hover:bg-green-600 hover:text-white font-bold uppercase tracking-widest transition-all text-[10px] items-center gap-2 ml-2 bg-black/50 hover:shadow-[0_0_15px_rgba(0,255,0,0.5)] rounded-sm"
           title="Open Dashboard"
         >
@@ -705,7 +705,7 @@
         Kalvium
         <span class="text-red-600"
           ><span class="text-red-600"
-            >squad <span id="hove">138</span>
+            >squad <span id="hove"></span>
           </span></span
         >
       </h1>
@@ -733,7 +733,7 @@
       ></div>
     </section>
 
-    <!-- Students -->
+    <!-- Kalvians -->
     <section
       id="students-section"
       class="py-32 bg-black/40 border-y border-white/5 relative z-10 scroll-mt-32"

@@ -76,6 +76,9 @@ const PROFILE_PLACEHOLDER = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAA
 
 let profilePictureLookupClient = null;
 const profilePictureLookupCache = new Map();
+let kalvianRosterCache = null;
+let leadershipProfilesCache = null;
+const PORTFOLIO_DATA_VERSION_KEY = 'portfolio_data_version';
 
 function getProfilePictureLookupClient() {
   if (profilePictureLookupClient) return profilePictureLookupClient;
@@ -92,11 +95,9 @@ function getProfilePictureLookupClient() {
 function findProfilePictureUrlByEmail(email) {
   const normalized = (email || "").trim().toLowerCase();
   if (!normalized) return Promise.resolve("");
-  if (profilePictureLookupCache.has(normalized)) {
-    return profilePictureLookupCache.get(normalized);
-  }
 
-  const promise = (async () => {
+  // Always query storage to ensure latest image is returned (no caching)
+  return (async () => {
     const client = getProfilePictureLookupClient();
     if (!client) return "";
 
@@ -118,16 +119,19 @@ function findProfilePictureUrlByEmail(email) {
       .from("dossier_assets")
       .getPublicUrl(`Profile/profile_picture/${match.name}`).data.publicUrl;
   })().catch(() => "");
-
-  profilePictureLookupCache.set(normalized, promise);
-  return promise;
 }
 
 async function tryResolveProfileImage(imgEl, email, localSrc) {
   if (!imgEl) return;
   const resolvedUrl = await findProfilePictureUrlByEmail(email);
   if (resolvedUrl) {
-    imgEl.src = resolvedUrl;
+    const bust = `t=${Date.now()}`;
+    imgEl.src = resolvedUrl + (resolvedUrl.includes('?') ? '&' : '?') + bust;
+    return;
+  }
+
+  if (localSrc && (localSrc.startsWith("http://") || localSrc.startsWith("https://") || localSrc.startsWith("data:"))) {
+    imgEl.src = localSrc;
     return;
   }
 
@@ -160,6 +164,188 @@ function getProfilePictureSrc(email) {
   const normalizedEmail = email.trim().toLowerCase();
   return `${SUPABASE_BUCKET_IMAGE_BASE}${normalizedEmail}`;
 }
+
+function normalizeTablePerson(row, fallbackRole = "") {
+  return {
+    name: row?.full_name || row?.name || "",
+    full_name: row?.full_name || row?.name || "",
+    role: row?.role || fallbackRole || "",
+    email: row?.email || "",
+    img: row?.avatar_url || row?.img_url || row?.img || "",
+    github: row?.github_url || row?.github_username || row?.github || "",
+    linkedin: row?.linkedin_url || row?.linkedin || "",
+    bio: row?.bio || "",
+    leetcode: row?.leetcode_username || row?.leetcode || "",
+    hackerrank: row?.hackerrank_username || row?.hackerrank || "",
+    codechef: row?.codechef_username || row?.codechef || "",
+  };
+}
+
+function replaceArrayContents(target, entries) {
+  target.splice(0, target.length, ...entries);
+}
+
+function invalidatePortfolioDataCaches() {
+  kalvianRosterCache = null;
+  leadershipProfilesCache = null;
+}
+
+async function refreshPortfolioSections() {
+  invalidatePortfolioDataCaches();
+  await Promise.all([renderLeadershipSection(), fetchKalvianRoster()]);
+
+  const studentsSection = document.getElementById('students-section');
+  if (studentsSection) {
+    renderStudents();
+    resolveAllProfileImages();
+  }
+}
+
+window.addEventListener('storage', (event) => {
+  if (event.key !== PORTFOLIO_DATA_VERSION_KEY) return;
+  refreshPortfolioSections().catch((error) => {
+    console.warn('Portfolio refresh after storage update failed:', error);
+  });
+});
+
+async function fetchKalvianRoster() {
+  // Always fetch fresh roster data to avoid stale profile displays
+  if (!supabaseClient) {
+    kalvianRosterCache = new Set();
+    replaceArrayContents(studentsData, []);
+    return kalvianRosterCache;
+  }
+
+  const { data, error } = await supabaseClient
+    .from('kalvian')
+    .select('full_name, role, img_url, github_url, linkedin_url, email, bio, squad')
+    .order('full_name', { ascending: true });
+
+  const roster = new Set();
+  const loadedStudents = [];
+  if (!error && Array.isArray(data)) {
+    data.forEach((row) => {
+      const person = normalizeTablePerson(row, row?.role || 'KALVIAN');
+      const fullName = (person?.name || '').trim().toLowerCase();
+      const email = (person?.email || '').trim().toLowerCase();
+      if (fullName || email) loadedStudents.push(person);
+      if (fullName) roster.add(fullName);
+      if (email) roster.add(email);
+    });
+  }
+
+  replaceArrayContents(studentsData, loadedStudents);
+  // keep a short-lived roster cache so other helpers can check membership
+  kalvianRosterCache = roster;
+  return roster;
+}
+
+function isInKalvianRoster(person) {
+  if (!person) return false;
+  const roster = kalvianRosterCache;
+  if (!roster || roster.size === 0) return false;
+
+  const name = (person.name || '').trim().toLowerCase();
+  const email = (person.email || '').trim().toLowerCase();
+  return roster.has(name) || roster.has(email);
+}
+
+function getVisibleKalvianStudents() {
+  return (studentsData || []).filter((person) => isInKalvianRoster(person));
+}
+
+async function fetchLeadershipProfiles() {
+  // Always fetch fresh leadership/profile data to reflect updates immediately
+  if (!supabaseClient) {
+    return [];
+  }
+
+  const { data, error } = await supabaseClient
+    .from("management")
+    .select("full_name, role, img_url, linkedin_url, email, bio, created_at")
+    .order("full_name", { ascending: true });
+
+  const merged = new Map();
+
+  const normalizeKey = (entry) => {
+    const name = (entry?.name || entry?.full_name || "").trim().toLowerCase();
+    const email = (entry?.email || "").trim().toLowerCase();
+    return email || name;
+  };
+
+  if (!error && Array.isArray(data)) {
+    data.forEach((row) => {
+      const key = normalizeKey(row);
+      if (!key) return;
+
+      merged.set(key, normalizeTablePerson(row, row.role || "LEADERSHIP"));
+    });
+  }
+
+
+  if (merged.size === 0) {
+    replaceArrayContents(mentorsData, []);
+    return [];
+  }
+  const profilesArray = Array.from(merged.values());
+  replaceArrayContents(mentorsData, profilesArray);
+  return profilesArray;
+}
+
+async function renderLeadershipSection() {
+  const leadershipProfiles = await fetchLeadershipProfiles();
+  replaceArrayContents(mentorsData, leadershipProfiles);
+  window.mentorsData = mentorsData;
+
+  const mentorGrid = document.getElementById("mentorGrid");
+  if (mentorGrid) {
+    mentorGrid.innerHTML = leadershipProfiles
+      .map((mentor) => renderCard(mentor, true))
+      .join("");
+  }
+
+  resolveAllProfileImages();
+}
+
+async function getDashboardRoleByEmail(email) {
+  const normalized = (email || "").trim().toLowerCase();
+  if (!normalized || !supabaseClient) return "default";
+
+  const { data, error } = await supabaseClient
+    .from("management")
+    .select("email, role")
+    .ilike("email", normalized)
+    .maybeSingle();
+
+  if (error || !data) return "default";
+
+  const role = (data.role || "").toString().trim().toUpperCase();
+  if (role.includes("MANAGER")) return "manager";
+  if (role.includes("MENTOR")) return "mentor";
+  return "default";
+}
+
+async function handleDashboardAccess() {
+  if (!supabaseClient) {
+    window.location.href = "dashboard.html?view=default";
+    return;
+  }
+
+  const {
+    data: { session },
+  } = await supabaseClient.auth.getSession();
+
+  if (!session?.user?.email) {
+    handleLogin();
+    return;
+  }
+
+  const dashboardRole = await getDashboardRoleByEmail(session.user.email);
+  window.location.href = `dashboard.html?view=${encodeURIComponent(dashboardRole)}`;
+}
+
+window.getDashboardRoleByEmail = getDashboardRoleByEmail;
+window.handleDashboardAccess = handleDashboardAccess;
 
 function applyTheme(mode) {
   let isDark = true;
@@ -254,332 +440,8 @@ document.addEventListener("DOMContentLoaded", () => {
   document.body.style.overflow = "hidden";
 
   // --- DATA & STATE ---
-  const mentorsData = [
-    {
-      name: "Aravind R",
-      role: "MENTOR",
-      img: "./Src/Aravind - Mentor.png",
-      linkedin: "https://www.linkedin.com/in/aravind-r-812634245/",
-      email: "aravind.r@kalvium.com",
-    },
-    {
-      name: "H. Karunakaran",
-      role: "CAMPUS MANAGER",
-      img: "./Src/Karunakaran - Mentor.png",
-      linkedin: "https://www.linkedin.com/in/h-karunakaran-3b1285376",
-      email: "karunakaran.h@kalvium.com",
-    },
-    {
-      name: "Hanuram T",
-      role: "MENTOR",
-      img: "./Src/Hanuram - Mentor.png",
-      linkedin: "http://www.linkedin.com/in/hanuram-t",
-      email: "hanuram.t@kalvium.com",
-    },
-  ];
-
-  const studentsData = [
-    {
-      name: "Dhinesh Babu G",
-      role: "Kalvian/Creator_1",
-      img: "./Src/Dhinesh Babu.png",
-      github: "https://github.com/dhineshbabus138-commit",
-      linkedin: "https://www.linkedin.com/in/dhinesh-babu-software-engg",
-      email: "dhinesh.babu.s.138@kalvium.community",
-    },
-    {
-      name: "Sanjay Chelliah C",
-      role: "Kalvian/Creator_2",
-      img: "./Src/Sanjay Chelliah.png",
-      github: "https://github.com/SanCheS138",
-      linkedin: "https://www.linkedin.com/in/sanjay-c-606981384",
-      email: "sanjay.chelliah.s.138@kalvium.community",
-    },
-    {
-      name: "Ashwin Raj J J",
-      role: "Kalvian/Creator_3",
-      img: "./Src/Ashwin Raj.png",
-      github: "https://github.com/Partha1107",
-      linkedin: "https://www.linkedin.com/in/ashwin-raj-j-j-a8034a383",
-      email: "ashwin.raj.s.138@kalvium.community",
-    },
-    {
-      name: "Purushoth K",
-      role: "Kalvian",
-      img: "./Src/PURUSHOTHAMAN K.png",
-      github: "https://github.com/purushothaman-k",
-      linkedin: "https://www.linkedin.com/in/purushothaman-k-82129a325",
-      email: "purushothaman.k.s.138@kalvium.community",
-    },
-    {
-      name: "Vignesh M",
-      role: "Kalvian",
-      img: "./Src/Vignesh M.png",
-      github: "https://github.com/vigneshms138-creator",
-      linkedin: "https://www.linkedin.com/in/vignesh-m-2b1690383",
-      email: "vignesh.m.s.138@kalvium.community",
-    },
-    {
-      name: "Manoj Kumar P",
-      role: "Kalvian",
-      img: "./Src/Manoj Kumar Ponnusamy.png",
-      github: "https://github.com/manojponnusamy2032-star",
-      linkedin: "https://www.linkedin.com/in/manoj-kumar-p-621049386",
-      email: "manoj.ponnusamy.s.138@kalvium.community",
-    },
-    {
-      name: "Pradheesh S",
-      role: "Kalvian",
-      img: "./Src/Pradheesh S.png",
-      github: "https://github.com/pradheesh08-s",
-      linkedin: "https://www.linkedin.com/in/pradheesh-s-a7a7a0381",
-      email: "pradheesh.s.s.138@kalvium.community",
-    },
-    {
-      name: "Shree Vidhya T",
-      role: "Kalvian",
-      img: "./Src/Srividhya (1).png",
-      github: "https://github.com/shreevidhyats138-cmyk",
-      linkedin: "https://www.linkedin.com/in/shree-v-5a60a0382",
-      email: "shree.vidhya.t.s.138@kalvium.community",
-    },
-    {
-      name: "Arun Ragav G K G",
-      role: "Kalvian",
-      img: "./Src/Arun ragav G.K.G.png",
-      github: "https://github.com/arun-ragav",
-      linkedin: "https://www.linkedin.com/in/arun-ragav-589061384",
-      email: "arun.ragav.s.138@kalvium.community",
-    },
-    {
-      name: "Prasanna Kumar A",
-      role: "Kalvian",
-      img: "./Src/Prasanna Kumar A.png",
-      github: "https://github.com/prasannaas138-alt",
-      linkedin: "https://www.linkedin.com/in/prasanna-kumar-a0a055384",
-      email: "prasanna.a.s.138@kalvium.community",
-    },
-    {
-      name: "Deboraah Issac I",
-      role: "Kalvian",
-      img: "./Src/DeboraahIssac I.png",
-      github: "https://github.com/deboraahissacats138-cmyx",
-      linkedin: "https://www.linkedin.com/in/deboraah-issac-ab0813388",
-      email: "deboraahissac.i.s.138@kalvium.community",
-    },
-    {
-      name: "Sasi Mahesh Y",
-      role: "Kalvian",
-      img: "./Src/Sasi Mahesh.png",
-      github: "https://github.com/sasimaheshs138-loop",
-      linkedin: "https://www.linkedin.com/in/sasi-mahesh-2aa3b4384",
-      email: "sasi.mahesh.s.138@kalvium.community",
-    },
-    {
-      name: "Chandru A",
-      role: "Kalvian",
-      img: "./Src/Chandru A.png",
-      github: "https://github.com/chandrua138",
-      linkedin: "https://www.linkedin.com/in/chandru-a-331451384",
-      email: "chandru.a.s.138@kalvium.community",
-    },
-    {
-      name: "Sandeep V",
-      role: "Kalvian",
-      img: "./Src/Sandeep V.jpeg",
-      github: "https://github.com/sandeepvs138-dev",
-      linkedin: "https://www.linkedin.com/in/sandeep-v-947063384",
-      email: "sandeep.v.s.138@kalvium.community",
-    },
-    {
-      name: "Arvind Selva Jas J S",
-      role: "Kalvian",
-      img: "./Src/Arvind selva Jas J. S.jpg",
-      github: "https://github.com/arvindselvajas0222-coder",
-      linkedin: "https://www.linkedin.com/in/arvind-selva-jas-j-s-68a79b381",
-      email: "arvind.j.s.138@kalvium.community",
-    },
-    {
-      name: "Nithyanandharaj M",
-      role: "Kalvian",
-      img: "./Src/Nithyanadharaj.png",
-      github: "https://github.com/nithyanandharajms138-debug",
-      linkedin: "https://www.linkedin.com/in/nithyanandharaj-m-728189383",
-      email: "nithyanandharaj.m.s.138@kalvium.community",
-    },
-    {
-      name: "Tavanidhiragavi B B",
-      role: "Kalvian",
-      img: "./Src/Tavanidhiragavi B.B.jpg",
-      github: "https://github.com/tavanidhiragavibbs138-rgb",
-      linkedin: "https://www.linkedin.com/in/tavanidhiragavi-b-b-0068b03a2",
-      email: "tavanidhiragavi.bb.s.138@kalvium.community",
-    },
-    {
-      name: "Sherly N",
-      role: "Kalvian",
-      img: "./Src/Sherly N.jpg",
-      github: "https://github.com/sherlyns138-crypto",
-      linkedin: "https://www.linkedin.com/in/sherly-n-407881382",
-      email: "sherly.n.s.138@kalvium.community",
-    },
-    {
-      name: "Chandru S",
-      role: "Kalvian",
-      img: "./Src/Chandru S.jpg",
-      github: "https://github.com/chandru24126",
-      linkedin: "https://www.linkedin.com/in/chandru-sk-999077384",
-      email: "chandru.s.s.138@kalvium.community",
-    },
-    {
-      name: "Ashwath Palanisamy",
-      role: "Kalvian",
-      img: "./Src/Ashwath Palanisamy.jpg",
-      github: "https://github.com/Ashwath-Palanisamy",
-      linkedin: "https://www.linkedin.com/in/ashwathpalanisamy",
-      email: "ashwath.p.s.138@kalvium.community",
-    },
-    {
-      name: "Kishore R",
-      role: "Kalvian",
-      img: "./Src/Kishore. R.png",
-      github: "https://github.com/kishorers138-cyber",
-      linkedin: "https://www.linkedin.com/in/kishore-r-6bb4a6383",
-      email: "kishore.r.s.138@kalvium.community",
-    },
-    {
-      name: "Deepika V",
-      role: "Kalvian",
-      img: "./Src/Deepika (1).jpg",
-      github: "https://github.com/deepikavs138-design",
-      linkedin: "https://www.linkedin.com/in/deepika-v-957099382",
-      email: "deepika.v.s.138@kalvium.community",
-    },
-    {
-      name: "Haricharan P",
-      role: "Kalvian",
-      img: "./Src/Hari charan (1).png",
-      github: "https://github.com/harips138-droid",
-      linkedin: "https://www.linkedin.com/in/hari-charan-p-5006393b1",
-      email: "hari.p.s.138@kalvium.community",
-    },
-    {
-      name: "Karthikeyan A E",
-      role: "Kalvian",
-      img: "./Src/Karthikeyan A.E.png",
-      github: "https://github.com/karthikeyan24-kk",
-      linkedin: "https://www.linkedin.com/in/karthikeyan-a-e-8b3847381",
-      email: "karthikeyan.ae.s.138@kalvium.community",
-    },
-    {
-      name: "Mohammed Tharik S",
-      role: "Kalvian",
-      img: "./Src/Mohammed Tharik S.jpg",
-      github: "https://github.com/MohammedTharikS",
-      linkedin: "https://www.linkedin.com/in/mohammed-tharik-s-26b108384",
-      email: "mohammed.tharik.s.138@kalvium.community",
-    },
-    {
-      name: "Sai Goutham G",
-      role: "Kalvian",
-      img: "./Src/Gundla Sai Gowtham.png",
-      github: "https://github.com/gundlagowthams138-cell",
-      linkedin: "https://www.linkedin.com/in/gundla-sai-gowtham-985460390",
-      email: "gundla.gowtham.s.138@kalvium.community",
-    },
-    {
-      name: "Ram Charan M",
-      role: "Kalvian",
-      img: "./Src/Ram Charan.png",
-      github: "https://github.com/medaboinacharan-pixel",
-      linkedin: "https://www.linkedin.com/in/ram-charan-b551133ab",
-      email: "medaboina.charan.s.138@kalvium.community",
-    },
-    {
-      name: "Dinesh P",
-      role: "Kalvian",
-      img: "./Src/Dinesh P.webp",
-      github: "https://github.com/dineshps138-ds",
-      linkedin: "https://www.linkedin.com/in/dinesh-prakasam-a8279a381",
-      email: "dinesh.p.s.138@kalvium.community",
-    },
-    {
-      name: "Surjith Sri K",
-      role: "Kalvian",
-      img: "./Src/Surjith Sri K.jpeg",
-      github: "https://github.com/surjithks138",
-      linkedin: "https://kalvium.community",
-      email: "surjith.k.s.138@kalvium.community",
-    },
-    {
-      name: "Navya D",
-      role: "Kalvian",
-      img: "./Src/Navya D.jpg",
-      github: "https://github.com/navyads138-star",
-      linkedin: "https://www.linkedin.com/in/navya-d-a1b187383",
-      email: "navya.d.s.138@kalvium.community",
-    },
-    {
-      name: "David G",
-      role: "Kalvian",
-      img: "./Src/DAVID G.png",
-      github: "https://github.com/davidgs138-cyber",
-      linkedin: "https://www.linkedin.com/in/david-g-6bb3323b1",
-      email: "david.g.s.138@kalvium.community",
-    },
-    {
-      name: "Harshini J",
-      role: "Kalvian",
-      img: "./Src/Harshini J.png",
-      github: "https://github.com/harshinijs138-svg",
-      linkedin: "https://www.linkedin.com/in/harshini-j-244611383",
-      email: "harshini.j.s.138@kalvium.community",
-    },
-    {
-      name: "Udhaya E",
-      role: "Kalvian",
-      img: "./Src/Udhaya E.png",
-      github: "https://github.com/udhayaes138-spec",
-      linkedin: "https://www.linkedin.com/in/udhaya-e-a1b443383",
-      email: "udhaya.e.s.138@kalvium.community",
-    },
-    {
-      name: "Jeevanand J",
-      role: "Kalvian",
-      img: "./Src/Jeevanand j.png",
-      github: "https://github.com/jeevanand-jaisankar",
-      linkedin: "https://www.linkedin.com/in/jeevanand-j-575676281",
-      email: "jeevanand.j.s.138@kalvium.community",
-    },
-    {
-      name: "Edupalli Sai Praneeth",
-      role: "Kalvian",
-      img: "./Src/Edupalli Sai Praneeth Lokesh.png",
-      github: "https://github.com/edupallilokeshs138-bot",
-      linkedin: "https://www.linkedin.com/in/edupalli-sai-praneeth-3ab348383",
-      email: "edupalli.lokesh.s.138@kalvium.community",
-    },
-    {
-      name: "Chandana E",
-      role: "Kalvian",
-      img: "./Src/Chadhana (1).png",
-      github: "https://github.com/chandanaes139-lang",
-      linkedin: "https://www.linkedin.com/in/chandana-elavarasan-a10964384",
-      email: "chandana.e.s.139@kalvium.community",
-    },
-  ];
-
-  while (studentsData.length < 36) {
-    let id = studentsData.length + 1;
-    studentsData.push({
-      name: `Subject Node ${id}`,
-      role: "SDE Intern",
-      img: `https://i.pravatar.cc/400?u=st${id}`,
-      github: "https://github.com",
-      linkedin: "#",
-      email: "#",
-    });
-  }
+  const mentorsData = [];
+  const studentsData = [];
 
   window.dossierStates = {}; // Make globally available
   window.currentActiveSubject = "";
@@ -684,10 +546,18 @@ document.addEventListener("DOMContentLoaded", () => {
         document.getElementById("instruction-overlay").style.display = "flex";
     }, 3000);
 
-    document.getElementById("mentorGrid").innerHTML = mentorsData
-      .map((m) => renderCard(m, true))
-      .join("");
-    resolveAllProfileImages();
+    await renderLeadershipSection();
+
+    await fetchKalvianRoster();
+
+    // Pre-render students immediately so the section isn't blank for users
+    // (keeps lazy loading as a fallback when the list is very large)
+    try {
+      renderStudents();
+      resolveAllProfileImages();
+    } catch (e) {
+      console.warn('Pre-render students failed:', e);
+    }
 
     // Defer rendering of the heavy students section until it's in view.
     // Place lightweight placeholders so first paint is fast.
@@ -742,9 +612,10 @@ document.addEventListener("DOMContentLoaded", () => {
   function renderStudents() {
     const scrollerEl = document.getElementById("studentScroller");
     const gridEl = document.getElementById("studentGrid");
+    const visibleStudents = getVisibleKalvianStudents();
 
     // Scroller: show a smaller set to avoid heavy duplication
-    const scrollerItems = studentsData.slice(0, 12);
+    const scrollerItems = visibleStudents.slice(0, 12);
     if (scrollerEl) {
       scrollerEl.innerHTML = scrollerItems
         .map((s) => renderCard(s, false, "scroll"))
@@ -942,7 +813,37 @@ function resetSystem() {
 }
 
 // --- MODALS ---
-function openModal(name, isMentor) {
+async function fetchRoleBio(isMentor, email, fullName) {
+  if (!supabaseClient) return '';
+
+  const tableName = isMentor ? 'management' : 'kalvian';
+  const normalizedEmail = (email || '').trim().toLowerCase();
+  const normalizedName = (fullName || '').trim();
+  const filters = [];
+
+  if (normalizedEmail) {
+    filters.push({ column: 'email', value: normalizedEmail });
+  }
+  if (normalizedName) {
+    filters.push({ column: 'full_name', value: normalizedName });
+  }
+
+  for (const filter of filters) {
+    const { data, error } = await supabaseClient
+      .from(tableName)
+      .select('*')
+      .ilike(filter.column, filter.value)
+      .maybeSingle();
+
+    if (!error && data && typeof data.bio === 'string' && data.bio.trim()) {
+      return data.bio;
+    }
+  }
+
+  return '';
+}
+
+async function openModal(name, isMentor) {
   const list = isMentor ? window.mentorsData : window.studentsData;
   const p = list.find((x) => x.name === name);
 
@@ -981,9 +882,14 @@ function openModal(name, isMentor) {
                     </button>`
                         : ""
                     }                             
+                    ${
+                      p.linkedin
+                        ? `
                     <a href="${p.linkedin}" target="_blank" class="btn-cyber-main flex-1 min-w-[130px] py-3 rounded-lg font-black text-xs uppercase text-center tracking-[0.1em] flex justify-center items-center gap-2">                                 
                         <i class="fa-brands fa-linkedin-in text-lg"></i> Connect                             
-                    </a>                             
+                    </a>`
+                        : ""
+                    }                             
                     ${
                       p.github
                         ? `                             
@@ -1007,29 +913,25 @@ function openModal(name, isMentor) {
   if (modalImg) tryResolveProfileImage(modalImg, p.email, p.img);
 
   // Background Sync for Bio if not mentor
-  if (!isMentor && supabaseClient) {
-      // Set temporary state while syncing
+    if (supabaseClient) {
       const bioEl = document.getElementById("modalBioText");
       if (bioEl) bioEl.classList.add('opacity-50');
 
-      supabaseClient.from('dossiers').select('bio').eq('full_name', name).maybeSingle()
-      .then(({data}) => {
-          if (bioEl) {
-              bioEl.classList.remove('opacity-50');
-              if (data && data.bio && data.bio.trim() !== "") {
-                  bioEl.innerText = data.bio;
-                  bioEl.classList.remove('text-red-900/40', 'italic');
-              } else {
-                  bioEl.innerText = ">> NO_ANY_BIO_ADDED // PLEASE_UPDATE_VIA_DASHBOARD";
-                  bioEl.classList.add('text-red-900/40', 'italic');
-              }
-              // Re-check read more button after content load
-              const toggleBtn = document.getElementById("modalBioToggle");
-              if (toggleBtn) {
-                  toggleBtn.style.display = bioEl.scrollHeight > bioEl.clientHeight ? "flex" : "none";
-              }
-          }
-      });
+      const resolvedBio = await fetchRoleBio(isMentor, p.email, p.name);
+      if (bioEl) {
+        bioEl.classList.remove('opacity-50');
+        if (resolvedBio && resolvedBio.trim() !== "") {
+          bioEl.innerText = resolvedBio;
+          bioEl.classList.remove('text-red-900/40', 'italic');
+        } else {
+          bioEl.innerText = ">> NO_ANY_BIO_ADDED // PLEASE_UPDATE_VIA_DASHBOARD";
+          bioEl.classList.add('text-red-900/40', 'italic');
+        }
+        const toggleBtn = document.getElementById("modalBioToggle");
+        if (toggleBtn) {
+          toggleBtn.style.display = bioEl.scrollHeight > bioEl.clientHeight ? "flex" : "none";
+        }
+      }
   }
 
   setTimeout(() => {
@@ -1331,7 +1233,7 @@ const chatKnowledge = {
       "Connection established. I'm ready to process your queries.",
       "Hey there! Neural pathways active. Fire away with your question."
     ],
-    suggestions: ["Who are the mentors?", "Show me features", "How many students?"]
+    suggestions: ["Who are the mentors?", "Show me features", "How many kalvians?"]
   },
   about: {
     triggers: ["about", "what is this", "what is kalvium", "tell me about", "explain", "purpose", "what does this"],
@@ -1345,21 +1247,21 @@ const chatKnowledge = {
     responses: [
       "⚡ <b>Available Systems:</b><br><br>🎨 <b>Theme Engine</b> — 3 modes, 10 accents, 7 fonts<br>📊 <b>Coding Intelligence</b> — Live stats from LeetCode/GitHub/HackerRank/CodeChef<br>📁 <b>Subject Dossiers</b> — Editable projects, certs & skills<br>🔍 <b>Database Scanner</b> — Real-time student search<br>🤖 <b>Neural Assist</b> — That's me!<br>🗺️ <b>Guided Tour</b> — Interactive walkthrough<br><br>Try asking me to navigate somewhere!"
     ],
-    suggestions: ["Start tour", "Open settings", "Go to students"]
+    suggestions: ["Start tour", "Open settings", "Go to kalvians"]
   },
   students: {
     triggers: ["students", "kalvians", "how many students", "squad", "members", "classmates", "batch"],
     responses: [
-      `📋 <b>Squad 138 Registry:</b> 36 active operatives enrolled in B.Tech CSE at St. Joseph's University, Chennai — powered by <b>Kalvium</b>.<br><br>Notable operatives include the 3 creators: <b>Dhinesh Babu G</b>, <b>Sanjay Chelliah C</b>, and <b>Ashwin Raj J J</b>.<br><br>Want me to look up a specific student?`
+      `📋 <b>Squad 138 Registry:</b> 36 active operatives enrolled in B.Tech CSE at St. Joseph's University, Chennai — powered by <b>Kalvium</b>.<br><br>Notable operatives include the 3 creators: <b>Dhinesh Babu G</b>, <b>Sanjay Chelliah C</b>, and <b>Ashwin Raj J J</b>.<br><br>Want me to look up a specific kalvian?`
     ],
-    suggestions: ["Who are creators?", "Go to students", "Open a profile"]
+    suggestions: ["Who are creators?", "Go to kalvians", "Open a profile"]
   },
   mentors: {
     triggers: ["mentor", "mentors", "teachers", "faculty", "guide", "instructor", "aravind", "karunakaran", "hanuram"],
     responses: [
-      "👨‍🏫 <b>Leadership Nodes (Mentors):</b><br><br>• <b>Aravind R</b> — Academic Mentor, specializes in debugging & problem-solving<br>• <b>H. Karunakaran</b> — Campus Manager, focused on student development<br>• <b>Hanuram T</b> — Mentor & Business Analyst, balancing logic, data & good vibes"
+      "👨‍🏫 <b>Leadership Nodes (Mentors):</b><br><br>• <b>Aravind R</b> — Academic Mentor, specializes in debugging & problem-solving<br>• <b>H. Karunakaran</b> — Campus Manager, focused on kalvian development<br>• <b>Hanuram T</b> — Mentor & Business Analyst, balancing logic, data & good vibes"
     ],
-    suggestions: ["Go to mentors", "Tell me about Kalvium", "Show students"]
+    suggestions: ["Go to mentors", "Tell me about Kalvium", "Show kalvians"]
   },
   creators: {
     triggers: ["who built", "who made", "creator", "developer", "who created", "built by"],
@@ -1373,7 +1275,7 @@ const chatKnowledge = {
     responses: [
       "📊 <b>Coding Intelligence System:</b><br><br>The portfolio tracks real-time coding skills across 4 platforms:<br><br>• <b>LeetCode</b> (35% weight) — Problem difficulty breakdown<br>• <b>GitHub</b> (25% weight) — Repos, stars, languages<br>• <b>HackerRank</b> (20% weight) — Profile level, practice signals<br>• <b>CodeChef</b> (20% weight) — Rating & ranks<br><br>Composite scores range from 0–100 with ranks: RECRUIT → OPERATIVE → SPECIALIST → ELITE → LEGENDARY<br><br>Open any student's <b>Dossier</b> to see their score!"
     ],
-    suggestions: ["What ranks exist?", "Go to students", "About features"]
+    suggestions: ["What ranks exist?", "Go to kalvians", "About features"]
   },
   ranks: {
     triggers: ["rank", "ranks", "legendary", "elite", "specialist", "operative", "recruit"],
@@ -1392,9 +1294,9 @@ const chatKnowledge = {
   help: {
     triggers: ["help", "commands", "what can i ask", "how to use"],
     responses: [
-      "📖 <b>Neural_Assist Commands:</b><br><br>💬 <b>Ask anything</b> — Students, mentors, features, coding stats<br>🧭 <b>Navigate</b> — \"Go to students\", \"Go to mentors\", \"Go to contact\"<br>👤 <b>Open profiles</b> — \"Open Ashwin's profile\"<br>⚙️ <b>Settings</b> — \"Open settings\", \"Set dark mode\", \"Set accent cyan\"<br>🗺️ <b>Tour</b> — \"Start tour\"<br>🔄 <b>Actions</b> — \"Switch to gallery\", \"Switch to scroll\"<br><br>Or just chat — I don't bite! 🤖"
+      "📖 <b>Neural_Assist Commands:</b><br><br>💬 <b>Ask anything</b> — Kalvians, mentors, features, coding stats<br>🧭 <b>Navigate</b> — \"Go to kalvians\", \"Go to mentors\", \"Go to contact\"<br>👤 <b>Open profiles</b> — \"Open Ashwin's profile\"<br>⚙️ <b>Settings</b> — \"Open settings\", \"Set dark mode\", \"Set accent cyan\"<br>🗺️ <b>Tour</b> — \"Start tour\"<br>🔄 <b>Actions</b> — \"Switch to gallery\", \"Switch to scroll\"<br><br>Or just chat — I don't bite! 🤖"
     ],
-    suggestions: ["About this site", "Show students", "Start tour"]
+    suggestions: ["About this site", "Show kalvians", "Start tour"]
   },
   fun: {
     triggers: ["joke", "funny", "lol", "haha", "bored", "entertain", "fun"],
@@ -1474,7 +1376,7 @@ function generateReply(msg) {
     if (person) {
       const isMentor = (window.mentorsData || []).some(m => m.name === person.name);
       setTimeout(() => openModal(person.name, isMentor), 600);
-      return { text: `👤 Opening profile for <b>${person.name}</b>...`, suggestions: ["Show students", "Go to mentors"] };
+      return { text: `👤 Opening profile for <b>${person.name}</b>...`, suggestions: ["Show kalvians", "Go to mentors"] };
     }
   }
 
@@ -1485,7 +1387,7 @@ function generateReply(msg) {
     const role = isMentor ? nameMatch.role : 'Kalvian';
     return {
       text: `👤 <b>${nameMatch.name}</b><br>Role: ${role}<br><br>"${nameMatch.bio.substring(0, 150)}${nameMatch.bio.length > 150 ? '...' : ''}"<br><br>${nameMatch.github ? `<a href="${nameMatch.github}" target="_blank" class="text-red-500 hover:underline">GitHub ↗</a> · ` : ''}<a href="${nameMatch.linkedin}" target="_blank" class="text-red-500 hover:underline">LinkedIn ↗</a>`,
-      suggestions: [`Open ${nameMatch.name.split(' ')[0]}'s profile`, "Show all students", "Back to help"]
+      suggestions: [`Open ${nameMatch.name.split(' ')[0]}'s profile`, "Show all kalvians", "Back to help"]
     };
   }
 
@@ -1499,9 +1401,9 @@ function generateReply(msg) {
 
   // 5. Fallback
   const fallbacks = [
-    "🤔 I couldn't parse that query. Try asking about <b>students</b>, <b>mentors</b>, <b>features</b>, or type <b>help</b> for all commands.",
+    "🤔 I couldn't parse that query. Try asking about <b>kalvians</b>, <b>mentors</b>, <b>features</b>, or type <b>help</b> for all commands.",
     "⚠️ Signal unclear. I can help with navigation, student info, coding stats, and more. Type <b>help</b> to see what I can do.",
-    "📡 Query not recognized in the database. Try: \"Who are the mentors?\" or \"Show features\" or \"Go to students\"."
+    "📡 Query not recognized in the database. Try: \"Who are the mentors?\" or \"Show features\" or \"Go to kalvians\"."
   ];
   return { text: fallbacks[Math.floor(Math.random() * fallbacks.length)], suggestions: ["Help", "Show features", "About"] };
 }
