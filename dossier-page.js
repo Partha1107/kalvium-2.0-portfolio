@@ -164,8 +164,8 @@ document.addEventListener("DOMContentLoaded", async () => {
   if (supabaseClient) {
     try {
       const [mRes, sRes] = await Promise.all([
-        supabaseClient.from('mentors').select('*'),
-        supabaseClient.from('students').select('*')
+        supabaseClient.from('management').select('*'),
+        supabaseClient.from('kalvian').select('*')
       ]);
       if (mRes.data?.length > 0) {
         mentorsData.length = 0;
