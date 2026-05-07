@@ -539,9 +539,9 @@ document.addEventListener("DOMContentLoaded", () => {
     // Supabase avatars can be enabled later, but they must not override `Src/` images.
 
     setTimeout(() => {
-      window.scrollTo(0, 0); 
+      window.scrollTo(0, 0);
       document.getElementById("loader").style.display = "none";
-      document.body.style.overflow = ""; 
+      document.body.style.overflow = "";
       if (!localStorage.getItem("cyber_v22"))
         document.getElementById("instruction-overlay").style.display = "flex";
     }, 3000);
@@ -874,30 +874,27 @@ async function openModal(name, isMentor) {
                 </div>                                                  
                 
                 <div class="flex flex-wrap gap-3 mt-4 w-full">                             
-                    ${
-                      !isMentor
-                        ? `
+                    ${!isMentor
+      ? `
                     <button onclick="openAchievements(&quot;${p.name}&quot;)" class="btn-cyber-alt flex-1 min-w-[130px] py-3 rounded-lg font-black text-xs uppercase text-center tracking-[0.1em] flex justify-center items-center gap-2">                                 
                         <i class="fa-solid fa-chart-pie text-lg"></i> Dossier                             
                     </button>`
-                        : ""
-                    }                             
-                    ${
-                      p.linkedin
-                        ? `
+      : ""
+    }                             
+                    ${p.linkedin
+      ? `
                     <a href="${p.linkedin}" target="_blank" class="btn-cyber-main flex-1 min-w-[130px] py-3 rounded-lg font-black text-xs uppercase text-center tracking-[0.1em] flex justify-center items-center gap-2">                                 
                         <i class="fa-brands fa-linkedin-in text-lg"></i> Connect                             
                     </a>`
-                        : ""
-                    }                             
-                    ${
-                      p.github
-                        ? `                             
+      : ""
+    }                             
+                    ${p.github
+      ? `                             
                     <a href="${p.github}" target="_blank" class="btn-cyber-icon flex-1 min-w-[130px] py-3 rounded-lg font-black text-xs uppercase text-center tracking-[0.1em] flex justify-center items-center gap-2">                                 
                         <i class="fa-brands fa-github text-lg"></i> GitHub                             
                     </a>`
-                        : ""
-                    }                             
+      : ""
+    }                             
                     <a href="https://mail.google.com/mail/?view=cm&fs=1&to=${p.email}" class="btn-cyber-icon w-[46px] h-[46px] flex items-center justify-center rounded-lg text-lg flex-shrink-0">                                 
                         <i class="fa-solid fa-envelope"></i>                             
                     </a>                         
@@ -913,25 +910,25 @@ async function openModal(name, isMentor) {
   if (modalImg) tryResolveProfileImage(modalImg, p.email, p.img);
 
   // Background Sync for Bio if not mentor
-    if (supabaseClient) {
-      const bioEl = document.getElementById("modalBioText");
-      if (bioEl) bioEl.classList.add('opacity-50');
+  if (supabaseClient) {
+    const bioEl = document.getElementById("modalBioText");
+    if (bioEl) bioEl.classList.add('opacity-50');
 
-      const resolvedBio = await fetchRoleBio(isMentor, p.email, p.name);
-      if (bioEl) {
-        bioEl.classList.remove('opacity-50');
-        if (resolvedBio && resolvedBio.trim() !== "") {
-          bioEl.innerText = resolvedBio;
-          bioEl.classList.remove('text-red-900/40', 'italic');
-        } else {
-          bioEl.innerText = ">> NO_ANY_BIO_ADDED // PLEASE_UPDATE_VIA_DASHBOARD";
-          bioEl.classList.add('text-red-900/40', 'italic');
-        }
-        const toggleBtn = document.getElementById("modalBioToggle");
-        if (toggleBtn) {
-          toggleBtn.style.display = bioEl.scrollHeight > bioEl.clientHeight ? "flex" : "none";
-        }
+    const resolvedBio = await fetchRoleBio(isMentor, p.email, p.name);
+    if (bioEl) {
+      bioEl.classList.remove('opacity-50');
+      if (resolvedBio && resolvedBio.trim() !== "") {
+        bioEl.innerText = resolvedBio;
+        bioEl.classList.remove('text-red-900/40', 'italic');
+      } else {
+        bioEl.innerText = ">> NO_ANY_BIO_ADDED // PLEASE_UPDATE_VIA_DASHBOARD";
+        bioEl.classList.add('text-red-900/40', 'italic');
       }
+      const toggleBtn = document.getElementById("modalBioToggle");
+      if (toggleBtn) {
+        toggleBtn.style.display = bioEl.scrollHeight > bioEl.clientHeight ? "flex" : "none";
+      }
+    }
   }
 
   setTimeout(() => {
@@ -976,8 +973,8 @@ function renderDossier() {
                 <button onclick="promptAddProject()" class="text-[10px] mono text-gray-400 hover:text-white border border-white/10 hover:border-white px-2 py-1 transition-all rounded bg-white/5">+ ADD</button>                     
             </div>                     
             ${state.projects
-              .map(
-                (pr, idx) => `                         
+      .map(
+        (pr, idx) => `                         
                 <div class="dossier-card group">                             
                     <button onclick="removeProject(${idx})" class="absolute top-4 right-4 text-gray-600 hover:text-red-600 opacity-0 group-hover:opacity-100 transition-all" title="Remove"><i class="fa-solid fa-trash-can"></i></button>                             
                     <h4 class="text-white font-bold text-lg mb-1 pr-6">${pr.title}</h4>                             
@@ -985,8 +982,8 @@ function renderDossier() {
                     <span class="inline-block mt-3 px-2 py-1 bg-red-600/10 text-red-500 text-[9px] mono uppercase rounded border border-red-600/30">Active_Node</span>                         
                 </div>                     
             `,
-              )
-              .join("")}                 
+      )
+      .join("")}                 
         </div>                  
 
         <div class="flex flex-col gap-4">                     
@@ -996,8 +993,8 @@ function renderDossier() {
             </div>                     
             <div class="grid grid-cols-1 gap-4">                         
                 ${state.certs
-                  .map(
-                    (c, idx) => `                             
+      .map(
+        (c, idx) => `                             
                     <div class="dossier-card flex items-center gap-4 justify-between !py-4 group">                                 
                         <div class="flex items-center gap-4">                                     
                             <div class="w-8 h-8 rounded-full border border-red-600/50 flex items-center justify-center bg-red-600/10 text-red-500 text-xs">                                         
@@ -1014,8 +1011,8 @@ function renderDossier() {
                         </div>                             
                     </div>                         
                 `,
-                  )
-                  .join("")}                     
+      )
+      .join("")}                     
             </div>                 
         </div>                  
 
@@ -1026,8 +1023,8 @@ function renderDossier() {
             </div>                     
             <div class="dossier-card space-y-6">                         
                 ${state.skills
-                  .map(
-                    (s, idx) => `                             
+      .map(
+        (s, idx) => `                             
                     <div class="group">                                 
                         <div class="flex justify-between items-end text-xs mono mb-2 text-gray-300">                                     
                             <div class="flex items-center gap-2">                                         
@@ -1044,8 +1041,8 @@ function renderDossier() {
                         </div>                             
                     </div>                         
                 `,
-                  )
-                  .join("")}                     
+      )
+      .join("")}                     
             </div>                 
         </div>             
     `;
@@ -1331,23 +1328,23 @@ const chatKnowledge = {
 
 // Action commands the bot can execute
 const chatActions = [
-  { triggers: ["go to student", "show student", "go to kalvian", "navigate student"], action: () => { smoothScrollTo('students-section'); return "🧭 Navigating to the Kalvians registry..."; }},
-  { triggers: ["go to mentor", "show mentor", "navigate mentor"], action: () => { smoothScrollTo('mentorGrid'); return "🧭 Navigating to Leadership Nodes..."; }},
-  { triggers: ["go to contact", "show contact", "navigate contact"], action: () => { smoothScrollTo('contact-footer'); return "🧭 Navigating to Contact sector..."; }},
-  { triggers: ["go to top", "go home", "scroll top"], action: () => { smoothScrollTo('home-top'); return "🧭 Returning to base..."; }},
-  { triggers: ["open setting", "show setting"], action: () => { openSettings(); return "⚙️ Opening System Configuration..."; }},
-  { triggers: ["start tour", "guided tour", "show tour", "take a tour"], action: () => { setTimeout(() => startTour(), 500); return "🗺️ Initiating guided tour sequence..."; }},
-  { triggers: ["gallery mode", "switch gallery", "show gallery"], action: () => { switchView('gallery'); smoothScrollTo('students-section'); return "🖼️ Switching to Gallery mode..."; }},
-  { triggers: ["scroll mode", "switch scroll", "feed mode"], action: () => { switchView('scroll'); smoothScrollTo('students-section'); return "📜 Switching to Scroll mode..."; }},
-  { triggers: ["dark mode", "set dark"], action: () => { setTheme('dark'); return "🌙 Dark mode activated."; }},
-  { triggers: ["light mode", "set light"], action: () => { setTheme('light'); return "☀️ Light mode activated."; }},
-  { triggers: ["accent red"], action: () => { setAccent('red'); return "🔴 Accent set to Red."; }},
-  { triggers: ["accent cyan"], action: () => { setAccent('cyan'); return "🔵 Accent set to Cyan."; }},
-  { triggers: ["accent green"], action: () => { setAccent('green'); return "🟢 Accent set to Green."; }},
-  { triggers: ["accent purple"], action: () => { setAccent('purple'); return "🟣 Accent set to Purple."; }},
-  { triggers: ["accent gold"], action: () => { setAccent('gold'); return "🟡 Accent set to Gold."; }},
-  { triggers: ["accent matrix"], action: () => { setAccent('matrix'); return "💚 Accent set to Matrix."; }},
-  { triggers: ["accent pink"], action: () => { setAccent('pink'); return "💗 Accent set to Pink."; }},
+  { triggers: ["go to student", "show student", "go to kalvian", "navigate student"], action: () => { smoothScrollTo('students-section'); return "🧭 Navigating to the Kalvians registry..."; } },
+  { triggers: ["go to mentor", "show mentor", "navigate mentor"], action: () => { smoothScrollTo('mentorGrid'); return "🧭 Navigating to Leadership Nodes..."; } },
+  { triggers: ["go to contact", "show contact", "navigate contact"], action: () => { smoothScrollTo('contact-footer'); return "🧭 Navigating to Contact sector..."; } },
+  { triggers: ["go to top", "go home", "scroll top"], action: () => { smoothScrollTo('home-top'); return "🧭 Returning to base..."; } },
+  { triggers: ["open setting", "show setting"], action: () => { openSettings(); return "⚙️ Opening System Configuration..."; } },
+  { triggers: ["start tour", "guided tour", "show tour", "take a tour"], action: () => { setTimeout(() => startTour(), 500); return "🗺️ Initiating guided tour sequence..."; } },
+  { triggers: ["gallery mode", "switch gallery", "show gallery"], action: () => { switchView('gallery'); smoothScrollTo('students-section'); return "🖼️ Switching to Gallery mode..."; } },
+  { triggers: ["scroll mode", "switch scroll", "feed mode"], action: () => { switchView('scroll'); smoothScrollTo('students-section'); return "📜 Switching to Scroll mode..."; } },
+  { triggers: ["dark mode", "set dark"], action: () => { setTheme('dark'); return "🌙 Dark mode activated."; } },
+  { triggers: ["light mode", "set light"], action: () => { setTheme('light'); return "☀️ Light mode activated."; } },
+  { triggers: ["accent red"], action: () => { setAccent('red'); return "🔴 Accent set to Red."; } },
+  { triggers: ["accent cyan"], action: () => { setAccent('cyan'); return "🔵 Accent set to Cyan."; } },
+  { triggers: ["accent green"], action: () => { setAccent('green'); return "🟢 Accent set to Green."; } },
+  { triggers: ["accent purple"], action: () => { setAccent('purple'); return "🟣 Accent set to Purple."; } },
+  { triggers: ["accent gold"], action: () => { setAccent('gold'); return "🟡 Accent set to Gold."; } },
+  { triggers: ["accent matrix"], action: () => { setAccent('matrix'); return "💚 Accent set to Matrix."; } },
+  { triggers: ["accent pink"], action: () => { setAccent('pink'); return "💗 Accent set to Pink."; } },
 ];
 
 function findStudentByName(query) {
@@ -1682,7 +1679,7 @@ async function checkSession() {
   const { data: { session } } = await supabaseClient.auth.getSession();
   const loginBtn = document.getElementById('auth-login-btn');
   const userBtn = document.getElementById('auth-user-btn');
-  
+
   if (session && session.user) {
     if (loginBtn) loginBtn.classList.add('hidden');
     if (userBtn) {
@@ -1703,7 +1700,7 @@ async function handleLogin() {
     alert("Supabase client is not initialized. Please ensure the CDN is loaded and Anon Key is provided.");
     return;
   }
-  
+
   // Initiate Supabase Google OAuth Flow
   const { data, error } = await supabaseClient.auth.signInWithOAuth({
     provider: 'google',
@@ -1721,7 +1718,7 @@ async function handleLogin() {
 // Automatically check session on page load if supabase client exists
 document.addEventListener('DOMContentLoaded', () => {
   checkSession();
-  
+
   // Also listen for auth state changes (e.g. returning from OAuth redirect)
   if (supabaseClient) {
     supabaseClient.auth.onAuthStateChange((event, session) => {
