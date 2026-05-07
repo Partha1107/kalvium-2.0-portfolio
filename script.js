@@ -76,131 +76,9 @@ const SUPABASE_BUCKET_IMAGE_BASE =
 
 const PROFILE_PLACEHOLDER = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==';
 
-// Cache keys
-const IMG_CACHE_KEY = 'profile_img_cache_v1';
-const IMG_CACHE_TTL = 5 * 60 * 1000; // 5 minutes
-
-let profilePictureLookupClient = null;
-const profilePictureLookupCache = new Map(); // in-memory map: email → url
-let _batchListPromise = null;              // singleton promise so we only ever call list() once
 let kalvianRosterCache = null;
 let leadershipProfilesCache = null;
 const PORTFOLIO_DATA_VERSION_KEY = 'portfolio_data_version';
-
-function getProfilePictureLookupClient() {
-  if (profilePictureLookupClient) return profilePictureLookupClient;
-  if (!window.supabase) return null;
-  profilePictureLookupClient = window.supabase.createClient(
-    "https://gjkbbbklxqgxvjoqhvue.supabase.co",
-    "sb_publishable_Z-ZLJ1kdtSnjYqXFwwDAQw_JKMikQQr",
-  );
-  return profilePictureLookupClient;
-}
-
-// --- Load the persisted cache from localStorage into the in-memory Map ---
-function loadImgCacheFromStorage() {
-  try {
-    const raw = localStorage.getItem(IMG_CACHE_KEY);
-    if (!raw) return false;
-    const { ts, entries } = JSON.parse(raw);
-    if (Date.now() - ts > IMG_CACHE_TTL) return false; // expired
-    Object.entries(entries).forEach(([email, url]) => profilePictureLookupCache.set(email, url));
-    return true;
-  } catch { return false; }
-}
-
-function saveImgCacheToStorage() {
-  try {
-    const entries = Object.fromEntries(profilePictureLookupCache);
-    localStorage.setItem(IMG_CACHE_KEY, JSON.stringify({ ts: Date.now(), entries }));
-  } catch { /* quota errors are non-fatal */ }
-}
-
-// --- Single batch list() — only ever runs once per page load ---
-function getBatchFileList() {
-  if (_batchListPromise) return _batchListPromise;
-  const client = getProfilePictureLookupClient();
-  if (!client) { _batchListPromise = Promise.resolve([]); return _batchListPromise; }
-
-  _batchListPromise = client.storage
-    .from("dossier_assets")
-    .list("Profile/profile_picture", { limit: 1000 })
-    .then(({ data, error }) => (!error && Array.isArray(data) ? data : []))
-    .catch(() => []);
-
-  return _batchListPromise;
-}
-
-// --- Build/update the in-memory cache from the storage file list ---
-async function warmImageCache() {
-  const files = await getBatchFileList();
-  files.forEach((file) => {
-    const name = (file?.name || "").toLowerCase();
-    // File names are expected to contain the email (or part of it)
-    const url = `${SUPABASE_BUCKET_IMAGE_BASE}${encodeURIComponent(file.name)}`;
-    profilePictureLookupCache.set(name, url);
-  });
-  saveImgCacheToStorage();
-}
-
-// --- Resolve a single email → URL (uses cache, falls back to batch fetch) ---
-async function findProfilePictureUrlByEmail(email) {
-  const normalized = (email || "").trim().toLowerCase();
-  if (!normalized) return "";
-
-  // 1. Check in-memory cache first (fastest)
-  for (const [key, url] of profilePictureLookupCache) {
-    if (key.includes(normalized) || normalized.includes(key.replace(/\.[^.]+$/, ""))) return url;
-  }
-
-  // 2. Not cached yet — warm the cache with a single list() call then retry
-  await warmImageCache();
-  for (const [key, url] of profilePictureLookupCache) {
-    if (key.includes(normalized) || normalized.includes(key.replace(/\.[^.]+$/, ""))) return url;
-  }
-
-  return "";
-}
-
-async function tryResolveProfileImage(imgEl, email, localSrc) {
-  if (!imgEl) return;
-
-  // Show local/fallback src immediately (no blank flash)
-  if (localSrc && (localSrc.startsWith("http://") || localSrc.startsWith("https://") || localSrc.startsWith("data:"))) {
-    imgEl.src = localSrc;
-  } else if (localSrc && localSrc.startsWith("./Src/")) {
-    imgEl.src = resolveDossierImageSrc(localSrc);
-  }
-
-  // Then resolve the authoritative URL from Supabase storage
-  const resolvedUrl = await findProfilePictureUrlByEmail(email);
-  if (resolvedUrl && resolvedUrl !== imgEl.src) {
-    imgEl.src = resolvedUrl; // no cache-bust: let browser cache handle it for speed
-  } else if (!resolvedUrl && !localSrc) {
-    imgEl.src = PROFILE_PLACEHOLDER;
-  }
-}
-
-function resolveAllProfileImages() {
-  document.querySelectorAll("img[data-profile-email]").forEach((img) => {
-    tryResolveProfileImage(img, img.dataset.profileEmail, img.dataset.localSrc);
-  });
-}
-
-// --- Background silent refresh: after page load, re-fetch list and update any changed images ---
-function scheduleBackgroundImageRefresh(delayMs = 8000) {
-  setTimeout(async () => {
-    // Bust the singleton so we get a fresh list() call
-    _batchListPromise = null;
-    profilePictureLookupCache.clear();
-    await warmImageCache();
-    // Update any img elements whose src has changed
-    document.querySelectorAll("img[data-profile-email]").forEach(async (img) => {
-      const freshUrl = await findProfilePictureUrlByEmail(img.dataset.profileEmail);
-      if (freshUrl && freshUrl !== img.src) img.src = freshUrl;
-    });
-  }, delayMs);
-}
 
 function resolveDossierImageSrc(src) {
   if (!src) return src;
@@ -214,10 +92,6 @@ function getProfilePictureSrc(email) {
   if (!email) return "";
   return `${SUPABASE_BUCKET_IMAGE_BASE}${email.trim().toLowerCase()}`;
 }
-
-// Pre-warm the cache as early as possible (before DOMContentLoaded)
-loadImgCacheFromStorage(); // load from localStorage instantly (synchronous)
-warmImageCache();          // kick off the single batch list() in the background
 
 function normalizeTablePerson(row, fallbackRole = "") {
   return {
@@ -252,20 +126,11 @@ async function refreshPortfolioSections() {
   const studentsSection = document.getElementById('students-section');
   if (studentsSection) {
     renderStudents();
-    resolveAllProfileImages();
   }
 }
 
 window.addEventListener('storage', (event) => {
-  if (event.key !== PORTFOLIO_DATA_VERSION_KEY && event.key !== IMG_CACHE_KEY) return;
-
-  // If it's an image cache invalidation from the dashboard, bust and refresh immediately
-  if (event.key === IMG_CACHE_KEY && event.newValue === null) {
-    _batchListPromise = null;
-    profilePictureLookupCache.clear();
-    scheduleBackgroundImageRefresh(500); // refresh quickly
-    return;
-  }
+  if (event.key !== PORTFOLIO_DATA_VERSION_KEY) return;
 
   // Normal portfolio data refresh
   refreshPortfolioSections().catch((error) => {
@@ -368,8 +233,6 @@ async function renderLeadershipSection() {
       .map((mentor) => renderCard(mentor, true))
       .join("");
   }
-
-  resolveAllProfileImages();
 }
 
 async function getDashboardRoleByEmail(email) {
@@ -619,7 +482,6 @@ document.addEventListener("DOMContentLoaded", () => {
     // (keeps lazy loading as a fallback when the list is very large)
     try {
       renderStudents();
-      resolveAllProfileImages();
     } catch (e) {
       console.warn('Pre-render students failed:', e);
     }
@@ -636,7 +498,6 @@ document.addEventListener("DOMContentLoaded", () => {
       const io = new IntersectionObserver((entries, obs) => {
         if (entries[0].isIntersecting) {
           renderStudents();
-          resolveAllProfileImages();
           obs.disconnect();
         }
       }, { rootMargin: '400px' });
@@ -644,7 +505,6 @@ document.addEventListener("DOMContentLoaded", () => {
     } else {
       // Fallback: render immediately
       renderStudents();
-      resolveAllProfileImages();
     }
 
     document.getElementById("proverbDisplay").innerText =
@@ -661,9 +521,6 @@ document.addEventListener("DOMContentLoaded", () => {
     const sizeBtn = document.getElementById(`btn-size-${currentFontSize}`);
     if (sizeBtn) sizeBtn.classList.add("active");
 
-    // After page loads, silently refresh images in the background
-    // so dashboard image updates are reflected without slowing initial load
-    scheduleBackgroundImageRefresh(8000);
   }
 
   // --- PROVERBS ---
@@ -725,7 +582,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Re-render with new filter
     renderStudents();
-    resolveAllProfileImages();
   };
 
 
@@ -746,7 +602,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 <div class="tactical-card group" onmousemove="handleCardMove(event, this)" onclick="openModal(&quot;${p.name}&quot;, ${isMentor})" data-name="${p.name.toLowerCase()}">                         
                     <div class="card-glare"></div>                         
                     <div class="card-watermark">${watermark}</div>                         
-                    <img src="${PROFILE_PLACEHOLDER}" data-profile-email="${p.email || ''}" data-local-src="${p.img || ''}" class="w-32 h-32 mb-6 border border-red-600/30 p-1 transition-all duration-500 grayscale group-hover:grayscale-0 group-hover:border-red-600 rounded-full z-10" loading="lazy">                         
+                    <img src="${resolveDossierImageSrc(p.img) || PROFILE_PLACEHOLDER}" class="w-32 h-32 mb-6 border border-red-600/30 p-1 transition-all duration-500 grayscale group-hover:grayscale-0 group-hover:border-red-600 rounded-full z-10" loading="lazy">                         
                     <div class="text-center z-10 px-4">                             
                         <p class="text-red-600 mono text-[9px] uppercase font-bold tracking-widest mb-1 transition-colors duration-500 group-hover:text-white">${isMentor ? p.role : "KALVIAN"}</p>
                         <h3 class="text-xl font-black uppercase tracking-tighter">${p.name}</h3>
