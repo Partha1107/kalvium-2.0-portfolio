@@ -37,7 +37,7 @@ function resolveDossierImageSrc(src) {
   const fileName = src.replace(/^\.\/Src\//, "");
   if (!fileName || fileName === src) return src;
 
-  return `${SUPABASE_BUCKET_IMAGE_BASE}${encodeURIComponent(fileName)}`;
+  return `${SUPABASE_BUCKET_IMAGE_BASE}${encodeURI(fileName)}`;
 }
 
 function getProfilePictureSrc(email) {
@@ -193,8 +193,8 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   // Debug: log loaded people when troubleshooting
   console.log('Dossier: requested name=', name, 'email=', emailParam);
-  console.log('Dossier: loaded mentors=', mentorsData.length, mentorsData.map(m=>m.name));
-  console.log('Dossier: loaded students=', studentsData.length, studentsData.map(s=>s.name));
+  console.log('Dossier: loaded mentors=', mentorsData.length, mentorsData.map(m => m.name));
+  console.log('Dossier: loaded students=', studentsData.length, studentsData.map(s => s.name));
 
   if (!person) {
     const available = allPeople.map((p) => `<li class="text-sm text-gray-400 mono">${p.name} ${p.email ? `(${p.email})` : ''}</li>`).join('');
@@ -278,7 +278,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         // Redraw page header components that might have changed
         const innerBio = document.querySelector("#profileHeader p");
         if (innerBio) innerBio.innerText = remoteDossier.bio;
-        
+
         renderDossier();
       }
     } catch (e) {
@@ -293,11 +293,11 @@ document.addEventListener("DOMContentLoaded", async () => {
   if (supabaseClient) {
     supabaseClient
       .channel('dossier_changes')
-      .on('postgres_changes', { 
-        event: 'UPDATE', 
-        schema: 'public', 
+      .on('postgres_changes', {
+        event: 'UPDATE',
+        schema: 'public',
         table: 'dossiers',
-        filter: `email=eq.${person.email}` 
+        filter: `email=eq.${person.email}`
       }, (payload) => {
         console.log("Remote Override Detected. Synchronizing Matrix...");
         fetchAndRender();
@@ -403,8 +403,8 @@ function renderDossier() {
                 <h3 class="mono text-red-500 font-bold uppercase tracking-widest flex items-center gap-2"><i class="fa-solid fa-folder-tree"></i> Deployed_Systems</h3>
             </div>
             ${state.projects && state.projects.length > 0
-              ? state.projects.map(
-                  (pr, idx) => `
+      ? state.projects.map(
+        (pr, idx) => `
                 <div class="dossier-card group">
                     <h4 class="text-white font-bold text-lg mb-1 pr-6">${pr.title}</h4>
                     <p class="text-gray-400 text-[11px] mb-3 leading-relaxed">${pr.desc}</p>
@@ -422,8 +422,8 @@ function renderDossier() {
                     </div>
                 </div>
             `,
-                ).join("")
-              : `
+      ).join("")
+      : `
                 <div class="dossier-card flex items-center gap-4 !py-8 justify-center opacity-50 grayscale">
                     <div class="text-center">
                         <i class="fa-solid fa-microchip text-red-600 text-2xl mb-2"></i>
@@ -432,7 +432,7 @@ function renderDossier() {
                     </div>
                 </div>
               `
-            }
+    }
         </div>
 
         <div class="flex flex-col gap-4">
@@ -440,8 +440,8 @@ function renderDossier() {
                 <h3 class="mono text-red-500 font-bold uppercase tracking-widest flex items-center gap-2"><i class="fa-solid fa-id-badge"></i> Advancement</h3>
             </div>
             <div class="grid grid-cols-1 gap-4">
-                ${state.certs && state.certs.length > 0 
-                  ? state.certs.map((c, idx) => `
+                ${state.certs && state.certs.length > 0
+      ? state.certs.map((c, idx) => `
                     <div class="dossier-card flex items-center gap-4 justify-between !py-4 group">
                         <div class="flex items-center gap-4">
                             <div class="w-8 h-8 rounded-full border border-red-600/50 flex items-center justify-center bg-red-600/10 text-red-500 text-xs"><i class="fa-solid fa-check"></i></div>
@@ -455,7 +455,7 @@ function renderDossier() {
                         </div>
                     </div>
                   `).join("")
-                  : `
+      : `
                     <div class="dossier-card flex items-center gap-4 !py-8 justify-center opacity-50 grayscale">
                         <div class="text-center">
                             <i class="fa-solid fa-triangle-exclamation text-red-600 text-2xl mb-2"></i>
@@ -464,7 +464,7 @@ function renderDossier() {
                         </div>
                     </div>
                   `
-                }
+    }
             </div>
         </div>
 
@@ -487,13 +487,13 @@ function promptAddProject() {
   document.getElementById("input-modal-save").onclick = () => {
     const t = document.getElementById("in-proj-title").value;
     const d = document.getElementById("in-proj-desc").value;
-      if (t && d) {
-        window
-          .getDossierState(window.currentActiveSubject)
-          .projects.push({ title: t, desc: d });
-        renderDossier();
-        loadCodingStats(window.currentActiveSubject);
-        persistCurrentDossier().catch((error) => console.warn('Project persist failed:', error));
+    if (t && d) {
+      window
+        .getDossierState(window.currentActiveSubject)
+        .projects.push({ title: t, desc: d });
+      renderDossier();
+      loadCodingStats(window.currentActiveSubject);
+      persistCurrentDossier().catch((error) => console.warn('Project persist failed:', error));
     }
     closeInputModal();
   };
@@ -507,7 +507,7 @@ function promptAddCert() {
     `<input type="text" id="in-cert-title" placeholder="Certification Name" class="bg-black border border-white/20 p-3 text-white text-sm mono outline-none focus:border-red-600">`;
   document.getElementById("input-modal-save").onclick = () => {
     const t = document.getElementById("in-cert-title").value;
-      if (t) {
+    if (t) {
       window.getDossierState(window.currentActiveSubject).certs.push(t);
       renderDossier();
       loadCodingStats(window.currentActiveSubject);
