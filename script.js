@@ -70,7 +70,7 @@ let currentTheme = localStorage.getItem("cyber_theme") || "dark";
 let currentAccent = localStorage.getItem("cyber_accent") || "red";
 let currentFont = localStorage.getItem("cyber_font") || "sans";
 let currentFontSize = localStorage.getItem("cyber_fontsize") || "md";
-let squad = localStorage.getItem('squad')|| "138";
+let squad = localStorage.getItem('squad') || "138";
 // Global data arrays used across render/fetch helpers
 const mentorsData = [];
 const studentsData = [];
@@ -654,7 +654,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   // --- SQUAD SWITCHER ---
-  window.switchSquad = function(selectedSquad) {
+  window.switchSquad = function (selectedSquad) {
     squad = selectedSquad;
     localStorage.setItem('squad', squad);
 
