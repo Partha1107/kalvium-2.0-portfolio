@@ -156,7 +156,7 @@ function resolveDossierImageSrc(src) {
   const fileName = src.replace(/^\.\/Src\//, "");
   if (!fileName || fileName === src) return src;
 
-  return `${SUPABASE_BUCKET_IMAGE_BASE}${encodeURIComponent(fileName)}`;
+  return `${SUPABASE_BUCKET_IMAGE_BASE}${encodeURI(fileName)}`;
 }
 
 function getProfilePictureSrc(email) {
