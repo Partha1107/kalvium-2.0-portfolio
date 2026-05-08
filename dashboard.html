@@ -70,7 +70,7 @@
         class="grid grid-cols-1 md:grid-cols-2 gap-10 text-left cursor-default"
       >
         <!-- PROFILE INFO -->
-        <div class="dossier-card">
+        <div class="dossier-card md:col-span-2">
           <div class="bracket tl"></div>
           <div class="bracket tr"></div>
           <div class="bracket bl"></div>
@@ -122,7 +122,7 @@
             </p>
           </div>
 
-          <div id="dashboard-actions" class="flex flex-col gap-2 mt-4">
+          <div id="dashboard-actions" class="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-4">
             <button
               id="mentor-add-folk-btn"
               onclick="openNewFolkModal()"
@@ -157,14 +157,14 @@
 
             <button
               onclick="viewPublicDossier()"
-              class="w-full py-3 border border-blue-600/50 text-blue-500 hover:bg-blue-600 hover:text-white font-bold uppercase tracking-widest transition-all text-xs flex justify-center items-center gap-3"
+              class="w-full sm:col-span-2 py-3 border border-blue-600/50 text-blue-500 hover:bg-blue-600 hover:text-white font-bold uppercase tracking-widest transition-all text-xs flex justify-center items-center gap-3"
             >
               <i class="fa-solid fa-eye"></i> View_Public_Dossier
             </button>
 
             <button
               onclick="handleLogout()"
-              class="w-full py-3 border border-red-600/50 text-red-500 hover:bg-red-600 hover:text-white font-bold uppercase tracking-widest transition-all text-xs flex justify-center items-center gap-3"
+              class="w-full sm:col-span-2 py-3 border border-red-600/50 text-red-500 hover:bg-red-600 hover:text-white font-bold uppercase tracking-widest transition-all text-xs flex justify-center items-center gap-3"
             >
               <i class="fa-solid fa-power-off"></i> Disconnect_Session
             </button>
@@ -513,9 +513,16 @@
       }
 
       async function resolveDashboardBio(view, email, fullName, fallbackBio) {
-        const tableName = getDashboardBioTable(view);
-        const tableBio = await fetchBioFromTable(tableName, email, fullName);
-        return tableBio || fallbackBio || '';
+        const roleTable = getDashboardBioTable(view);
+        const searchTables = ['dossiers'];
+        if (roleTable && roleTable !== 'dossiers') searchTables.push(roleTable);
+
+        for (const tableName of searchTables) {
+          const tableBio = await fetchBioFromTable(tableName, email, fullName);
+          if (tableBio) return tableBio;
+        }
+
+        return fallbackBio || '';
       }
 
       async function syncDashboardBioTables(view, email, fullName, bio) {
@@ -547,6 +554,64 @@
         }
       }
 
+      async function syncKalvianBioAcrossTables(email, fullName, bio) {
+        if (!supabaseClient || typeof bio !== 'string') return;
+
+        const normalizedEmail = (email || '').trim().toLowerCase();
+        const normalizedName = (fullName || '').trim();
+
+        if (!normalizedEmail && !normalizedName) return;
+
+        const dossierPayload = {
+          bio,
+          email: normalizedEmail || null,
+          full_name: normalizedName || normalizedEmail || 'Unknown Operative',
+          updated_at: new Date(),
+        };
+
+        // Use BOTH email and full_name for precise lookup to avoid ambiguity
+        let dossierQuery = supabaseClient
+          .from('dossiers')
+          .select('id')
+          .limit(1);
+
+        if (normalizedEmail && normalizedName) {
+          dossierQuery = dossierQuery.eq('email', normalizedEmail).eq('full_name', normalizedName);
+        } else if (normalizedEmail) {
+          dossierQuery = dossierQuery.eq('email', normalizedEmail);
+        } else {
+          dossierQuery = dossierQuery.eq('full_name', normalizedName);
+        }
+
+        const { data: dossierRow, error: lookupError } = await dossierQuery.maybeSingle();
+
+        if (lookupError && lookupError.code !== 'PGRST116') {
+          console.warn('Kalvian bio lookup failed for dossiers:', lookupError.message);
+          return;
+        }
+
+        if (dossierRow?.id) {
+          const { error: updateError } = await supabaseClient
+            .from('dossiers')
+            .update(dossierPayload)
+            .eq('id', dossierRow.id);
+
+          if (updateError) {
+            console.warn('Kalvian bio sync failed for dossiers:', updateError.message);
+          }
+        } else {
+          const { error: insertError } = await supabaseClient
+            .from('dossiers')
+            .insert(dossierPayload);
+
+          if (insertError) {
+            console.warn('Kalvian bio insert failed for dossiers:', insertError.message);
+          }
+        }
+
+        // Keep the dossier as the source of truth for bios; the role table can lag safely.
+      }
+
       async function syncDashboardGithubTables(view, email, fullName, github) {
         if (!supabaseClient || typeof github !== 'string') return;
 
@@ -573,6 +638,31 @@
         if (managementResult.error) {
           console.warn('GitHub sync failed for management:', managementResult.error.message);
         }
+      }
+
+      async function fetchDossierBio(email, fullName) {
+        if (!supabaseClient) return '';
+
+        const normalizedEmail = (email || '').trim().toLowerCase();
+        const normalizedName = (fullName || '').trim();
+        const filters = [];
+
+        if (normalizedEmail) filters.push({ column: 'email', value: normalizedEmail });
+        if (normalizedName) filters.push({ column: 'full_name', value: normalizedName });
+
+        for (const filter of filters) {
+          const { data, error } = await supabaseClient
+            .from('dossiers')
+            .select('bio')
+            .ilike(filter.column, filter.value)
+            .maybeSingle();
+
+          if (!error && data && typeof data.bio === 'string' && data.bio.trim()) {
+            return data.bio;
+          }
+        }
+
+        return '';
       }
 
       async function getDashboardViewFromSession(email) {
@@ -1108,26 +1198,80 @@
           }
         });
 
-        const { error } = await supabaseClient
+        const dossierPayload = {
+          id: session.user.id,
+          bio: bio,
+          email: session.user.email,
+          full_name: session.user.user_metadata?.full_name || session.user.email,
+          github_username: github,
+          leetcode_username: leetcode,
+          hackerrank_username: hackerrank,
+          codechef_username: codechef,
+          linkedin_url: linkedin,
+          skills: skillsArray,
+          certs: certsArray,
+          projects: projectsArray,
+          updated_at: new Date()
+        };
+
+        let dossierRowQuery = supabaseClient
           .from('dossiers')
-          .update({ 
-            bio: bio, 
-            email: session.user.email,
-            github_username: github,
-            leetcode_username: leetcode,
-            hackerrank_username: hackerrank,
-            codechef_username: codechef,
-            linkedin_url: linkedin,
-            skills: skillsArray,
-            certs: certsArray,
-            projects: projectsArray,
-            updated_at: new Date() 
-          })
+          .select('id')
+          .limit(1)
           .eq('id', session.user.id);
 
-        if (error) {
-          console.error("Save Error:", error);
-          showDashboardAlert("Error saving dossier: " + error.message, 'error', 'Save Failed');
+        const { data: existingDossier, error: dossierLookupError } = await dossierRowQuery.maybeSingle();
+
+        if (dossierLookupError && dossierLookupError.code !== 'PGRST116') {
+          console.error('Save lookup error:', dossierLookupError);
+          showDashboardAlert("Error saving dossier: " + dossierLookupError.message, 'error', 'Save Failed');
+          return;
+        }
+
+        let saveError = null;
+        if (existingDossier?.id) {
+          const { error } = await supabaseClient
+            .from('dossiers')
+            .update({ 
+              bio: bio, 
+              email: session.user.email,
+              full_name: session.user.user_metadata?.full_name || session.user.email,
+              github_username: github,
+              leetcode_username: leetcode,
+              hackerrank_username: hackerrank,
+              codechef_username: codechef,
+              linkedin_url: linkedin,
+              skills: skillsArray,
+              certs: certsArray,
+              projects: projectsArray,
+              updated_at: new Date() 
+            })
+            .eq('id', existingDossier.id);
+          saveError = error;
+        } else {
+          const { error } = await supabaseClient
+            .from('dossiers')
+            .insert({
+              id: session.user.id,
+              bio: bio,
+              email: session.user.email,
+              full_name: session.user.user_metadata?.full_name || session.user.email,
+              github_username: github,
+              leetcode_username: leetcode,
+              hackerrank_username: hackerrank,
+              codechef_username: codechef,
+              linkedin_url: linkedin,
+              skills: skillsArray,
+              certs: certsArray,
+              projects: projectsArray,
+              updated_at: new Date()
+            });
+          saveError = error;
+        }
+
+        if (saveError) {
+          console.error("Save Error:", saveError);
+          showDashboardAlert("Error saving dossier: " + saveError.message, 'error', 'Save Failed');
         } else {
           await syncDashboardBioTables(currentDashboardView, session.user.email, session.user.user_metadata?.full_name, bio);
           await syncDashboardGithubTables(currentDashboardView, session.user.email, session.user.user_metadata?.full_name, github);
@@ -1431,6 +1575,19 @@
         if (linkedinInput) linkedinInput.value = entry?.linkedin_url || '';
         if (squadInput) squadInput.value = entry?.squad || '';
         if (saveBtn) saveBtn.disabled = !entry;
+
+        if (bioInput) {
+          bioInput.value = entry?.bio || '';
+          fetchDossierBio(entry?.email || '', entry?.full_name || '')
+            .then((dossierBio) => {
+              if (!bioInput) return;
+              // Keep the field aligned with dossiers so edits start from the canonical bio.
+              if (dossierBio) bioInput.value = dossierBio;
+            })
+            .catch((error) => {
+              console.warn('Could not load dossier bio for update modal:', error);
+            });
+        }
       }
 
       function renderUpdateKalvianList() {
@@ -1513,7 +1670,7 @@
 
         const { data, error } = await supabaseClient
           .from('kalvian')
-          .select('full_name, email, squad, linkedin_url, bio')
+          .select('id, full_name, email, squad, linkedin_url, bio')
           .order('full_name', { ascending: true });
 
         if (error || !Array.isArray(data)) {
@@ -1617,6 +1774,8 @@
           showDashboardAlert('Could not update kalvian: ' + error.message, 'error', 'Update Failed');
           return;
         }
+
+        await syncKalvianBioAcrossTables(selectedEntry.email || email, selectedEntry.full_name || fullName, bio);
 
         closeUpdateKalvianModal();
         updateKalvianEntries = [];
