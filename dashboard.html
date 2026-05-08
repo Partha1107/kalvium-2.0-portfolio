@@ -1424,14 +1424,12 @@
         const emailInput = document.getElementById('update-kalvian-email');
         const linkedinInput = document.getElementById('update-kalvian-linkedin');
         const squadInput = document.getElementById('update-kalvian-squad');
-        const bioInput = document.getElementById('update-kalvian-bio');
         const saveBtn = document.getElementById('update-kalvian-action');
 
         if (fullNameInput) fullNameInput.value = entry?.full_name || '';
         if (emailInput) emailInput.value = entry?.email || '';
         if (linkedinInput) linkedinInput.value = entry?.linkedin_url || '';
         if (squadInput) squadInput.value = entry?.squad || '';
-        if (bioInput) bioInput.value = entry?.bio || '';
         if (saveBtn) saveBtn.disabled = !entry;
       }
 
@@ -1573,7 +1571,6 @@
         const email = emailInput.value.trim().toLowerCase();
         const linkedinUrl = document.getElementById('update-kalvian-linkedin').value.trim();
         const squad = document.getElementById('update-kalvian-squad').value.trim();
-        const bio = document.getElementById('update-kalvian-bio').value.trim();
 
         if (!fullName) {
           showDashboardAlert('Enter a full name before updating the profile.', 'warning', 'Missing Name');
@@ -1604,7 +1601,6 @@
           email,
           linkedin_url: linkedinUrl || null,
           squad: squad || null,
-          bio: bio || null,
           role: 'Kalvian',
         };
 
@@ -2020,7 +2016,7 @@
                 <div class="flex items-center justify-between gap-3 pb-4 border-b border-white/10">
                   <div>
                     <p class="text-sky-400 mono text-[10px] uppercase tracking-[0.3em]">Edit_Profile</p>
-                    <p class="text-gray-500 mono text-[8px] uppercase tracking-[0.25em] mt-1">Full name, email, squad, LinkedIn, and bio are editable.</p>
+                    <p class="text-gray-500 mono text-[8px] uppercase tracking-[0.25em] mt-1">Full name, email, squad, and LinkedIn are editable.</p>
                   </div>
                 </div>
 
@@ -2044,10 +2040,6 @@
                   <div class="input-group md:col-span-2">
                     <label class="block text-[9px] text-gray-500 mono uppercase mb-1">LinkedIn_URL</label>
                     <input id="update-kalvian-linkedin" class="w-full bg-black/40 border border-white/10 p-3 text-white mono text-xs focus:border-sky-500 outline-none transition-all" placeholder="https://linkedin.com/in/..." />
-                  </div>
-                  <div class="input-group md:col-span-2">
-                    <label class="block text-[9px] text-gray-500 mono uppercase mb-1">Bio</label>
-                    <textarea id="update-kalvian-bio" class="w-full bg-black/40 border border-white/10 p-3 text-white mono text-xs focus:border-sky-500 outline-none transition-all h-32" placeholder="Short bio..."></textarea>
                   </div>
                 </div>
 
