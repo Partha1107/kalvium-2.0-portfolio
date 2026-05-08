@@ -580,20 +580,20 @@ document.addEventListener("DOMContentLoaded", () => {
     if (supabaseClient) {
       try {
         const [mRes, sRes] = await Promise.all([
-            supabaseClient.from('management').select('*'),
+          supabaseClient.from('management').select('*'),
           supabaseClient.from('kalvian').select('*')
         ]);
 
         if (mRes.data && mRes.data.length > 0) {
           mentorsData.length = 0; // Clear hardcoded
-            mRes.data.forEach(m => mentorsData.push({
-              name: m.full_name,
-              role: m.role,
-              img: m.img_url,
-              linkedin: m.linkedin_url,
-              email: m.email,
-              github: m.github_url || m.github_username || m.github
-            }));
+          mRes.data.forEach(m => mentorsData.push({
+            name: m.full_name,
+            role: m.role,
+            img: m.img_url,
+            linkedin: m.linkedin_url,
+            email: m.email,
+            github: m.github_url || m.github_username || m.github
+          }));
         }
 
         if (sRes.data && sRes.data.length > 0) {
@@ -984,7 +984,7 @@ async function openModal(name, isMentor) {
   const existingImgSrc = existingCardImg && existingCardImg.src ? existingCardImg.src : (p.img || PROFILE_PLACEHOLDER);
 
   if (isMentor) {
-  document.getElementById("modalContent").innerHTML = `
+    document.getElementById("modalContent").innerHTML = `
     <div class="flex flex-col lg:flex-row gap-10 md:gap-14 items-center relative z-10">
       <div class="w-56 h-56 md:w-72 md:h-72 flex-shrink-0 relative group">
         <div class="absolute inset-0 border-2 border-red-600/20 rounded-full transition-all duration-500"></div>
@@ -1006,7 +1006,7 @@ async function openModal(name, isMentor) {
       </div>
     </div>`;
   } else {
-  document.getElementById("modalContent").innerHTML = `                 
+    document.getElementById("modalContent").innerHTML = `                 
     <div class="flex flex-col lg:flex-row gap-10 md:gap-14 items-center relative z-10">                     
       <div class="absolute -right-10 -bottom-10 opacity-[0.03] text-red-600 pointer-events-none">                         
         <i class="fa-solid fa-fingerprint" style="font-size: 250px;"></i>                      
@@ -1037,19 +1037,19 @@ async function openModal(name, isMentor) {
             <i class="fa-solid fa-chart-pie text-lg"></i> Dossier                              
           </button>                             
           ${p.linkedin
-    ? `
+        ? `
           <a href="${p.linkedin}" target="_blank" class="btn-cyber-main flex-1 min-w-[130px] py-3 rounded-lg font-black text-xs uppercase text-center tracking-[0.1em] flex justify-center items-center gap-2">                                 
             <i class="fa-brands fa-linkedin-in text-lg"></i> Connect                              
           </a>`
-    : ""
-  }                              
+        : ""
+      }                              
           ${p.github
-    ? `                              
+        ? `                              
           <a href="${p.github}" target="_blank" class="btn-cyber-icon flex-1 min-w-[130px] py-3 rounded-lg font-black text-xs uppercase text-center tracking-[0.1em] flex justify-center items-center gap-2">                                 
             <i class="fa-brands fa-github text-lg"></i> GitHub                              
           </a>`
-    : ""
-  }                              
+        : ""
+      }                              
           <a href="https://mail.google.com/mail/?view=cm&fs=1&to=${p.email}" class="btn-cyber-icon w-[46px] h-[46px] flex items-center justify-center rounded-lg text-lg flex-shrink-0">                                 
             <i class="fa-solid fa-envelope"></i>                              
           </a>                         
