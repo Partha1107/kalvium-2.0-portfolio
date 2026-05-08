@@ -1576,18 +1576,6 @@
         if (squadInput) squadInput.value = entry?.squad || '';
         if (saveBtn) saveBtn.disabled = !entry;
 
-        if (bioInput) {
-          bioInput.value = entry?.bio || '';
-          fetchDossierBio(entry?.email || '', entry?.full_name || '')
-            .then((dossierBio) => {
-              if (!bioInput) return;
-              // Keep the field aligned with dossiers so edits start from the canonical bio.
-              if (dossierBio) bioInput.value = dossierBio;
-            })
-            .catch((error) => {
-              console.warn('Could not load dossier bio for update modal:', error);
-            });
-        }
       }
 
       function renderUpdateKalvianList() {

@@ -647,13 +647,7 @@ document.addEventListener("DOMContentLoaded", () => {
       console.warn('Pre-render students failed:', e);
     }
 
-    // Defer rendering of the heavy students section until it's in view.
-    // Place lightweight placeholders so first paint is fast.
-    const scrollerEl = document.getElementById("studentScroller");
-    const gridEl = document.getElementById("studentGrid");
-    if (scrollerEl) scrollerEl.innerHTML = '<div class="stats-loader">LOADING_STUDENTS...</div>';
-    if (gridEl) gridEl.innerHTML = '<div class="stats-loader">LOADING_STUDENTS...</div>';
-
+    // Re-render students when the section scrolls into view (refreshes if data changed).
     const studentsSection = document.getElementById('students-section');
     if (studentsSection && 'IntersectionObserver' in window) {
       const io = new IntersectionObserver((entries, obs) => {
