@@ -220,11 +220,40 @@ window.getDossierState = function (n) {
   return window.dossierStates[n];
 };
 
+function renderDossierLoading(message = "Loading dossier...") {
+  const profileHeader = document.getElementById("profileHeader");
+  const dossierContent = document.getElementById("dossierContent");
+
+  if (profileHeader) {
+    profileHeader.innerHTML = `
+      <div class="dossier-card relative overflow-hidden">
+        <div class="flex flex-col sm:flex-row items-center gap-8 p-4">
+          <div class="w-28 h-28 rounded-full border border-red-600/40 bg-white/5 animate-pulse"></div>
+          <div class="flex-1 w-full">
+            <div class="h-4 w-40 bg-white/10 rounded animate-pulse mb-3"></div>
+            <div class="h-8 w-64 bg-white/10 rounded animate-pulse mb-3"></div>
+            <div class="h-3 w-48 bg-white/10 rounded animate-pulse"></div>
+          </div>
+        </div>
+      </div>`;
+  }
+
+  if (dossierContent) {
+    dossierContent.innerHTML = `
+      <div class="lg:col-span-3 dossier-card flex flex-col items-center justify-center py-16 text-center">
+        <i class="fa-solid fa-circle-notch text-red-600 text-3xl animate-spin mb-4"></i>
+        <p class="mono text-gray-300 uppercase tracking-widest text-xs">${message}</p>
+      </div>`;
+  }
+}
+
 // --- INIT: Read URL params and render ---
 document.addEventListener("DOMContentLoaded", async () => {
   const params = new URLSearchParams(window.location.search);
   const name = params.get("name");
   const emailParam = (params.get("email") || '').trim().toLowerCase();
+
+  renderDossierLoading("Loading profile and dossier data...");
 
   await loadPeopleFromTables();
 
@@ -244,7 +273,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       if (mRes.data?.length > 0) {
         mentorsData.length = 0;
         mRes.data.forEach(m => mentorsData.push({
-          name: m.full_name, role: m.role, img: m.img_url, linkedin: m.linkedin_url, email: m.email
+          name: m.full_name, role: m.role, img: m.img_url, linkedin: m.linkedin_url, email: m.email, github: m.github_url || m.github_username || m.github
         }));
       }
       if (sRes.data?.length > 0) {
@@ -383,7 +412,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   document.getElementById("dossier-name").innerText = `ID_${name.replace(/\s+/g, "_")}`;
 
   // Render profile header (prefer remote bio/links if available)
-  const displayBio = remoteDossier ? remoteDossier.bio : person.bio;
+  const displayBio = (remoteDossier && remoteDossier.bio) ? remoteDossier.bio : (person.bio || "");
   const displayEmail = person.email;
   const displayLinkedIn = remoteDossier?.linkedin_url || person.linkedin;
   const displayGitHub = remoteDossier?.github_username || remoteDossier?.github_url
@@ -409,7 +438,8 @@ document.addEventListener("DOMContentLoaded", async () => {
                         <span class="text-red-600 mono text-xs uppercase tracking-[0.3em] font-bold">${isMentor ? "MENTOR" : "KALVIAN"} // ONLINE</span>
                     </div>
                     <h2 class="text-3xl sm:text-4xl font-black uppercase tracking-tighter text-white mb-2">${person.name}</h2>
-                    <p class="text-gray-400 mono text-[10px] sm:text-xs leading-relaxed max-w-xl">${displayBio}</p>
+                    ${displayBio ? `<p class="text-gray-400 mono text-[10px] sm:text-xs leading-relaxed max-w-xl">${displayBio}</p>` : ''}
+                    <p class="text-gray-300 mono text-sm mt-2">Role: <span class="text-red-500 font-bold">${person.role || (isMentor ? 'Mentor' : 'Kalvian')}</span></p>
                 </div>
                 <div class="flex gap-3 flex-shrink-0">
                     <a href="${displayLinkedIn}" target="_blank" class="btn-cyber-main px-5 py-3 rounded-lg font-black text-xs uppercase tracking-[0.1em] flex items-center gap-2">
@@ -469,6 +499,30 @@ async function persistCurrentDossier() {
 
 function renderDossier() {
   const state = window.getDossierState(window.currentActiveSubject);
+  const person = ([...mentorsData, ...studentsData].find((p) => p.name === window.currentActiveSubject) || {});
+  const isMentorLocal = mentorsData.some((m) => m.name === window.currentActiveSubject);
+  const displayBio = (window.remoteDossier && window.remoteDossier.bio) ? window.remoteDossier.bio : (person.bio || "");
+
+  if (isMentorLocal) {
+    const content = `
+      <div class="dossier-card">
+        <h3 class="mono text-red-500 font-bold uppercase tracking-widest flex items-center gap-2"><i class="fa-solid fa-id-card-clip"></i> Profile_Bio</h3>
+        <div class="mt-4">
+          <p class="text-gray-300 mono text-sm leading-relaxed">${displayBio && displayBio.trim() ? displayBio : 'Not available'}</p>
+        </div>
+      </div>`;
+    document.getElementById("dossierContent").innerHTML = content;
+    setTimeout(() => {
+      try {
+        const headerImg = document.querySelector('#profileHeader img');
+        if (headerImg) tryResolveProfileImage(headerImg, person.email, person.img);
+      } catch (e) {
+        console.warn('Avatar resolve failed:', e);
+      }
+    }, 50);
+    return;
+  }
+
   const statsHTML = renderCodingStatsSection();
   const content = `
         ${statsHTML}
