@@ -82,6 +82,98 @@ const PROFILE_PLACEHOLDER = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAA
 let kalvianRosterCache = null;
 let leadershipProfilesCache = null;
 const PORTFOLIO_DATA_VERSION_KEY = 'portfolio_data_version';
+const PROFILE_IMAGE_CACHE_KEY = 'profile_image_url_cache_v1';
+const PROFILE_IMAGE_URL_CACHE_TTL_MS = 6 * 60 * 60 * 1000;
+const PROFILE_IMAGE_LIST_CACHE_TTL_MS = 10 * 60 * 1000;
+
+let profileImageUrlCache = new Map();
+let profilePictureFileListCache = null;
+let profilePictureFileListFetchedAt = 0;
+
+function loadProfileImageUrlCache() {
+  try {
+    const raw = localStorage.getItem(PROFILE_IMAGE_CACHE_KEY);
+    if (!raw) return;
+    const parsed = JSON.parse(raw);
+    if (!parsed || typeof parsed !== "object") return;
+
+    const now = Date.now();
+    Object.entries(parsed).forEach(([email, entry]) => {
+      if (!entry || typeof entry.url !== "string" || typeof entry.expiresAt !== "number") return;
+      if (entry.expiresAt > now) {
+        profileImageUrlCache.set(email, entry);
+      }
+    });
+  } catch (e) {
+    // ignore cache parse errors
+  }
+}
+
+function persistProfileImageUrlCache() {
+  try {
+    const obj = {};
+    profileImageUrlCache.forEach((entry, email) => {
+      obj[email] = entry;
+    });
+    localStorage.setItem(PROFILE_IMAGE_CACHE_KEY, JSON.stringify(obj));
+  } catch (e) {
+    // ignore storage quota / serialization failures
+  }
+}
+
+function getCachedProfileImageUrl(email) {
+  const normalized = (email || "").trim().toLowerCase();
+  if (!normalized) return "";
+
+  const cached = profileImageUrlCache.get(normalized);
+  if (!cached) return "";
+
+  if (cached.expiresAt <= Date.now()) {
+    profileImageUrlCache.delete(normalized);
+    persistProfileImageUrlCache();
+    return "";
+  }
+
+  return cached.url || "";
+}
+
+function setCachedProfileImageUrl(email, url) {
+  const normalized = (email || "").trim().toLowerCase();
+  if (!normalized || !url) return;
+
+  profileImageUrlCache.set(normalized, {
+    url,
+    expiresAt: Date.now() + PROFILE_IMAGE_URL_CACHE_TTL_MS,
+  });
+  persistProfileImageUrlCache();
+}
+
+async function getProfilePictureFileList() {
+  const now = Date.now();
+  if (
+    Array.isArray(profilePictureFileListCache) &&
+    now - profilePictureFileListFetchedAt < PROFILE_IMAGE_LIST_CACHE_TTL_MS
+  ) {
+    return profilePictureFileListCache;
+  }
+
+  const client = supabaseClient;
+  if (!client) return [];
+
+  const { data, error } = await client.storage
+    .from("dossier_assets")
+    .list("Profile/profile_picture", { limit: 1000 });
+
+  if (error || !Array.isArray(data)) {
+    return [];
+  }
+
+  profilePictureFileListCache = data;
+  profilePictureFileListFetchedAt = now;
+  return profilePictureFileListCache;
+}
+
+loadProfileImageUrlCache();
 
 function resolveDossierImageSrc(src) {
   if (!src) return src;
@@ -101,14 +193,14 @@ async function findProfilePictureUrlByEmail(email) {
   const normalized = (email || "").trim().toLowerCase();
   if (!normalized) return "";
 
+  const cachedUrl = getCachedProfileImageUrl(normalized);
+  if (cachedUrl) return cachedUrl;
+
   const client = supabaseClient;
   if (!client) return "";
 
-  const { data, error } = await client.storage
-    .from("dossier_assets")
-    .list("Profile/profile_picture", { limit: 1000 });
-
-  if (error || !Array.isArray(data)) return "";
+  const data = await getProfilePictureFileList();
+  if (!Array.isArray(data) || data.length === 0) return "";
 
   const match = data.find((file) => {
     const fileName = (file?.name || "").toLowerCase();
@@ -117,9 +209,15 @@ async function findProfilePictureUrlByEmail(email) {
 
   if (!match) return "";
 
-  return client.storage
+  const publicUrl = client.storage
     .from("dossier_assets")
     .getPublicUrl(`Profile/profile_picture/${match.name}`).data.publicUrl;
+
+  if (publicUrl) {
+    setCachedProfileImageUrl(normalized, publicUrl);
+  }
+
+  return publicUrl || "";
 }
 
 async function tryResolveProfileImage(imgEl, email, localSrc) {
@@ -127,8 +225,7 @@ async function tryResolveProfileImage(imgEl, email, localSrc) {
 
   const resolvedUrl = await findProfilePictureUrlByEmail(email);
   if (resolvedUrl) {
-    const bust = `t=${Date.now()}`;
-    imgEl.src = resolvedUrl + (resolvedUrl.includes("?") ? "&" : "?") + bust;
+    imgEl.src = resolvedUrl;
     return;
   }
 
@@ -175,6 +272,8 @@ function replaceArrayContents(target, entries) {
 function invalidatePortfolioDataCaches() {
   kalvianRosterCache = null;
   leadershipProfilesCache = null;
+  profilePictureFileListCache = null;
+  profilePictureFileListFetchedAt = 0;
 }
 
 async function refreshPortfolioSections() {
@@ -481,19 +580,20 @@ document.addEventListener("DOMContentLoaded", () => {
     if (supabaseClient) {
       try {
         const [mRes, sRes] = await Promise.all([
-          supabaseClient.from('management').select('*'),
+            supabaseClient.from('management').select('*'),
           supabaseClient.from('kalvian').select('*')
         ]);
 
         if (mRes.data && mRes.data.length > 0) {
           mentorsData.length = 0; // Clear hardcoded
-          mRes.data.forEach(m => mentorsData.push({
-            name: m.full_name,
-            role: m.role,
-            img: m.img_url,
-            linkedin: m.linkedin_url,
-            email: m.email
-          }));
+            mRes.data.forEach(m => mentorsData.push({
+              name: m.full_name,
+              role: m.role,
+              img: m.img_url,
+              linkedin: m.linkedin_url,
+              email: m.email,
+              github: m.github_url || m.github_username || m.github
+            }));
         }
 
         if (sRes.data && sRes.data.length > 0) {
@@ -684,7 +784,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     <div class="card-watermark">${watermark}</div>                         
                     <img src="${PROFILE_PLACEHOLDER}" data-profile-email="${p.email || ''}" data-local-src="${p.img || ''}" class="w-32 h-32 mb-6 border border-red-600/30 p-1 transition-all duration-500 grayscale group-hover:grayscale-0 group-hover:border-red-600 rounded-full z-10" loading="lazy">                         
                     <div class="text-center z-10 px-4">                             
-                        <p class="text-red-600 mono text-[9px] uppercase font-bold tracking-widest mb-1 transition-colors duration-500 group-hover:text-white">${isMentor ? p.role : "KALVIAN"}</p>
+                        <p class="text-red-600 mono text-[9px] uppercase font-bold tracking-widest mb-1 transition-colors duration-500 group-hover:text-white">${isMentor ? (p.role || '') : "KALVIAN"}</p>
                         <h3 class="text-xl font-black uppercase tracking-tighter">${safeName}</h3>
                     </div>                     
                 </div>                 
@@ -876,69 +976,98 @@ async function fetchRoleBio(isMentor, email, fullName) {
 
 async function openModal(name, isMentor) {
   const list = isMentor ? window.mentorsData : window.studentsData;
-  const p = list.find((x) => x.name === name);
+  const p = list.find((x) => x.name === name) || {};
 
+  // Try to reuse the image already loaded on the card to avoid extra fetches
+  const safeNameKey = (name || "").trim().toLowerCase();
+  let existingCardImg = document.querySelector(`.tactical-card[data-name=\"${safeNameKey}\"] img`);
+  const existingImgSrc = existingCardImg && existingCardImg.src ? existingCardImg.src : (p.img || PROFILE_PLACEHOLDER);
+
+  if (isMentor) {
+  document.getElementById("modalContent").innerHTML = `
+    <div class="flex flex-col lg:flex-row gap-10 md:gap-14 items-center relative z-10">
+      <div class="w-56 h-56 md:w-72 md:h-72 flex-shrink-0 relative group">
+        <div class="absolute inset-0 border-2 border-red-600/20 rounded-full transition-all duration-500"></div>
+        <img src="${existingImgSrc}" data-profile-email="${p.email || ''}" data-local-src="${p.img || ''}" loading="lazy" class="w-full h-full object-cover rounded-full p-5 transition-all duration-700 shadow-[0_0_30px_rgba(255,0,0,0.15)]">
+      </div>
+      <div class="text-left max-w-xl w-full">
+        <h2 class="text-3xl sm:text-4xl md:text-5xl font-black uppercase tracking-tighter mb-2 text-white">${p.name || ''}</h2>
+        <div class="flex flex-col gap-3 mt-4">
+          <p class="text-gray-300 mono text-sm">Role: <span class="text-red-500 font-bold">${p.role || 'Mentor'}</span></p>
+          <div class="flex gap-3">
+            <button onclick="openAchievements('${p.name || ''}')" class="btn-cyber-alt px-5 py-3 rounded-lg font-black text-xs uppercase tracking-[0.1em] flex items-center gap-2">
+              <i class="fa-solid fa-chart-pie text-lg"></i> Dossier
+            </button>
+            ${p.linkedin ? `<a href="${p.linkedin}" target="_blank" class="btn-cyber-main px-5 py-3 rounded-lg font-black text-xs uppercase tracking-[0.1em] flex items-center gap-2"><i class="fa-brands fa-linkedin-in"></i> LinkedIn</a>` : ''}
+            ${p.github ? `<a href="${p.github}" target="_blank" class="btn-cyber-icon px-5 py-3 rounded-lg font-black text-xs uppercase tracking-[0.1em] flex items-center gap-2"><i class="fa-brands fa-github"></i> GitHub</a>` : ''}
+            <a href="https://mail.google.com/mail/?view=cm&fs=1&to=${p.email || ''}" class="btn-cyber-icon w-[46px] h-[46px] flex items-center justify-center rounded-lg text-lg flex-shrink-0"><i class="fa-solid fa-envelope"></i></a>
+          </div>
+        </div>
+      </div>
+    </div>`;
+  } else {
   document.getElementById("modalContent").innerHTML = `                 
-        <div class="flex flex-col lg:flex-row gap-10 md:gap-14 items-center relative z-10">                     
-            <div class="absolute -right-10 -bottom-10 opacity-[0.03] text-red-600 pointer-events-none">                         
-                <i class="fa-solid fa-fingerprint" style="font-size: 250px;"></i>                     
-            </div>                     
-            <div class="w-56 h-56 md:w-72 md:h-72 flex-shrink-0 relative group">                         
-                <div class="absolute inset-0 border-2 border-red-600/20 rounded-full group-hover:border-red-600/60 transition-all duration-500 animate-[spin_8s_linear_infinite]"></div>                         
-                <div class="absolute inset-3 border border-red-600/40 rounded-full border-dashed animate-[spin_12s_linear_infinite_reverse]"></div>                         
-                <img src="${PROFILE_PLACEHOLDER}" data-profile-email="${p.email || ''}" data-local-src="${p.img || ''}" loading="lazy" class="w-full h-full object-cover rounded-full p-5 transition-all duration-700 shadow-[0_0_30px_rgba(255,0,0,0.15)]">                         
-            </div>                     
-            <div class="text-left max-w-xl w-full">                         
-                <div class="flex items-center gap-3 mb-3">                             
-                    <span class="w-2 h-2 rounded-full bg-red-600 animate-pulse"></span>                             
-                    <span class="text-red-600 mono text-xs uppercase tracking-[0.3em] font-bold">${isMentor ? "MENTOR" : "KALVIAN"} // ONLINE</span>                         
-                </div>                         
-                <h2 class="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-black uppercase tracking-tighter mb-2 text-white drop-shadow-[0_0_12px_rgba(255,255,255,0.1)] leading-[0.9] break-words max-w-full">${p.name}</h2>                         
-                <p class="text-gray-400 mono text-sm md:text-base font-bold mb-6 uppercase tracking-widest border-l-2 border-red-600 pl-4">${p.role}</p>                                                  
+    <div class="flex flex-col lg:flex-row gap-10 md:gap-14 items-center relative z-10">                     
+      <div class="absolute -right-10 -bottom-10 opacity-[0.03] text-red-600 pointer-events-none">                         
+        <i class="fa-solid fa-fingerprint" style="font-size: 250px;"></i>                      
+      </div>                      
+      <div class="w-56 h-56 md:w-72 md:h-72 flex-shrink-0 relative group">                          
+        <div class="absolute inset-0 border-2 border-red-600/20 rounded-full group-hover:border-red-600/60 transition-all duration-500 animate-[spin_8s_linear_infinite]"></div>                          
+        <div class="absolute inset-3 border border-red-600/40 rounded-full border-dashed animate-[spin_12s_linear_infinite_reverse]"></div>                          
+        <img src="${existingImgSrc}" data-profile-email="${p.email || ''}" data-local-src="${p.img || ''}" loading="lazy" class="w-full h-full object-cover rounded-full p-5 transition-all duration-700 shadow-[0_0_30px_rgba(255,0,0,0.15)]">                           
+      </div>                      
+      <div class="text-left max-w-xl w-full">                          
+        <div class="flex items-center gap-3 mb-3">                              
+          <span class="w-2 h-2 rounded-full bg-red-600 animate-pulse"></span>                              
+          <span class="text-red-600 mono text-xs uppercase tracking-[0.3em] font-bold">KALVIAN // ONLINE</span>                          
+        </div>                          
+        <h2 class="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-black uppercase tracking-tighter mb-2 text-white drop-shadow-[0_0_12px_rgba(255,255,255,0.1)] leading-[0.9] break-words max-w-full">${p.name || ''}</h2>                          
+        <p class="text-gray-400 mono text-sm md:text-base font-bold mb-6 uppercase tracking-widest border-l-2 border-red-600 pl-4">${p.role || ''}</p>                                                   
                 
-                <div class="bg-black/40 border border-white/10 rounded-xl p-5 mb-8 backdrop-blur-sm shadow-inner relative overflow-hidden flex flex-col items-start">                             
-                    <div class="absolute top-0 left-0 w-1 h-full bg-gradient-to-b from-transparent via-red-600/50 to-transparent"></div>                             
-                    <p id="modalBioText" class="text-gray-300 text-base md:text-lg font-light bio-text" style="max-height: 3.2em;">>> SYNCING_WITH_MAINFRAME...</p>                             
-                    <button id="modalBioToggle" onclick="toggleBio()" class="hidden text-red-500 hover:text-white mono text-[10px] uppercase font-bold tracking-widest mt-4 transition-all hover:translate-x-2 flex items-center gap-2 group">                                 
-                        <i class="fa-solid fa-chevron-right text-[10px] group-hover:text-red-500"></i> Initialize_Decryption [Read_More]                             
-                    </button>                         
-                </div>                                                  
+        <div class="bg-black/40 border border-white/10 rounded-xl p-5 mb-8 backdrop-blur-sm shadow-inner relative overflow-hidden flex flex-col items-start">                              
+          <div class="absolute top-0 left-0 w-1 h-full bg-gradient-to-b from-transparent via-red-600/50 to-transparent"></div>                              
+          <p id="modalBioText" class="text-gray-300 text-base md:text-lg font-light bio-text" style="max-height: 3.2em;">>> SYNCING_WITH_MAINFRAME...</p>                              
+          <button id="modalBioToggle" onclick="toggleBio()" class="hidden text-red-500 hover:text-white mono text-[10px] uppercase font-bold tracking-widest mt-4 transition-all hover:translate-x-2 flex items-center gap-2 group">                                 
+            <i class="fa-solid fa-chevron-right text-[10px] group-hover:text-red-500"></i> Initialize_Decryption [Read_More]                              
+          </button>                          
+        </div>                                                   
                 
-                <div class="flex flex-wrap gap-3 mt-4 w-full">                             
-                    ${!isMentor
-      ? `
-                    <button onclick="openAchievements(&quot;${p.name}&quot;)" class="btn-cyber-alt flex-1 min-w-[130px] py-3 rounded-lg font-black text-xs uppercase text-center tracking-[0.1em] flex justify-center items-center gap-2">                                 
-                        <i class="fa-solid fa-chart-pie text-lg"></i> Dossier                             
-                    </button>`
-      : ""
-    }                             
-                    ${p.linkedin
-      ? `
-                    <a href="${p.linkedin}" target="_blank" class="btn-cyber-main flex-1 min-w-[130px] py-3 rounded-lg font-black text-xs uppercase text-center tracking-[0.1em] flex justify-center items-center gap-2">                                 
-                        <i class="fa-brands fa-linkedin-in text-lg"></i> Connect                             
-                    </a>`
-      : ""
-    }                             
-                    ${p.github
-      ? `                             
-                    <a href="${p.github}" target="_blank" class="btn-cyber-icon flex-1 min-w-[130px] py-3 rounded-lg font-black text-xs uppercase text-center tracking-[0.1em] flex justify-center items-center gap-2">                                 
-                        <i class="fa-brands fa-github text-lg"></i> GitHub                             
-                    </a>`
-      : ""
-    }                             
-                    <a href="https://mail.google.com/mail/?view=cm&fs=1&to=${p.email}" class="btn-cyber-icon w-[46px] h-[46px] flex items-center justify-center rounded-lg text-lg flex-shrink-0">                                 
-                        <i class="fa-solid fa-envelope"></i>                             
-                    </a>                         
-                </div>                     
-            </div>                 
-        </div>`;
+        <div class="flex flex-wrap gap-3 mt-4 w-full">                              
+          <button onclick="openAchievements(&quot;${p.name}&quot;)" class="btn-cyber-alt flex-1 min-w-[130px] py-3 rounded-lg font-black text-xs uppercase text-center tracking-[0.1em] flex justify-center items-center gap-2">                                 
+            <i class="fa-solid fa-chart-pie text-lg"></i> Dossier                              
+          </button>                             
+          ${p.linkedin
+    ? `
+          <a href="${p.linkedin}" target="_blank" class="btn-cyber-main flex-1 min-w-[130px] py-3 rounded-lg font-black text-xs uppercase text-center tracking-[0.1em] flex justify-center items-center gap-2">                                 
+            <i class="fa-brands fa-linkedin-in text-lg"></i> Connect                              
+          </a>`
+    : ""
+  }                              
+          ${p.github
+    ? `                              
+          <a href="${p.github}" target="_blank" class="btn-cyber-icon flex-1 min-w-[130px] py-3 rounded-lg font-black text-xs uppercase text-center tracking-[0.1em] flex justify-center items-center gap-2">                                 
+            <i class="fa-brands fa-github text-lg"></i> GitHub                              
+          </a>`
+    : ""
+  }                              
+          <a href="https://mail.google.com/mail/?view=cm&fs=1&to=${p.email}" class="btn-cyber-icon w-[46px] h-[46px] flex items-center justify-center rounded-lg text-lg flex-shrink-0">                                 
+            <i class="fa-solid fa-envelope"></i>                              
+          </a>                         
+        </div>                      
+      </div>                 
+    </div>`;
+  }
 
   document.getElementById("modal-overlay").classList.add("active");
   document.body.style.overflow = "hidden";
 
   // Resolve modal image candidates (tries multiple filename variants)
   const modalImg = document.querySelector('#modalContent img[data-profile-email]');
-  if (modalImg) tryResolveProfileImage(modalImg, p.email, p.img);
+  if (modalImg) {
+    if (!existingCardImg) {
+      tryResolveProfileImage(modalImg, p.email, p.img);
+    } // else: we reused the already-loaded card image; no extra resolution needed
+  }
 
   // Background Sync for Bio if not mentor
   if (supabaseClient) {
@@ -979,8 +1108,11 @@ async function openModal(name, isMentor) {
 function openAchievements(name) {
   document.getElementById("modal-overlay").classList.remove("active");
   document.body.style.overflow = "auto";
-  // Open dossier in the same tab
-  window.location.href = `dossier.html?name=${encodeURIComponent(name)}`;
+  // Resolve email for the person if available and open dossier with both name and email
+  const all = [...(window.mentorsData || []), ...(window.studentsData || [])];
+  const person = all.find((p) => p.name === name) || {};
+  const emailParam = person.email ? `&email=${encodeURIComponent(person.email)}` : "";
+  window.location.href = `dossier.html?name=${encodeURIComponent(name)}${emailParam}`;
 }
 
 function closeAchievements() {
@@ -1089,10 +1221,9 @@ function renderDossier() {
 function promptAddProject() {
   document.getElementById("input-modal-title").innerText =
     "NEW_DEPLOYMENT_NODE";
-  document.getElementById("input-modal-body").innerHTML = `                 
-        <input type="text" id="in-proj-title" placeholder="Project Name" class="bg-black border border-white/20 p-3 text-white text-sm mono outline-none focus:border-red-600">                 
-        <input type="text" id="in-proj-desc" placeholder="Brief Description" class="bg-black border border-white/20 p-3 text-white text-sm mono outline-none focus:border-red-600">             
-    `;
+  document.getElementById("input-modal-body").innerHTML = `
+        <input type="text" id="in-proj-title" placeholder="Project Name" class="bg-black border border-white/20 p-3 text-white text-sm mono outline-none focus:border-red-600">
+        <input type="text" id="in-proj-desc" placeholder="Brief Description" class="bg-black border border-white/20 p-3 text-white text-sm mono outline-none focus:border-red-600">`;
   document.getElementById("input-modal-save").onclick = () => {
     const t = document.getElementById("in-proj-title").value;
     const d = document.getElementById("in-proj-desc").value;
@@ -1106,27 +1237,7 @@ function promptAddProject() {
   };
   document.getElementById("input-modal").style.display = "flex";
 }
-
-function promptAddCert() {
-  document.getElementById("input-modal-title").innerText =
-    "NEW_SECURITY_CLEARANCE";
-  document.getElementById("input-modal-body").innerHTML = `                 
-        <input type="text" id="in-cert-title" placeholder="Certification Name" class="bg-black border border-white/20 p-3 text-white text-sm mono outline-none focus:border-red-600">             
-    `;
-  document.getElementById("input-modal-save").onclick = () => {
-    const t = document.getElementById("in-cert-title").value;
-    if (t) {
-      window.getDossierState(window.currentActiveSubject).certs.push(t);
-      renderDossier();
-    }
-    closeInputModal();
-  };
-  document.getElementById("input-modal").style.display = "flex";
-}
-
 function promptAddSkill() {
-  document.getElementById("input-modal-title").innerText = "NEW_COMBAT_SKILL";
-
   const languages = [
     "JavaScript",
     "TypeScript",
@@ -1148,9 +1259,8 @@ function promptAddSkill() {
     "Assembly",
   ];
 
-  let options = languages
-    .map((lang) => `<option value="${lang}">${lang}</option>`)
-    .join("");
+  document.getElementById("input-modal-title").innerText = "NEW_COMBAT_SKILL";
+  let options = languages.map((lang) => `<option value="${lang}">${lang}</option>`).join("");
 
   document.getElementById("input-modal-body").innerHTML = `
         <div class="relative">
@@ -1167,9 +1277,7 @@ function promptAddSkill() {
   document.getElementById("input-modal-save").onclick = () => {
     const t = document.getElementById("in-skill-name").value;
     if (t) {
-      window
-        .getDossierState(window.currentActiveSubject)
-        .skills.push({ name: t, pct: 0 });
+      window.getDossierState(window.currentActiveSubject).skills.push({ name: t, pct: 0 });
       renderDossier();
     }
     closeInputModal();
