@@ -947,27 +947,25 @@ function resetSystem() {
 async function fetchRoleBio(isMentor, email, fullName) {
   if (!supabaseClient) return '';
 
-  const tableName = isMentor ? 'management' : 'kalvian';
   const normalizedEmail = (email || '').trim().toLowerCase();
   const normalizedName = (fullName || '').trim();
+  const searchTables = ['dossiers', isMentor ? 'management' : 'kalvian'];
   const filters = [];
 
-  if (normalizedEmail) {
-    filters.push({ column: 'email', value: normalizedEmail });
-  }
-  if (normalizedName) {
-    filters.push({ column: 'full_name', value: normalizedName });
-  }
+  if (normalizedEmail) filters.push({ column: 'email', value: normalizedEmail });
+  if (normalizedName) filters.push({ column: 'full_name', value: normalizedName });
 
-  for (const filter of filters) {
-    const { data, error } = await supabaseClient
-      .from(tableName)
-      .select('*')
-      .ilike(filter.column, filter.value)
-      .maybeSingle();
+  for (const tableName of searchTables) {
+    for (const filter of filters) {
+      const { data, error } = await supabaseClient
+        .from(tableName)
+        .select('*')
+        .ilike(filter.column, filter.value)
+        .maybeSingle();
 
-    if (!error && data && typeof data.bio === 'string' && data.bio.trim()) {
-      return data.bio;
+      if (!error && data && typeof data.bio === 'string' && data.bio.trim()) {
+        return data.bio;
+      }
     }
   }
 
@@ -994,6 +992,10 @@ async function openModal(name, isMentor) {
         <h2 class="text-3xl sm:text-4xl md:text-5xl font-black uppercase tracking-tighter mb-2 text-white">${p.name || ''}</h2>
         <div class="flex flex-col gap-3 mt-4">
           <p class="text-gray-300 mono text-sm">Role: <span class="text-red-500 font-bold">${p.role || 'Mentor'}</span></p>
+          <div class="bg-black/40 border border-white/10 rounded-xl p-4 backdrop-blur-sm shadow-inner relative overflow-hidden flex flex-col items-start">
+            <div class="absolute top-0 left-0 w-1 h-full bg-gradient-to-b from-transparent via-red-600/50 to-transparent"></div>
+            <p id="modalBioText" class="text-gray-300 text-sm leading-relaxed">${p.bio && p.bio.trim() ? p.bio : 'Not available'}</p>
+          </div>
           <div class="flex gap-3">
             <button onclick="openAchievements('${p.name || ''}')" class="btn-cyber-alt px-5 py-3 rounded-lg font-black text-xs uppercase tracking-[0.1em] flex items-center gap-2">
               <i class="fa-solid fa-chart-pie text-lg"></i> Dossier

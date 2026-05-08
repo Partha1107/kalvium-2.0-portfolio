@@ -438,8 +438,8 @@ document.addEventListener("DOMContentLoaded", async () => {
                         <span class="text-red-600 mono text-xs uppercase tracking-[0.3em] font-bold">${isMentor ? "MENTOR" : "KALVIAN"} // ONLINE</span>
                     </div>
                     <h2 class="text-3xl sm:text-4xl font-black uppercase tracking-tighter text-white mb-2">${person.name}</h2>
-                    ${displayBio ? `<p class="text-gray-400 mono text-[10px] sm:text-xs leading-relaxed max-w-xl">${displayBio}</p>` : ''}
                     <p class="text-gray-300 mono text-sm mt-2">Role: <span class="text-red-500 font-bold">${person.role || (isMentor ? 'Mentor' : 'Kalvian')}</span></p>
+                    <p class="text-gray-400 mono text-[10px] sm:text-xs leading-relaxed max-w-xl mt-2">${displayBio ? displayBio : 'Not available'}</p>
                 </div>
                 <div class="flex gap-3 flex-shrink-0">
                     <a href="${displayLinkedIn}" target="_blank" class="btn-cyber-main px-5 py-3 rounded-lg font-black text-xs uppercase tracking-[0.1em] flex items-center gap-2">
